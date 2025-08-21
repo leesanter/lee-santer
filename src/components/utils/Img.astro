@@ -1,0 +1,50 @@
+---
+/**
+ * Img.astro — safe image helper
+ * - Prefer importing images from /src/assets and pass that import as `src`
+ * - For strings (/public/* or remote URLs), we fall back to <img>
+ *
+ * Props:
+ *  - src: ImageMetadata | string
+ *  - alt: string (required; use "" for decorative)
+ *  - class?: string
+ *  - sizes?: string           (used when we create responsive images)
+ *  - widths?: number[]        (optional override; usually omit)
+ *  - priority?: boolean       (hero/LCP: eager, sync decode, fetchpriority=high)
+ *  - ...any other <img> attributes (style, loading, decoding, etc.)
+ */
+import { Image } from "astro:assets";
+
+export interface Props {
+	src: any; // local import OR remote URL string
+	alt: string;
+	widths?: number[];
+	sizes?: string;
+	format?: Array<"avif" | "webp" | "png" | "jpeg">;
+	loading?: "lazy" | "eager";
+	decoding?: "async" | "auto" | "sync";
+	class?: string;
+}
+
+const {
+	src,
+	alt,
+	widths = [480, 768, 1024, 1440],
+	sizes = "100vw",
+	format = ["avif", "webp", "jpeg"],
+	loading = "lazy",
+	decoding = "async",
+	class: className = "",
+} = Astro.props;
+
+const isRemote = typeof src === "string";
+const isSvg = (typeof src === "string" && src.endsWith(".svg")) || (src?.src && src.src.endsWith?.(".svg"));
+---
+
+{
+	isRemote || isSvg ? (
+		<img src={typeof src === "string" ? src : src.src} alt={alt} loading={loading} decoding={decoding} class={className} />
+	) : (
+		<Image src={src} alt={alt} widths={widths} sizes={sizes} format={format} loading={loading} decoding={decoding} class={className} />
+	)
+}

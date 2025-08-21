@@ -1,0 +1,96 @@
+---
+/* ======================================================================
+   /blog/page/[page].astro — paginated blog index
+   - Pre-renders pages with getStaticPaths()
+   - Filters out drafts in production
+   - Sorts posts by publishDate (new → old)
+   - Manual pagination (no `paginate` import), change POSTS_PER_PAGE to suit
+   - Renders a PostCard grid + Prev/Next controls
+   - Expects blog entries with: title, description?, publishDate?, draft?
+   - Pairs with /src/pages/blog/index.astro as page 1 (or redirect there)
+====================================================================== */
+
+import Base from '../../../layouts/Base.astro';
+import PostCard from '../../../components/molecules/PostCard.astro';
+import type { CollectionEntry } from 'astro:content';
+import { POSTS_PER_PAGE } from '../../../lib/constants';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+	const { getCollection } = await import('astro:content');
+
+	const all = (
+		await getCollection('blog', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+	).sort((a, b) => {
+		const ta = a.data.publishDate?.getTime?.() ?? 0;
+		const tb = b.data.publishDate?.getTime?.() ?? 0;
+		return tb - ta;
+	});
+
+	const totalPages = Math.max(1, Math.ceil(all.length / POSTS_PER_PAGE));
+
+	return Array.from({ length: totalPages }, (_, i) => {
+		const page = i + 1;
+		const start = i * POSTS_PER_PAGE;
+		const end = start + POSTS_PER_PAGE;
+		const entries = all.slice(start, end);
+		return {
+			params: { page: String(page) },
+			props: { entries, page, totalPages },
+		};
+	});
+}
+
+interface Props {
+	entries: CollectionEntry<'blog'>[];
+	page: number;
+	totalPages: number;
+}
+
+const { entries, page, totalPages } = Astro.props as Props;
+---
+
+<Base title={`Blog — Page ${page}`} description="Latest posts">
+	<section class="container container--large">
+		<div class="section-layout stack large">
+			<h1 class="h2">Blog</h1>
+
+			<div class="content-layout">
+				{
+					entries.map(({ id, data }) => (
+						<div class="content-column span-4 tablet:span-6 mobile:span-12">
+							<PostCard
+								href={`/blog/${id}`}
+								title={data.title}
+								description={data.description}
+								publishDate={data.publishDate}
+							/>
+						</div>
+					))
+				}
+			</div>
+
+			{/* Simple pagination controls */}
+			<nav class="stack small" aria-label="Pagination">
+				<p>Page {page} of {totalPages}</p>
+				<div class="stack small" style="display:flex; gap:.75rem;">
+					{
+						page > 1 && (
+							<a class="btn btn--outline" href={`/blog/page/${page - 1}`}>
+								← Prev
+							</a>
+						)
+					}
+					{
+						page < totalPages && (
+							<a class="btn" href={`/blog/page/${page + 1}`}>
+								Next →
+							</a>
+						)
+					}
+				</div>
+			</nav>
+		</div>
+	</section>
+</Base>

@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+// or
+// import Minimal from "../layouts/Minimal.astro";
+
+export const prerender = true;
+
+const title = 'Lee Santer';
+const description = 'Who I am and how I work.';
+---
+
+<Base {title} {description}>
+	<section class="section--first" style="min-height: 400vh;">
+		<div class="container section-layout">
+			<div class="stack large" style="text-align: center;">
+				<h1>Portfolio Site Starter</h1>
+				<p>
+					A clean Astro boilerplate with SCSS, scroll effects, and smart layout tools —
+					ready to go.
+				</p>
+			</div>
+		</div>
+	</section>
+</Base>

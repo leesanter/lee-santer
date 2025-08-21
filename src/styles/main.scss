@@ -1,0 +1,15 @@
+/* ======================================================================
+   main.scss — style entrypoint
+
+   - Order matters: tokens → base → typography → layout → UI → utilities
+   - Keep this file tiny; everything lives in partials
+====================================================================== */
+
+@use 'tokens'; // brand palette, scales (no scheme logic)
+@use 'theme'; // maps palette → semantic vars + [data-scheme="dark"] overrides
+@use 'fonts'; // @font-face etc.
+@use 'base'; // reset + element defaults (now read semantic vars)
+@use 'typography'; // headings/body rules using semantic vars
+@use 'layout'; // grids/containers (colour-agnostic)
+@use 'ui'; // buttons/forms/controls (consume semantics)
+@use 'utilities'; // helpers (.stack, scrims, on-image, display, spacing)

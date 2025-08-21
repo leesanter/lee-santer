@@ -1,0 +1,67 @@
+---
+/* ======================================================================
+   Minimal.astro — bare layout
+   - No header/footer; ideal for thank-you pages, embeds, micros
+   - Imports main.scss once; exposes <slot name="head" />
+   - Uses SEO.astro for meta/canonical/OG
+   - Shared head assets via HeadAssets (favicons/manifest/theme-color)
+   - <main tabindex="-1"> for accessible focus targets
+====================================================================== */
+
+import "../styles/main.scss";
+import SEO from "../components/utils/SEO.astro";
+import HeadAssets from "../components/utils/HeadAssets.astro";
+import FontAssets from "../components/utils/FontAssets.astro";
+
+const ENV = import.meta.env;
+const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || "")
+	.split(",")
+	.map((s) => s.trim())
+	.filter(Boolean);
+const HTML_LANG = ENV.PUBLIC_HTML_LANG ?? "en-GB";
+
+const {
+	title,
+	description,
+	canonical,
+	noindex = false,
+	pageClass = "",
+	structuredData,
+	ogImage,
+	type, // "website" | "article"
+	publishedTime, // ISO (article)
+	modifiedTime, // ISO (article)
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={HTML_LANG}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light" />
+
+		<SEO
+			{title}
+			{description}
+			{canonical}
+			{noindex}
+			{structuredData}
+			{ogImage}
+			type={type}
+			publishedTime={publishedTime}
+			modifiedTime={modifiedTime}
+		/>
+
+		<FontAssets files={fontPreloads.length ? fontPreloads : undefined} />
+		<HeadAssets />
+		<slot name="head" />
+	</head>
+	<body>
+		<div class="page-wrapper">
+			<main id="main" class:list={["main-wrapper", pageClass]} tabindex="-1">
+				<slot />
+			</main>
+		</div>
+	</body>
+</html>

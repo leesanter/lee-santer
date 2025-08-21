@@ -1,0 +1,389 @@
+/* ======================================================================
+   _ui.scss — generic UI primitives (forms, inputs, helpers)
+   - Inherits semantic colour tokens from _theme.scss
+   - Brand hues via --palette--*
+====================================================================== */
+
+/* ----------------------------- */
+/* Forms and Inputs              */
+/* ----------------------------- */
+/* Theme hooks (scheme-aware by default) */
+:root {
+	--control-height: 2.75rem;
+	--control-radius: var(--radius--m, 6px);
+
+	--control-pad-x: var(--size--small, 0.75rem);
+	--control-pad-y: max(0.5rem, calc(var(--size--small, 0.75rem) - 1px));
+
+	--control-bg: var(--bg-colour);
+	--control-bg-disabled: color-mix(in srgb, var(--bg-colour) 96%, var(--text-colour) 4%);
+	--control-text: var(--text-colour);
+	--control-placeholder: color-mix(in srgb, var(--text-colour) 55%, var(--bg-colour));
+
+	--control-border-color: var(--border-colour);
+	--control-border: 1px solid var(--control-border-color);
+
+	--control-focus-color: var(--focus-ring-colour);
+	--control-focus-border: 1px solid var(--control-focus-color);
+	--control-focus-ring: 0 0 0 3px color-mix(in srgb, var(--control-focus-color) 35%, transparent);
+
+	--control-error-color: var(--palette--warning);
+	--control-error-border: 1px solid var(--control-error-color);
+	--control-error-ring: 0 0 0 3px color-mix(in srgb, var(--control-error-color) 30%, transparent);
+
+	--control-success-color: var(--palette--success);
+	--control-success-border: 1px solid var(--control-success-color);
+	--control-success-ring: 0 0 0 3px
+		color-mix(in srgb, var(--control-success-color) 30%, transparent);
+
+	/* Select chevron; override in theme for dark if desired */
+	--select-indicator: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+<polyline points='6 9 12 15 18 9'/></svg>");
+}
+
+/* Base fields (text-ish) */
+:where(
+		input[type='text'],
+		input[type='email'],
+		input[type='url'],
+		input[type='search'],
+		input[type='password'],
+		input[type='tel'],
+		input[type='number'],
+		textarea,
+		select
+	) {
+	font: inherit;
+	color: var(--control-text);
+	background: var(--control-bg);
+	border: var(--control-border);
+	border-radius: var(--control-radius);
+	line-height: 1.4;
+	width: 100%;
+	min-height: var(--control-height);
+	padding: var(--control-pad-y) var(--control-pad-x);
+	box-shadow: 0 0 0 0 transparent;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease,
+		color 0.15s ease;
+	caret-color: currentColor;
+}
+
+textarea {
+	min-height: 6rem;
+	resize: vertical;
+}
+
+select {
+	appearance: none;
+	padding-right: calc(var(--control-pad-x) + 1.5rem);
+	background-image: var(--select-indicator);
+	background-repeat: no-repeat;
+	background-position: right var(--control-pad-x) center;
+	background-size: 1rem;
+}
+
+:where(input, textarea)::placeholder {
+	color: var(--control-placeholder);
+}
+
+/* Focus state */
+:where(input, textarea, select):focus-visible {
+	outline: none;
+	border: var(--control-focus-border);
+	box-shadow: var(--control-focus-ring);
+}
+
+/* Disabled / readonly */
+:where(input, textarea, select):disabled,
+:where(input, textarea, select)[aria-disabled='true'] {
+	background: var(--control-bg-disabled);
+	color: color-mix(in srgb, var(--control-text) 55%, var(--bg-colour));
+	cursor: not-allowed;
+}
+:where(input, textarea, select)[readonly] {
+	background: var(--control-bg-disabled);
+}
+
+/* Validation — class-based */
+.form-field.is-error :where(input, textarea, select),
+:where(input, textarea, select).is-error {
+	border: var(--control-error-border);
+	box-shadow: var(--control-error-ring);
+}
+.form-field.is-success :where(input, textarea, select),
+:where(input, textarea, select).is-success {
+	border: var(--control-success-border);
+	box-shadow: var(--control-success-ring);
+}
+
+/* Labels & messages */
+.form-label {
+	color: var(--heading-colour, currentColor);
+	font-weight: 500;
+}
+.form-required {
+	color: var(--control-error-color);
+	margin-left: 0.25em;
+}
+.form-help {
+	font-size: var(--font--small, 0.875rem);
+	color: var(--text-muted-colour);
+}
+.form-error {
+	font-size: var(--font--small, 0.875rem);
+	color: var(--control-error-color);
+}
+.form-success {
+	font-size: var(--font--small, 0.875rem);
+	color: var(--control-success-color);
+}
+
+/* Checkboxes & radios */
+:where(input[type='checkbox'], input[type='radio']) {
+	accent-color: var(--palette--primary);
+	inline-size: 1.125rem;
+	block-size: 1.125rem;
+	transform: translateY(0.5px);
+}
+.form-check {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.form-check + .form-check {
+	margin-top: 0.5rem;
+}
+
+/* Input groups (prefix/suffix) */
+.input-group {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+}
+.input-group > .prefix,
+.input-group > .suffix {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 var(--control-pad-x);
+	background: var(--control-bg-disabled);
+	color: color-mix(in srgb, var(--control-text) 60%, var(--bg-colour));
+	border: var(--control-border);
+	white-space: nowrap;
+}
+.input-group > .prefix {
+	border-right: 0;
+	border-radius: var(--control-radius) 0 0 var(--control-radius);
+}
+.input-group > .suffix {
+	border-left: 0;
+	border-radius: 0 var(--control-radius) var(--control-radius) 0;
+}
+.input-group > :where(input, select, textarea) {
+	border-radius: 0;
+	flex: 1 1 auto;
+}
+.input-group > :where(input, select, textarea):first-child {
+	border-top-left-radius: var(--control-radius);
+	border-bottom-left-radius: var(--control-radius);
+}
+.input-group > :where(input, select, textarea):last-child {
+	border-top-right-radius: var(--control-radius);
+	border-bottom-right-radius: var(--control-radius);
+}
+
+/* Sizes */
+.input-small {
+	--control-height: 2.25rem;
+	--control-pad-y: 0.375rem;
+	--control-pad-x: 0.625rem;
+	font-size: var(--font--small, 0.875rem);
+}
+.input-large {
+	--control-height: 3.25rem;
+	--control-pad-y: 0.75rem;
+	--control-pad-x: 1rem;
+	font-size: var(--font--medium, 1rem);
+}
+.form-compact {
+	--control-height: 2.5rem;
+	--control-pad-y: 0.5rem;
+}
+
+/* Fieldset */
+fieldset {
+	border: 1px solid var(--border-colour);
+	border-radius: var(--control-radius);
+	padding: var(--size--medium, 1rem);
+}
+legend {
+	padding: 0 0.5rem;
+	font-weight: 600;
+	color: var(--heading-colour, currentColor);
+}
+
+/* Platform normalisation */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+input[type='number'] {
+	-moz-appearance: textfield;
+}
+input[type='search'] {
+	-webkit-appearance: none;
+	outline-offset: -2px;
+}
+
+/* ----------------------------- */
+/* Buttons                       */
+/* ----------------------------- */
+.btn {
+	/* Defaults: brand-primary button */
+	--btn-bg: var(--palette--primary);
+	--btn-text: var(--palette--white);
+	--btn-border: var(--btn-bg);
+	--btn-radius: var(--button-radius);
+
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+
+	padding: 0.75rem 1.25rem;
+	border: 1px solid var(--btn-border);
+	border-radius: var(--btn-radius);
+	background: var(--btn-bg);
+	color: var(--btn-text);
+	transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+	cursor: pointer;
+}
+.btn:hover {
+	/* nudge toward the surrounding bg for context-aware hover */
+	background: color-mix(in srgb, var(--btn-bg) 90%, var(--bg-colour));
+}
+.btn:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--focus-ring-colour);
+}
+
+/* Variants */
+.btn--secondary {
+	--btn-bg: var(--palette--secondary);
+}
+.btn--warning {
+	--btn-bg: var(--palette--warning);
+}
+
+.btn--outline {
+	--btn-bg: transparent;
+	--btn-text: var(--heading-colour);
+	--btn-border: currentColor;
+	background: transparent;
+	color: var(--btn-text);
+}
+.btn--outline:hover {
+	background: var(--heading-colour);
+	color: var(--bg-colour);
+	border-color: var(--heading-colour);
+}
+
+.btn--text {
+	background: transparent;
+	border-color: transparent;
+	padding: 0;
+	--btn-text: var(--heading-colour);
+	color: var(--btn-text);
+}
+.btn--text:hover {
+	background: color-mix(in srgb, var(--heading-colour) 10%, var(--bg-colour));
+}
+
+/* Sizes */
+.btn--sm {
+	padding: 0.5rem 0.75rem;
+	font-size: var(--font--small);
+}
+.btn--lg {
+	padding: 1rem 1.5rem;
+	font-size: var(--font--large);
+}
+.btn--block {
+	display: flex;
+	width: 100%;
+	justify-content: center;
+}
+
+/* Disabled */
+.btn[disabled],
+.btn.is-disabled {
+	opacity: 0.6;
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
+/* Icons in buttons */
+.btn > svg,
+.btn > i {
+	width: 1em;
+	height: 1em;
+	flex: 0 0 auto;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.btn {
+		transition: none;
+	}
+	.btn.is-loading::after {
+		animation: none;
+	}
+}
+
+/* Optional loading state */
+.btn.is-loading {
+	position: relative;
+}
+.btn.is-loading::after {
+	content: '';
+	width: 1em;
+	height: 1em;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	display: inline-block;
+	margin-left: 0.5rem;
+	animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ----------------------------- */
+/* Accessibility                 */
+/* ----------------------------- */
+.skip-to-content {
+	position: absolute;
+	top: 0.5rem;
+	left: 0.5rem;
+	transform: translateY(-150%);
+	background: var(--palette--primary);
+	color: var(--palette--white);
+	padding: 0.75rem 1rem;
+	border-radius: 0.375rem;
+	z-index: 1000;
+	text-decoration: none;
+	transition: transform 0.2s ease;
+}
+.skip-to-content:focus {
+	transform: translateY(0);
+	outline: none;
+	box-shadow: 0 0 0 3px var(--focus-ring-colour);
+}

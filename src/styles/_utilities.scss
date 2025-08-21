@@ -1,0 +1,336 @@
+/* ==========================================================================
+   _utilities.scss — utilities
+   - Type sizes, weights, alignment, text helpers
+   - Colour + background helpers (semantic-first)
+   - Max-width helpers, visibility, small layout helpers
+========================================================================== */
+
+/* -------------------------------------
+   Type size utilities
+------------------------------------- */
+.text-tiny {
+	font-size: var(--font--tiny);
+}
+.text-small {
+	font-size: var(--font--small);
+}
+.text-regular {
+	font-size: var(--font--regular);
+}
+.text-medium {
+	font-size: var(--font--medium);
+}
+.text-large {
+	font-size: var(--font--large);
+}
+.text-larger {
+	font-size: var(--font--larger);
+}
+
+/* Heading-size utilities */
+.h1 {
+	font-size: var(--font--heading-1);
+}
+.h2 {
+	font-size: var(--font--heading-2);
+}
+.h3 {
+	font-size: var(--font--heading-3);
+}
+.h4 {
+	font-size: var(--font--heading-4);
+}
+.h5 {
+	font-size: var(--font--heading-5);
+}
+.h6 {
+	font-size: var(--font--heading-6);
+}
+
+/* Weights */
+.light {
+	font-weight: var(--weight--light);
+}
+.regular {
+	font-weight: var(--weight--regular);
+}
+.medium {
+	font-weight: var(--weight--medium);
+}
+.semibold {
+	font-weight: var(--weight--semibold);
+}
+.bold {
+	font-weight: var(--weight--bold);
+}
+.xbold {
+	font-weight: var(--weight--xbold);
+}
+
+/* Alignment */
+.left {
+	text-align: left;
+}
+.center {
+	text-align: center;
+}
+.right {
+	text-align: right;
+}
+
+/* Text styles */
+.italic {
+	font-style: italic;
+}
+.strikethrough {
+	text-decoration: line-through;
+}
+.allcaps {
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.nowrap {
+	white-space: nowrap;
+}
+
+/* Muted text (semantic; replaces opacity tricks) */
+.text-muted {
+	color: var(--text-muted-colour);
+}
+/* Legacy alias (kept for compatibility) */
+.muted {
+	color: var(--text-muted-colour);
+}
+
+/* Link style helper (semantic) */
+.link-style {
+	text-decoration: underline;
+	color: var(--link-colour);
+}
+.link-style:hover {
+	color: var(--link-hover-colour);
+}
+
+/* Quote style (logical props for RTL safety) */
+.quote-style {
+	border-inline-start: 4px solid var(--palette--primary);
+	padding-inline-start: 1em;
+	font-style: italic;
+}
+
+/* Text helpers */
+.text-balance {
+	text-wrap: balance;
+} /* nicer multi-line headings */
+.truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.line-clamp-2,
+.line-clamp-3 {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.line-clamp-2 {
+	-webkit-line-clamp: 2;
+}
+.line-clamp-3 {
+	-webkit-line-clamp: 3;
+}
+
+/* -------------------------------------
+   Text colours
+   Prefer semantics; palette helpers reserved for brand accents
+------------------------------------- */
+.text-heading {
+	color: var(--heading-colour);
+}
+.text-body {
+	color: var(--text-colour);
+}
+
+/* Brand accents (palette) */
+.text-primary {
+	color: var(--palette--primary);
+}
+.text-secondary {
+	color: var(--palette--secondary);
+}
+.text-tertiary {
+	color: var(--palette--tertiary);
+}
+
+/* Neutral palette steps (use with care re: contrast) */
+.text-dark {
+	color: var(--palette--neutral-900);
+}
+.text-mid {
+	color: var(--palette--neutral-600);
+}
+.text-light {
+	color: var(--palette--neutral-200);
+}
+.text-white {
+	color: var(--palette--white);
+}
+
+/* -------------------------------------
+   Background colours
+------------------------------------- */
+/* Scheme-aware surfaces */
+.bg-surface {
+	background-color: var(--bg-colour);
+}
+
+/* Brand backgrounds (palette) */
+.bg-primary {
+	background-color: var(--palette--primary);
+}
+.bg-secondary {
+	background-color: var(--palette--secondary);
+}
+.bg-tertiary {
+	background-color: var(--palette--tertiary);
+}
+
+/* Semantic-ish backgrounds (use thoughtfully) */
+.bg-heading {
+	background-color: var(--heading-colour);
+}
+.bg-body {
+	background-color: var(--text-colour);
+} /* for chips/badges, not large areas */
+
+/* Neutral backgrounds (palette) */
+.bg-light {
+	background-color: var(--palette--neutral-200);
+}
+.bg-mid {
+	background-color: var(--palette--neutral-600);
+}
+.bg-dark {
+	background-color: var(--palette--neutral-900);
+}
+.bg-white {
+	background-color: var(--palette--white);
+}
+.bg-transparent {
+	background-color: transparent;
+}
+
+/* -------------------------------------
+   Max-width utilities (fluid with clamp)
+------------------------------------- */
+.max-width-full {
+	width: 100%;
+	max-width: none;
+}
+.max-width-xxsmall {
+	width: 100%;
+	max-width: clamp(12rem, 24vw, 16rem);
+}
+.max-width-xsmall {
+	width: 100%;
+	max-width: clamp(16rem, 28vw, 20rem);
+}
+.max-width-small {
+	width: 100%;
+	max-width: clamp(20rem, 36vw, 24rem);
+}
+.max-width-medium {
+	width: 100%;
+	max-width: clamp(24rem, 44vw, 32rem);
+}
+.max-width-large {
+	width: 100%;
+	max-width: clamp(32rem, 52vw, 48rem);
+}
+.max-width-xlarge {
+	width: 100%;
+	max-width: clamp(40rem, 60vw, 64rem);
+}
+.max-width-xxlarge {
+	width: 100%;
+	max-width: clamp(48rem, 70vw, 80rem);
+}
+.max-width-xxxlarge {
+	width: 100%;
+	max-width: clamp(56rem, 82vw, 96rem);
+}
+
+@media (max-width: 991px) {
+	.max-width-full-tablet {
+		width: 100%;
+		max-width: none;
+	}
+}
+@media (max-width: 767px) {
+	.max-width-full-mobile-landscape {
+		width: 100%;
+		max-width: none;
+	}
+}
+@media (max-width: 479px) {
+	.max-width-full-mobile-portrait {
+		width: 100%;
+		max-width: none;
+	}
+}
+
+/* -------------------------------------
+   Layout helpers (tiny but handy)
+------------------------------------- */
+.flex {
+	display: flex !important;
+}
+.grid {
+	display: grid !important;
+}
+.inline-block {
+	display: inline-block !important;
+}
+.items-center {
+	align-items: center !important;
+}
+.justify-center {
+	justify-content: center !important;
+}
+.justify-between {
+	justify-content: space-between !important;
+}
+
+/* -------------------------------------
+   Visibility helpers
+------------------------------------- */
+.visually-hidden,
+.sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+/* Breakpoint hides */
+.hidden-desktop {
+	@media (min-width: 992px) {
+		display: none !important;
+	}
+}
+.hidden-tablet {
+	@media (max-width: 991px) and (min-width: 768px) {
+		display: none !important;
+	}
+}
+.hidden-mobile {
+	@media (max-width: 767px) {
+		display: none !important;
+	}
+}

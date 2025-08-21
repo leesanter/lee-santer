@@ -1,0 +1,1368 @@
+---
+/* ======================================================================
+   styleguide.astro — live design system preview
+
+   - Visualises tokens (colours, type scale, spacing, layout, motion)
+   - Previews utilities, grid, forms, and buttons
+   - “Tokens Inspector” reads computed CSS vars at runtime for quick QA
+   - Depends on: Base layout, global SCSS partials, your tokens
+====================================================================== */
+
+import Base from '../layouts/Base.astro';
+import Button from '../components/atoms/Button.astro';
+import Form from '../components/organisms/ContactForm.astro';
+
+const title = 'Styleguide';
+const description = 'Design tokens, utilities, and component previews.';
+
+export const prerender = true;
+---
+
+<Base {title} {description} noindex={true}>
+	<section class="container container--large">
+		<div class="section-layout">
+			<div id="intro" class="sg-section is-vertical">
+				<header class="sg-section-header">
+					<h1 class="sg-heading-large">Style Guide</h1>
+					<p class="text-medium">
+						A set of guidelines and strategies based on client-first by Finsweet
+						modified and adapted to by leesanter to help build Webflow websites.
+					</p>
+				</header>
+				<div class="stack small" style="margin-bottom:1rem">
+					<button
+						class="btn btn--outline"
+						type="button"
+						onclick="
+    const r = document.documentElement;
+    const isDark = r.getAttribute('data-scheme') === 'dark';
+    r.setAttribute('data-scheme', isDark ? 'light' : 'dark');
+  "
+					>
+						Toggle light/dark
+					</button>
+				</div>
+			</div>
+
+			<!-- =========================================
+     		Tokens Inspector (auto-reads CSS variables)
+			========================================== -->
+			<div id="tokens" class="sg-section">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Tokens Inspector</h2>
+					<p class="text-medium">
+						Live values pulled from <code>:root</code>. Useful for sanity checks when
+						theming.
+					</p>
+				</header>
+
+				<div class="sg-item-wrapper">
+					<!-- Colours -->
+					<div class="sg-item">
+						<div class="sg-item-header"><h3 class="sg-heading-small">Colours</h3></div>
+						<div class="sg-token-table">
+							<table class="sg-table">
+								<thead
+									><tr><th>Variable</th><th>Value</th><th>Preview</th></tr></thead
+								>
+								<tbody data-vars="colours"></tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Type scale -->
+					<div class="sg-item">
+						<div class="sg-item-header">
+							<h3 class="sg-heading-small">Type Scale</h3>
+						</div>
+						<div class="sg-token-table">
+							<table class="sg-table">
+								<thead
+									><tr><th>Variable</th><th>Value</th><th>Preview</th></tr></thead
+								>
+								<tbody data-vars="fonts"></tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Spacing -->
+					<div class="sg-item">
+						<div class="sg-item-header"><h3 class="sg-heading-small">Spacing</h3></div>
+						<div class="sg-token-table">
+							<table class="sg-table">
+								<thead
+									><tr><th>Variable</th><th>Value</th><th>Preview</th></tr></thead
+								>
+								<tbody data-vars="spacing"></tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Layout -->
+					<div class="sg-item">
+						<div class="sg-item-header"><h3 class="sg-heading-small">Layout</h3></div>
+						<div class="sg-token-table">
+							<table class="sg-table">
+								<thead
+									><tr><th>Variable</th><th>Value</th><th>Preview</th></tr></thead
+								>
+								<tbody data-vars="layout"></tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Motion -->
+					<div class="sg-item">
+						<div class="sg-item-header"><h3 class="sg-heading-small">Motion</h3></div>
+						<div class="sg-token-table">
+							<table class="sg-table">
+								<thead
+									><tr><th>Variable</th><th>Value</th><th>Preview</th></tr></thead
+								>
+								<tbody data-vars="motion"></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Inline script to read computed :root variables -->
+			<script is:inline>
+				const groups = {
+					colours: [
+						// Brand palette
+						'--palette--primary',
+						'--palette--secondary',
+						'--palette--tertiary',
+
+						// Neutral ladder (cool)
+						'--palette--neutral-950',
+						'--palette--neutral-900',
+						'--palette--neutral-800',
+						'--palette--neutral-700',
+						'--palette--neutral-600',
+						'--palette--neutral-500',
+						'--palette--neutral-400',
+						'--palette--neutral-300',
+						'--palette--neutral-200',
+						'--palette--neutral-100',
+						'--palette--neutral-50',
+
+						// Optional warm ladder (uncomment if you’ve added them)
+						// "--palette--warm-950","--palette--warm-900","--palette--warm-800",
+						// "--palette--warm-700","--palette--warm-600","--palette--warm-500",
+						// "--palette--warm-400","--palette--warm-300","--palette--warm-200",
+						// "--palette--warm-100","--palette--warm-50",
+
+						'--palette--white',
+
+						// Semantics (what components actually use)
+						'--bg-colour',
+						'--heading-colour',
+						'--text-colour',
+						'--text-muted-colour',
+						'--link-colour',
+						'--link-hover-colour',
+						'--border-colour',
+						'--focus-ring-colour',
+					],
+					fonts: [
+						'--font--tiny',
+						'--font--small',
+						'--font--regular',
+						'--font--medium',
+						'--font--large',
+						'--font--larger',
+						'--font--heading-6',
+						'--font--heading-5',
+						'--font--heading-4',
+						'--font--heading-3',
+						'--font--heading-2',
+						'--font--heading-1',
+						'--font--hero',
+					],
+					spacing: [
+						'--size--tiny',
+						'--size--xsmall',
+						'--size--small',
+						'--size--medium',
+						'--size--large',
+						'--size--xlarge',
+						'--size--huge',
+					],
+					layout: [
+						'--layout--section-y',
+						'--container--pad-x',
+						'--container--max-small',
+						'--container--max-medium',
+						'--container--max-large',
+						'--button-radius',
+					],
+					motion: ['--ease-standard', '--duration-fast', '--duration', '--duration-slow'],
+				};
+
+				const root = document.documentElement;
+				const get = (name) =>
+					getComputedStyle(root).getPropertyValue(name).trim() || '(unset)';
+
+				function renderGroup(key) {
+					const tbody = document.querySelector(`tbody[data-vars="${key}"]`);
+					if (!tbody) return;
+					groups[key].forEach((name) => {
+						const val = get(name);
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+        <td><code>${name}</code></td>
+        <td class="value">${val}</td>
+        <td class="preview"></td>
+      `;
+						const prev = tr.querySelector('.preview');
+
+						// Token family previews
+						const isColour =
+							name.startsWith('--palette--') ||
+							name.endsWith('-colour') ||
+							name.endsWith('-color');
+						if (isColour) {
+							prev.style.background = `var(${name})`;
+							prev.style.border = '1px solid var(--border-colour)';
+						} else if (name.startsWith('--font--')) {
+							const el = document.createElement('div');
+							el.textContent = 'Aa';
+							el.style.fontSize = `var(${name})`;
+							el.style.lineHeight = '1';
+							prev.appendChild(el);
+						} else if (
+							name.startsWith('--size--') ||
+							name.includes('--section') ||
+							name.includes('--pad')
+						) {
+							const box = document.createElement('div');
+							box.style.width = '3rem';
+							box.style.height = `var(${name})`;
+							box.style.background =
+								'color-mix(in srgb, var(--link-colour) 12%, transparent)';
+							box.style.border = '1px solid var(--border-colour)';
+							prev.appendChild(box);
+						} else if (name.startsWith('--container--max')) {
+							const bar = document.createElement('div');
+							bar.style.width = '100%';
+							bar.style.maxWidth = `var(${name})`;
+							bar.style.height = '0.75rem';
+							bar.style.background =
+								'color-mix(in srgb, var(--link-colour) 12%, transparent)';
+							bar.style.border = '1px solid var(--border-colour)';
+							prev.appendChild(bar);
+						} else if (name === '--button-radius') {
+							const pill = document.createElement('div');
+							pill.textContent = 'Button';
+							pill.style.display = 'inline-block';
+							pill.style.padding = '0.25rem 0.5rem';
+							pill.style.background = 'var(--palette--primary)';
+							pill.style.color = 'var(--palette--white)';
+							pill.style.borderRadius = `var(${name})`;
+							prev.appendChild(pill);
+						}
+
+						tbody.appendChild(tr);
+					});
+				}
+
+				['colours', 'fonts', 'spacing', 'layout', 'motion'].forEach(renderGroup);
+			</script>
+
+			<!-- =========================================
+           	Colours
+      		========================================== -->
+			<div id="colours" class="sg-section is-vertical">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Colours</h2>
+					<p class="text-medium">
+						Swatches use your utilities like <code>.bg-primary</code>, <code
+							>.text-primary</code
+						>.
+					</p>
+				</header>
+
+				<!-- Branding colours -->
+				<div class="sg-item-wrapper">
+					<div class="sg-3-col">
+						<div class="sg-item">
+							<div class="sg-label">Primary Colour</div>
+							<div class="sg-background">
+								<div class="bg-primary">
+									<div class="sg-background-space"></div>
+								</div>
+							</div>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">Secondary Colour</div>
+							<div class="sg-background">
+								<div class="bg-secondary">
+									<div class="sg-background-space"></div>
+								</div>
+							</div>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">Tertiary Colour</div>
+							<div class="sg-background">
+								<div class="bg-tertiary">
+									<div class="sg-background-space"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="sg-2-col">
+						<div class="sg-item">
+							<div class="sg-label">Heading Colour</div>
+							<div class="sg-background">
+								<div class="bg-heading">
+									<div class="sg-background-space"></div>
+								</div>
+							</div>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">Body Colour</div>
+							<div class="sg-background">
+								<div class="bg-body"><div class="sg-background-space"></div></div>
+							</div>
+						</div>
+					</div>
+
+					<div class="sg-4-col">
+						<div class="sg-item">
+							<div class="sg-label">Dark Colour</div>
+							<div class="sg-background">
+								<div class="bg-dark"><div class="sg-background-space"></div></div>
+							</div>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">Mid Colour</div>
+							<div class="sg-background">
+								<div class="bg-mid"><div class="sg-background-space"></div></div>
+							</div>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">Light Colour</div>
+							<div class="sg-background">
+								<div class="bg-light"><div class="sg-background-space"></div></div>
+							</div>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">White Colour</div>
+							<div class="sg-background">
+								<div class="bg-white"><div class="sg-background-space"></div></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- =========================================
+           Typography
+      ========================================== -->
+			<div id="typography" class="sg-section is-vertical">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Typography</h2>
+					<p class="text-medium">
+						Element defaults + utility scales: <code>.h1</code>…<code>.h6</code>, <code
+							>.text-large</code
+						>…
+					</p>
+				</header>
+
+				<div class="sg-item-wrapper">
+					<!-- HTML headings -->
+					<div class="sg-1-col">
+						<div class="sg-item">
+							<div class="sg-label is-tag">h1</div><h1>
+								Sample H1 heading text for preview.
+							</h1>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label is-tag">h2</div><h2>
+								Sample H2 heading text for preview.
+							</h2>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label is-tag">h3</div><h3>
+								Sample H3 heading text for preview.
+							</h3>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label is-tag">h4</div><h4>
+								Sample H4 heading text for preview.
+							</h4>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label is-tag">h5</div><h5>
+								Sample H5 heading text for preview.
+							</h5>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label is-tag">h6</div><h6>
+								Sample H6 heading text for preview.
+							</h6>
+						</div>
+					</div>
+
+					<!-- Heading utilities -->
+					<div class="sg-item-wrapper">
+						<div class="sg-item-header">
+							<h3 class="sg-heading-small">Heading Size Utilities</h3>
+						</div>
+						<div class="sg-1-col">
+							<div class="sg-item">
+								<div class="sg-label">.h1</div><h2 class="h1">
+									Utility heading .h1 example text.
+								</h2>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.h2</div><h2 class="h2">
+									Utility heading .h2 example text.
+								</h2>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.h3</div><h2 class="h3">
+									Utility heading .h3 example text.
+								</h2>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.h4</div><h2 class="h4">
+									Utility heading .h4 example text.
+								</h2>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.h5</div><h2 class="h5">
+									Utility heading .h5 example text.
+								</h2>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.h6</div><h2 class="h6">
+									Utility heading .h6 example text.
+								</h2>
+							</div>
+						</div>
+					</div>
+
+					<!-- Font sizes -->
+					<div class="sg-item-wrapper">
+						<div class="sg-item-header">
+							<h3 class="sg-heading-small">Font Sizes</h3>
+						</div>
+						<div class="sg-3-col">
+							<div class="sg-item">
+								<div class="sg-label">.text-larger</div><p class="text-larger">
+									Larger paragraph sample text.
+								</p>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.text-large</div><p class="text-large">
+									Large paragraph sample text.
+								</p>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.text-medium</div><p class="text-medium">
+									Medium paragraph sample text.
+								</p>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.text-regular</div><p class="text-regular">
+									Regular paragraph sample text.
+								</p>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.text-small</div><p class="text-small">
+									Small paragraph sample text.
+								</p>
+							</div>
+							<div class="sg-item">
+								<div class="sg-label">.text-tiny</div><p class="text-tiny">
+									Tiny paragraph sample text.
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Paragraph, links, lists -->
+				<div class="sg-2-col">
+					<div class="sg-item">
+						<div class="sg-label is-tag">p</div>
+						<p>
+							Sample text is being used as a placeholder for real text that is
+							normally present.
+						</p>
+					</div>
+					<div class="sg-item">
+						<div class="sg-label is-tag">a</div>
+						<a href="#" class="link-style">This is a link</a>
+					</div>
+					<div class="sg-item">
+						<div class="sg-label is-tag">blockquote</div>
+						<blockquote class="quote-style">
+							Quote style using <code>.quote-style</code>.
+						</blockquote>
+					</div>
+					<div class="sg-item">
+						<div class="sg-label is-tag">ol</div>
+						<ol>
+							<li>Ordered list item</li><li>Ordered list item</li><li>
+								Ordered list item
+							</li>
+						</ol>
+					</div>
+					<div class="sg-item">
+						<div class="sg-label is-tag">ul</div>
+						<ul>
+							<li>Unordered list item</li><li>Unordered list item</li><li>
+								Unordered list item
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<!-- =========================================
+           Structure (containers, paddings, grid)
+      ========================================== -->
+			<div id="structure" class="sg-section">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Structure</h2>
+					<p class="text-medium">Core layout wrappers & utilities.</p>
+				</header>
+
+				<div class="sg-item-wrapper">
+					<div class="sg-1-col">
+						<div class="sg-item">
+							<div class="sg-label">.page-wrapper</div>
+							<div class="page-wrapper"><div class="sg-empty"></div></div>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-label">.main-wrapper</div>
+							<main class="main-wrapper"><div class="sg-empty"></div></main>
+						</div>
+
+						<div class="sg-item is-stretch">
+							<div class="sg-label">.container (default medium)</div>
+							<div class="container"><div class="sg-empty"></div></div>
+						</div>
+						<div class="sg-item is-stretch">
+							<div class="sg-label">.container.container--small</div>
+							<div class="container container--small">
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+						<div class="sg-item is-stretch">
+							<div class="sg-label">.container.container--large</div>
+							<div class="container container--large">
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<div class="sg-item is-stretch">
+							<div class="sg-label">.section-layout</div>
+							<div class="section-layout">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<!-- Simple content-layout preview -->
+						<div class="sg-item is-stretch">
+							<div class="sg-row"><div class="sg-label">.content-layout</div></div>
+							<div class="content-layout">
+								<div class="content-column"><div class="sg-empty"></div></div>
+							</div>
+						</div>
+
+						<!-- Grid (12-column) demo -->
+						<div class="sg-item is-stretch">
+							<div class="sg-item-header" style="padding:0;border:0">
+								<h3 class="sg-heading-small">Grid (12-column) examples</h3>
+								<p class="text-medium">
+									Use <code>.content-layout</code> as the grid and place items with
+									<code>.content-column</code> + span utilities (<code
+										>.span-*</code
+									>, <code>.tablet:span-*</code>, <code>.mobile:span-*</code>).
+								</p>
+							</div>
+
+							<div class="sg-row" style="margin:.5rem 0 1rem 0;">
+								<div class="sg-label">Desktop: 3 × <code>.span-4</code></div>
+							</div>
+							<div class="content-layout">
+								<div class="content-column span-4">
+									<div class="sg-label">.span-4</div><div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-4">
+									<div class="sg-label">.span-4</div><div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-4">
+									<div class="sg-label">.span-4</div><div class="sg-empty"></div>
+								</div>
+							</div>
+
+							<div class="sg-row" style="margin:2rem 0 1rem 0;">
+								<div class="sg-label">
+									Desktop: <code>.span-8</code> + <code>.span-4</code>
+								</div>
+							</div>
+							<div class="content-layout">
+								<div class="content-column span-8">
+									<div class="sg-label">.span-8</div><div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-4">
+									<div class="sg-label">.span-4</div><div class="sg-empty"></div>
+								</div>
+							</div>
+
+							<div class="sg-row" style="margin:2rem 0 1rem 0;">
+								<div class="sg-label">
+									Desktop: <code>.span-3</code> + <code>.span-9</code>
+								</div>
+							</div>
+							<div class="content-layout">
+								<div class="content-column span-3">
+									<div class="sg-label">.span-3</div><div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-9">
+									<div class="sg-label">.span-9</div><div class="sg-empty"></div>
+								</div>
+							</div>
+
+							<div class="sg-row" style="margin:2rem 0 1rem 0;">
+								<div class="sg-label">
+									Responsive: <code>.span-6</code> (desktop) • <code
+										>.tablet:span-3</code
+									> • <code>.mobile:span-12</code>
+								</div>
+							</div>
+							<div class="content-layout is-6col-tablet">
+								<div class="content-column span-6 tablet:span-3 mobile:span-12">
+									<div class="sg-label">
+										.span-6 .tablet:span-3 .mobile:span-12
+									</div>
+									<div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-6 tablet:span-3 mobile:span-12">
+									<div class="sg-label">
+										.span-6 .tablet:span-3 .mobile:span-12
+									</div>
+									<div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-6 tablet:span-3 mobile:span-12">
+									<div class="sg-label">
+										.span-6 .tablet:span-3 .mobile:span-12
+									</div>
+									<div class="sg-empty"></div>
+								</div>
+								<div class="content-column span-6 tablet:span-3 mobile:span-12">
+									<div class="sg-label">
+										.span-6 .tablet:span-3 .mobile:span-12
+									</div>
+									<div class="sg-empty"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- =========================================
+           Layout utilities (stack + max-widths)
+      ========================================== -->
+			<div id="layout" class="sg-section">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Layout</h2>
+					<p class="text-medium">Stack system & max-width helpers.</p>
+				</header>
+
+				<div class="sg-item-wrapper">
+					<div class="sg-item-header">
+						<h3 class="sg-heading-small">Stack</h3>
+						<p class="text-medium">
+							Use <code>.stack</code> with size modifiers: <code>.tiny</code>…<code
+								>.huge</code
+							>, and <code>.no-gap</code>.
+						</p>
+					</div>
+
+					<div class="sg-1-col">
+						<div class="sg-item">
+							<div class="sg-row"><div class="sg-label">.stack</div></div>
+							<div class="stack">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">.stack</div><div class="sg-label">
+									.no-gap
+								</div>
+							</div>
+							<div class="stack no-gap">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">.stack</div><div class="sg-label">.tiny</div>
+							</div>
+							<div class="stack tiny">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">.stack</div><div class="sg-label">.small</div>
+							</div>
+							<div class="stack small">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">.stack</div><div class="sg-label">
+									.medium
+								</div>
+							</div>
+							<div class="stack medium">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">.stack</div><div class="sg-label">.large</div>
+							</div>
+							<div class="stack large">
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+								<div class="sg-empty"></div>
+							</div>
+
+							<div class="sg-item">
+								<div class="sg-row">
+									<div class="sg-label">.stack</div><div class="sg-label">
+										.xlarge
+									</div>
+								</div>
+								<div class="stack xlarge">
+									<div class="sg-empty"></div>
+									<div class="sg-empty"></div>
+									<div class="sg-empty"></div>
+								</div>
+							</div>
+
+							<div class="sg-item">
+								<div class="sg-row">
+									<div class="sg-label">.stack</div><div class="sg-label">
+										.huge
+									</div>
+								</div>
+								<div class="stack huge">
+									<div class="sg-empty"></div>
+									<div class="sg-empty"></div>
+									<div class="sg-empty"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="sg-item-wrapper">
+						<div class="sg-item-header">
+							<h3 class="sg-heading-small">Max Widths</h3>
+							<p class="text-medium">
+								These sizes grow smoothly (via clamp) and stop at sensible caps. Use
+								the ‘full’ variants to remove the cap on tablet/mobile.
+							</p>
+						</div>
+
+						<div class="sg-item-wrapper">
+							<div class="sg-1-col">
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-full</div>
+									<div class="max-width-full"><div class="sg-empty"></div></div>
+								</div>
+
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-xxxlarge</div><div
+										class="max-width-xxxlarge"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-xxlarge</div><div
+										class="max-width-xxlarge"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-xlarge</div><div
+										class="max-width-xlarge"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-large</div><div
+										class="max-width-large"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-medium</div><div
+										class="max-width-medium"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-small</div><div
+										class="max-width-small"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-xsmall</div><div
+										class="max-width-xsmall"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-xxsmall</div><div
+										class="max-width-xxsmall"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-full-tablet</div><div
+										class="max-width-full-tablet"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-full-mobile-landscape</div><div
+										class="max-width-full-mobile-landscape"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+								<div class="sg-item is-stretch">
+									<div class="sg-label">max-width-full-mobile-portrait</div><div
+										class="max-width-full-mobile-portrait"
+									>
+										<div class="sg-empty"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- =========================================
+           Elements — Buttons (via component)
+      ========================================== -->
+			<div id="elements" class="sg-section">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Elements</h2>
+					<p class="text-medium">
+						Variants: <code>primary</code>, <code>secondary</code>, <code>outline</code
+						>, <code>text</code><span class="text-mid">
+							(optional <code>warning</code>)</span
+						>. Sizes: <code>sm</code>, <code>lg</code>.
+					</p>
+				</header>
+
+				<div class="sg-item-wrapper">
+					<div class="sg-item-header">
+						<h3 class="sg-heading-small">Buttons</h3>
+					</div>
+					<div class="sg-3-col">
+						<div class="sg-item">
+							<div class="sg-label">primary</div><Button>Button</Button>
+						</div>
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">primary</div><div class="sg-label">
+									size=sm
+								</div>
+							</div>
+							<Button size="sm">Small</Button>
+						</div>
+						<div class="sg-item">
+							<div class="sg-row">
+								<div class="sg-label">primary</div><div class="sg-label">
+									size=lg
+								</div>
+							</div>
+							<Button size="lg">Large</Button>
+						</div>
+
+						<div class="sg-item">
+							<div class="sg-label">secondary</div><Button variant="secondary"
+								>Secondary</Button
+							>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">outline</div><Button variant="outline"
+								>Outline</Button
+							>
+						</div>
+						<div class="sg-item">
+							<div class="sg-label">text</div><Button variant="text">Text link</Button
+							>
+						</div>
+						<!-- Optional warning sample (enable variant in _ui.scss per snippet below) -->
+						<!-- <div class="sg-item"><div class="sg-label">warning</div><Button class="btn--warning">Warning</Button></div> -->
+					</div>
+				</div>
+			</div>
+
+			<!-- =========================================
+           Forms (UI primitives demo)
+      ========================================== -->
+			<div id="forms" class="sg-section">
+				<header class="sg-section-header">
+					<h2 class="sg-heading-medium">Forms</h2>
+					<p class="text-medium">
+						Minimal, themeable controls. Labels don’t add margins; use your <code
+							>.stack</code
+						> and <code>.form-grid</code> for spacing.
+					</p>
+				</header>
+
+				<div class="sg-item-wrapper">
+					<!-- Basic form -->
+					<div class="sg-item is-stretch">
+						<div class="sg-label">Basic</div>
+						<Form />
+					</div>
+
+					<!-- Input group, sizes, compact -->
+					<div class="sg-item is-stretch">
+						<div class="sg-row">
+							<div class="sg-label">Input group</div>
+							<div class="sg-label">Sizes</div>
+							<div class="sg-label">Compact form</div>
+						</div>
+
+						<div class="form-grid two-col">
+							<!-- Input group (prefix/suffix) -->
+							<div class="form-field stack tiny">
+								<label class="form-label" for="site">Website</label>
+								<div class="input-group">
+									<span class="prefix">https://</span>
+									<input id="site" type="text" placeholder="your-domain" />
+									<span class="suffix">.com</span>
+								</div>
+								<p class="form-help">
+									You can change prefix/suffix styles via CSS vars.
+								</p>
+							</div>
+
+							<!-- Sizes -->
+							<div class="stack tiny">
+								<div class="form-field stack tiny">
+									<label class="form-label" for="smallInput">Small</label>
+									<input
+										id="smallInput"
+										class="input-small"
+										type="text"
+										placeholder="input-small"
+									/>
+								</div>
+								<div class="form-field stack tiny">
+									<label class="form-label" for="largeInput">Large</label>
+									<input
+										id="largeInput"
+										class="input-large"
+										type="text"
+										placeholder="input-large"
+									/>
+								</div>
+							</div>
+
+							<!-- Compact form -->
+							<form class="form-compact stack tiny" action="#" method="post">
+								<div class="form-grid two-col">
+									<div class="form-field stack tiny">
+										<label class="form-label" for="c1">Compact field</label>
+										<input id="c1" type="text" placeholder="Smaller controls" />
+									</div>
+									<div class="form-field stack tiny">
+										<label class="form-label" for="c2">Compact select</label>
+										<select id="c2"
+											><option>One</option><option>Two</option></select
+										>
+									</div>
+								</div>
+								<Button type="button" size="sm">Save</Button>
+							</form>
+						</div>
+					</div>
+
+					<!-- Validation & states -->
+					<div class="sg-item is-stretch">
+						<div class="sg-row">
+							<div class="sg-label">Validation</div>
+							<div class="sg-label">Disabled/Readonly</div>
+							<div class="sg-label">Fieldset</div>
+						</div>
+
+						<div class="form-grid three-col">
+							<!-- Error -->
+							<div class="form-field stack tiny is-error">
+								<label class="form-label" for="err">Email</label>
+								<input
+									id="err"
+									type="email"
+									aria-describedby="errHelp errMsg"
+									placeholder="you@example.com"
+								/>
+								<p id="errHelp" class="form-help">We’ll never share your email.</p>
+								<p id="errMsg" class="form-error">
+									Please enter a valid email address.
+								</p>
+							</div>
+
+							<!-- Success -->
+							<div class="form-field stack tiny is-success">
+								<label class="form-label" for="ok">Promo code</label>
+								<input
+									id="ok"
+									type="text"
+									aria-describedby="okMsg"
+									value="SUMMER25"
+								/>
+								<p id="okMsg" class="form-success">Code applied!</p>
+							</div>
+
+							<!-- Disabled / readonly -->
+							<div class="stack tiny">
+								<div class="form-field stack tiny">
+									<label class="form-label" for="dis">Disabled</label>
+									<input
+										id="dis"
+										type="text"
+										disabled
+										placeholder="Disabled input"
+									/>
+								</div>
+								<div class="form-field stack tiny">
+									<label class="form-label" for="ro">Readonly</label>
+									<input id="ro" type="text" readonly value="Read-only value" />
+								</div>
+							</div>
+						</div>
+
+						<!-- Fieldset -->
+						<fieldset class="stack tiny" style="margin-top: var(--size--medium);">
+							<legend>Billing address</legend>
+							<div class="form-grid two-col">
+								<div class="form-field stack tiny">
+									<label class="form-label" for="addr1">Address line 1</label>
+									<input id="addr1" type="text" />
+								</div>
+								<div class="form-field stack tiny">
+									<label class="form-label" for="addr2">Address line 2</label>
+									<input id="addr2" type="text" />
+								</div>
+								<div class="form-field stack tiny">
+									<label class="form-label" for="city">City</label>
+									<input id="city" type="text" />
+								</div>
+								<div class="form-field stack tiny">
+									<label class="form-label" for="pc">Postcode</label>
+									<input id="pc" type="text" />
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- end wrapper -->
+	</section>
+</Base>
+
+<style lang="scss">
+	/* =========================================================
+   Styleguide scaffolding ONLY
+   - No global bleed, low specificity, de-duped
+	========================================================= */
+
+	/* -------------------------------------
+   Guard rails: grids & children
+	------------------------------------- */
+	:where(.content-layout, .sg-1-col, .sg-2-col, .sg-3-col, .sg-4-col, .sg-5-col) {
+		min-width: 0; /* container itself can shrink */
+	}
+	:where(.content-layout, .sg-1-col, .sg-2-col, .sg-3-col, .sg-4-col, .sg-5-col) > * {
+		min-width: 0; /* children can shrink inside tracks */
+		max-inline-size: 100%; /* never exceed their column */
+	}
+	/* content-layout demo columns */
+	.content-layout > .content-column {
+		min-width: 0;
+		max-inline-size: 100%;
+	}
+
+	/* -------------------------------------
+   Section & items
+	------------------------------------- */
+	.sg-section {
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-auto-columns: 1fr;
+		gap: 7.5rem;
+		place-items: start;
+	}
+	.sg-section.is-vertical {
+		gap: 7.5rem;
+	}
+
+	.sg-section-header {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1rem;
+		width: 100%;
+		padding-bottom: 3rem;
+		line-height: 1.4;
+		border-bottom: 1px solid var(--border-colour);
+		> * {
+			max-width: 52ch;
+		}
+	}
+
+	.sg-item-wrapper {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 4rem;
+	}
+	.sg-item-header {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+		padding-bottom: 2rem;
+		border-bottom: 1px solid var(--border-colour);
+	}
+
+	.sg-item {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.125rem;
+		padding-bottom: 3rem;
+		border-bottom: 1px solid var(--border-colour);
+		position: relative;
+		place-items: start stretch;
+	}
+	.sg-item.is-stretch {
+		justify-items: stretch;
+	}
+	.sg-item.is-start {
+		justify-items: start;
+	}
+
+	/* -------------------------------------
+   Grid helpers used by the page
+	------------------------------------- */
+	.sg-1-col,
+	.sg-2-col,
+	.sg-3-col,
+	.sg-4-col,
+	.sg-5-col {
+		width: 100%;
+		display: grid;
+		grid-template-rows: auto;
+	}
+	.sg-1-col {
+		gap: 3rem;
+		grid-template-columns: 1fr;
+	}
+	.sg-2-col {
+		gap: 4rem;
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.sg-3-col {
+		gap: 4rem;
+		grid-template-columns: repeat(3, 1fr);
+		align-items: stretch;
+	}
+	.sg-4-col {
+		gap: 4rem;
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.sg-5-col {
+		gap: 4rem;
+		grid-template-columns: repeat(5, 1fr);
+	}
+
+	@media (max-width: 1024px) {
+		.sg-5-col {
+			grid-template-columns: repeat(3, 1fr);
+		}
+		.sg-4-col,
+		.sg-3-col {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 640px) {
+		.sg-5-col,
+		.sg-4-col,
+		.sg-3-col,
+		.sg-2-col {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	/* -------------------------------------
+   Rows & label chips
+	------------------------------------- */
+	.sg-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	@media (max-width: 640px) {
+		.sg-row {
+			flex-wrap: wrap;
+		} /* allow line breaks on mobile */
+	}
+
+	.sg-label {
+		display: inline-flex;
+		align-items: center;
+		justify-self: flex-start;
+		align-self: flex-start;
+		padding: 0.25rem 0.75rem;
+		line-height: 1.4;
+		font-weight: 500;
+		white-space: nowrap; /* desktop: single line */
+		border-radius: 4px;
+		color: var(--palette--white);
+		background: var(--link-colour);
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.sg-label.is-tag {
+		background: var(--heading-colour);
+	}
+	.sg-label.is-child {
+		background: var(--palette--tertiary);
+	}
+
+	@media (max-width: 640px) {
+		.sg-label {
+			display: inline-block; /* allow wrapping */
+			white-space: normal;
+			overflow: visible;
+			text-overflow: clip;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	/* -------------------------------------
+	Swatches & demo boxes
+	------------------------------------- */
+	.sg-background {
+		border: 1px solid var(--border-colour);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: stretch;
+		width: 100%;
+		max-inline-size: 100%;
+		box-sizing: border-box;
+	}
+	.sg-background-space {
+		width: 1px;
+		height: 1px;
+		margin: 5rem;
+	}
+
+	.sg-empty {
+		background-color: color-mix(in srgb, var(--link-colour) 10%, transparent);
+		border: 1px dashed var(--link-colour);
+		min-width: 3rem;
+		height: 3rem;
+		border-radius: 6px;
+		max-inline-size: 100%;
+	}
+
+	/* -------------------------------------
+	Guide-only headings
+	------------------------------------- */
+	.sg-heading-large {
+		font-size: var(--font--heading-1);
+	}
+	.sg-heading-medium {
+		font-size: clamp(1.75rem, 4vw, 4rem);
+	}
+	.sg-heading-small {
+		font-size: clamp(1.25rem, 3vw, 2.5rem);
+	}
+
+	/* -------------------------------------
+	Tokens table
+	------------------------------------- */
+	.sg-token-table {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		min-width: 0;
+	}
+	.sg-table {
+		width: 100%;
+		max-width: 100%;
+		border-collapse: collapse;
+		font-size: var(--font--small);
+	}
+	.sg-table th,
+	.sg-table td {
+		border: 1px solid var(--border-colour);
+		padding: 0.5rem 0.75rem;
+		vertical-align: middle;
+	}
+	.sg-table th {
+		text-align: left;
+		background: color-mix(in srgb, var(--bg-colour) 90%, var(--heading-colour) 10%);
+	}
+	.sg-table td.value {
+		white-space: nowrap;
+	}
+	.sg-table td.value code {
+		overflow-wrap: anywhere;
+	}
+	.sg-table td.preview {
+		width: 10rem;
+		height: 2.25rem;
+	}
+</style>

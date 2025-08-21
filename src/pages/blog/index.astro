@@ -1,0 +1,64 @@
+---
+/* ======================================================================
+   /blog — listing page (page 1)
+   - Filters out drafts only in production
+   - Sorts posts by publishDate (new → old)
+   - Mirrors /blog/page/[page].astro pagination (POSTS_PER_PAGE)
+   - Renders first page and links to page 2 when more exist
+====================================================================== */
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import PostCard from '../../components/molecules/PostCard.astro';
+import { POSTS_PER_PAGE } from '../../lib/constants';
+
+// Get posts (hide drafts in prod), newest first
+const all = (
+	await getCollection('blog', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+).sort((a, b) => {
+	const ta = a.data.publishDate?.getTime?.() ?? 0;
+	const tb = b.data.publishDate?.getTime?.() ?? 0;
+	return tb - ta;
+});
+
+const posts = all.slice(0, POSTS_PER_PAGE);
+const totalPages = Math.max(1, Math.ceil(all.length / POSTS_PER_PAGE));
+
+const title = 'Blog';
+const description = 'Notes, updates, and longer-form posts.';
+---
+
+<Base {title} {description}>
+	<section class="container container--large section--first">
+		<div class="section-layout">
+			<header class="stack small">
+				<h1 class="h2">{title}</h1>
+				<p class="text-medium">{description}</p>
+			</header>
+
+			<div class="content-layout">
+				{
+					posts.map(({ id, data }) => (
+						<div class="content-column span-6 tablet:span-6 mobile:span-12">
+							<PostCard
+								href={`/blog/${id}`}
+								title={data.title}
+								description={data.description}
+								publishDate={data.publishDate}
+							/>
+						</div>
+					))
+				}
+			</div>
+
+			{
+				totalPages > 1 && (
+					<nav class="flow small" aria-label="Pagination">
+						<a class="link-style" href="/blog/page/2">
+							Older posts →
+						</a>
+					</nav>
+				)
+			}
+		</div>
+	</section>
+</Base>

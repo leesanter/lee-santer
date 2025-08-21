@@ -1,0 +1,246 @@
+/* ========================================================================
+   LAYOUT
+   - Sections, containers, wrappers
+   - Component spacing (.stack) and document flow spacing (.flow)
+   - Grid helpers (section-layout, content-layout, span utilities)
+   ======================================================================== */
+
+/* -------------------------------------
+   Global section rhythm
+------------------------------------- */
+section {
+	/* FIX: use the defined token name */
+	padding-block: var(--layout--section-y);
+}
+
+/* Optional: scheme-aware fill (opt-in) */
+.section--fill {
+	background: var(--bg-colour);
+}
+
+/* Default first section gets space = header + a bit of rhythm */
+main > section:first-of-type:not(.is-flush) {
+	padding-top: calc(var(--header-height, 56px) + var(--layout--section-y));
+}
+
+/* Utility: force space even if it isn't the first, or when you prefer class-based control */
+.first-section {
+	padding-top: calc(var(--header-height, 56px) + var(--size--large));
+}
+
+/* Utility: remove space (e.g., hero that sits flush under header) */
+.is-flush {
+	padding-top: 0 !important;
+}
+
+/* Optional section modifiers */
+.section--tight {
+	padding-block: var(--size--large);
+}
+.section--loose {
+	padding-block: var(--size--xlarge);
+}
+
+/* Make in-page anchors (e.g., #pricing) not hide under the header */
+:where(h1[id], h2[id], h3[id], h4[id], h5[id], h6[id], section[id], [data-anchor]) {
+	scroll-margin-top: calc(var(--header-height, 56px) + var(--size--small));
+}
+
+/* -------------------------------------
+   Containers
+------------------------------------- */
+.container {
+	width: min(100% - (var(--container--pad-x) * 2), var(--container--max-medium));
+	margin-inline: auto;
+}
+.container--small {
+	width: min(100% - (var(--container--pad-x) * 2), var(--container--max-small));
+}
+.container--large {
+	width: min(100% - (var(--container--pad-x) * 2), var(--container--max-large));
+}
+.container--fluid {
+	width: 100%;
+}
+
+@media (max-width: 991px) {
+	.container--fluid-tablet {
+		width: 100%;
+	}
+}
+@media (max-width: 767px) {
+	.container--fluid-mobile-landscape {
+		width: 100%;
+	}
+}
+@media (max-width: 479px) {
+	.container--fluid-mobile-portrait {
+		width: 100%;
+	}
+}
+
+/* -------------------------------------
+   Page / main wrappers
+------------------------------------- */
+.page-wrapper {
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+}
+.main-wrapper {
+	flex: 1 1 auto;
+}
+
+/* -------------------------------------
+   Stack (component-level vertical spacing)
+------------------------------------- */
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap, var(--size--medium));
+}
+.stack.no-gap {
+	--gap: 0;
+}
+.stack.tiny {
+	--gap: var(--size--tiny);
+}
+.stack.xsmall {
+	--gap: var(--size--xsmall);
+}
+.stack.small {
+	--gap: var(--size--small);
+}
+.stack.medium {
+	--gap: var(--size--medium);
+}
+.stack.large {
+	--gap: var(--size--large);
+}
+.stack.xlarge {
+	--gap: var(--size--xlarge);
+}
+.stack.huge {
+	--gap: var(--size--huge);
+}
+
+.stack :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, blockquote, figure) {
+	margin: 0;
+}
+
+/* -------------------------------------
+   Flow (document-level spacing)
+------------------------------------- */
+.flow {
+	--flow-space: var(--size--medium);
+}
+.flow.small {
+	--flow-space: var(--size--small);
+}
+.flow.large {
+	--flow-space: var(--size--large);
+}
+.flow > * + * {
+	margin-block-start: var(--flow-space);
+}
+
+/* ==========================================================================
+   GRID HELPERS
+========================================================================== */
+.section-layout {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+	gap: var(--section-gap, var(--size--xlarge));
+	width: 100%;
+}
+
+.content-layout {
+	--col-gap: var(--size--medium);
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	gap: var(--col-gap);
+}
+
+/* Mobile: single column prevents any track/nowrap surprises */
+@media (max-width: 767px) {
+	.content-layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+.content-layout > .content-column {
+	min-width: 0;
+	max-inline-size: 100%;
+}
+
+.content-column {
+	grid-column: 1 / -1;
+	@media (min-width: 768px) and (max-width: 991px) {
+		grid-column: 1 / -1;
+	}
+	@media (min-width: 992px) {
+		grid-column: 1 / -1;
+	}
+}
+
+@media (min-width: 992px) {
+	.span-2 {
+		grid-column: span 2;
+	}
+	.span-3 {
+		grid-column: span 3;
+	}
+	.span-4 {
+		grid-column: span 4;
+	}
+	.span-5 {
+		grid-column: span 5;
+	}
+	.span-6 {
+		grid-column: span 6;
+	}
+	.span-7 {
+		grid-column: span 7;
+	}
+	.span-8 {
+		grid-column: span 8;
+	}
+	.span-9 {
+		grid-column: span 9;
+	}
+	.span-10 {
+		grid-column: span 10;
+	}
+	.span-12 {
+		grid-column: span 12;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+	.tablet\:span-3 {
+		grid-column: span 3;
+	}
+	.tablet\:span-6 {
+		grid-column: span 6;
+	}
+	.tablet\:span-12 {
+		grid-column: span 12;
+	}
+}
+
+@media (max-width: 767px) {
+	.mobile\:span-6 {
+		grid-column: span 6;
+	}
+	.mobile\:span-12 {
+		grid-column: span 12;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+	.content-layout.is-6col-tablet {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+}

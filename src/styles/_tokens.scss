@@ -1,0 +1,124 @@
+/* ======================================================================
+	_tokens.scss — design tokens
+
+    - Clear families: colours / type / spacing / layout / motion / bp
+    NOTE: CSS vars in @media don’t work; breakpoints here are reference-only
+====================================================================== */
+
+:root {
+	/* ----------------------------- */
+	/* Colours                       */
+	/* ----------------------------- */
+	/* Brand */
+	--palette--primary: #c7a680;
+	--palette--secondary: #2a6f97;
+	--palette--tertiary: #ef7b45;
+
+	/* Cool neutrals (matches your current tones) */
+	--palette--neutral-950: #0b0c0d;
+	--palette--neutral-900: #1c1c1c; /* your “dark” */
+	--palette--neutral-800: #2a2d30;
+	--palette--neutral-700: #4d5257;
+	--palette--neutral-600: #8e9194; /* your “mid” */
+	--palette--neutral-500: #a8acb0;
+	--palette--neutral-400: #c2c7cc;
+	--palette--neutral-300: #d6dbe0;
+	--palette--neutral-200: #e9ecef; /* your “light” */
+	--palette--neutral-100: #f3f5f7;
+	--palette--neutral-50: #f9fafb;
+
+	/* Warm neutrals (pairs nicely with your gold primary) */
+	--palette--warm-950: #0e0c0a;
+	--palette--warm-900: #1a1917;
+	--palette--warm-800: #2a2724;
+	--palette--warm-700: #4b4642;
+	--palette--warm-600: #807772;
+	--palette--warm-500: #a79e98;
+	--palette--warm-400: #c7beb6;
+	--palette--warm-300: #ddd6cf;
+	--palette--warm-200: #ece6df;
+	--palette--warm-100: #f5f1ec;
+	--palette--warm-50: #fbf9f6;
+
+	/* Other */
+	--palette--white: #ffffff;
+	--palette--transparent: transparent;
+	--palette--success: #16a34a;
+	--palette--warning: #d61f1f;
+
+	/* ----------------------------- */
+	/* UI                            */
+	/* ----------------------------- */
+	/* Buttons */
+	--button-radius: 1rem;
+
+	/* ----------------------------- */
+	/* Typography                    */
+	/* ----------------------------- */
+	--font-family--body: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Inter,
+		'Helvetica Neue', Arial, sans-serif;
+	--font-family--heading: var(--font-family--body);
+
+	/* Fluid type scale */
+	--font--larger: clamp(1.25rem, 2vw, 2.5rem);
+	--font--large: clamp(1.125rem, 1.5vw, 2rem);
+	--font--medium: clamp(1rem, 1.2vw, 1.5rem);
+	--font--regular: clamp(0.95rem, 1vw, 1.125rem);
+	--font--small: clamp(0.875rem, 0.85vw, 1rem);
+	--font--tiny: clamp(0.75rem, 0.7vw, 0.875rem);
+
+	--font--hero: clamp(3rem, 3.2vw + 2rem, 4rem);
+	--font--heading-1: clamp(2rem, 5.5vw, 7rem);
+	--font--heading-2: clamp(1.75rem, 4.5vw, 5rem);
+	--font--heading-3: clamp(1.5rem, 3.5vw, 3.5rem);
+	--font--heading-4: clamp(1.375rem, 2.5vw, 2.5rem);
+	--font--heading-5: clamp(1.25rem, 2vw, 2rem);
+	--font--heading-6: clamp(1.125rem, 1.5vw, 1.5rem);
+
+	/* Weights */
+	--weight--light: 300;
+	--weight--regular: 400;
+	--weight--medium: 500;
+	--weight--semibold: 600;
+	--weight--bold: 700;
+	--weight--xbold: 800;
+
+	/* ----------------------------- */
+	/* Spacing                       */
+	/* ----------------------------- */
+	--size--huge: clamp(6rem, 12vw, 12rem);
+	--size--xlarge: clamp(4rem, 8vw, 8rem);
+	--size--large: clamp(2.5rem, 6vw, 5rem);
+	--size--medium: clamp(2rem, 4vw, 2.5rem);
+	--size--small: clamp(1rem, 2.5vw, 1.75rem);
+	--size--xsmall: clamp(0.75rem, 1.5vw, 1.25rem);
+	--size--tiny: clamp(0.5rem, 1vw, 1rem);
+
+	/* ----------------------------- */
+	/* Layout                        */
+	/* ----------------------------- */
+	--layout--section-y: clamp(3rem, 4vw + 2rem, 6rem);
+	--container--pad-x: 2rem;
+
+	/* RECOMMENDATION:
+     Max widths as tokens, then use min() in CSS (more predictable than clamp()) */
+	--container--max-small: 64rem; /* 1024px */
+	--container--max-medium: 90rem; /* 1440px */
+	--container--max-large: 120rem; /* 1920px */
+
+	/* ----------------------------- */
+	/* Motion                        */
+	/* ----------------------------- */
+	--ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+	--duration-fast: 120ms;
+	--duration: 200ms;
+	--duration-slow: 320ms;
+
+	/* ----------------------------- */
+	/* Breakpoints (reference only)  */
+	/* ----------------------------- */
+	--bp-desktop: 992px;
+	--bp-tablet: 768px;
+	--bp-mobile-landscape: 640px;
+	--bp-mobile: 480px;
+}

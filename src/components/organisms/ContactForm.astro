@@ -1,0 +1,165 @@
+---
+/* ======================================================================
+   ContactForm.astro — Netlify-ready contact form (AJAX + graceful fallback)
+
+   - Static markup (Netlify can parse it at build time)
+   - Honeypot anti-spam + optional Netlify reCAPTCHA
+   - Native HTML5 validation (no "novalidate") + small error cue
+   - ARIA: live status + aria-busy while sending
+   - Uses your UI primitives: .form-field, .form-label, .form-check, .btn
+
+   Props:
+   - formName?: string = "contact"           // Netlify form name
+   - successText?: string                    // Inline success copy
+   - errorText?: string                      // Inline error copy
+   - class?: string                          // Extra classes on <form>
+   - redirect?: string | undefined           // Non-JS fallback thank-you URL (sets action=)
+   - recaptcha?: boolean = false             // Adds <div data-netlify-recaptcha="true">
+
+   Notes:
+   - With JS disabled, browser validation still runs and Netlify handles the POST.
+   - With JS enabled, we AJAX-submit and show inline status (no redirect).
+====================================================================== */
+
+import Button from "../atoms/Button.astro";
+
+/** Props */
+const {
+	formName = "contact",
+	successText = "Thanks! Your message has been sent.",
+	errorText = "Sorry — something went wrong. Please try again.",
+	class: className = "",
+	redirect, // e.g. "/thank-you"
+	recaptcha = false,
+} = Astro.props;
+
+const formId = `form-${formName}`;
+const action = redirect || undefined; // only set action when you want non-JS redirect
+---
+
+<form
+	id={formId}
+	class={`contact-form stack small ${className}`}
+	method="POST"
+	data-netlify="true"
+	netlify-honeypot="bot-field"
+	name={formName}
+	accept-charset="UTF-8"
+	action={action}
+>
+	<!-- Netlify bits -->
+	<input type="hidden" name="form-name" value={formName} />
+	<div class="visually-hidden">
+		<label>Don’t fill this out if you’re human: <input name="bot-field" /></label>
+	</div>
+
+	<!-- Fields -->
+	<div class="form-field stack tiny">
+		<label for={`${formId}-name`} class="form-label">Name</label>
+		<input id={`${formId}-name`} name="name" type="text" required autocomplete="name" />
+	</div>
+
+	<div class="form-field stack tiny">
+		<label for={`${formId}-email`} class="form-label">Email</label>
+		<input id={`${formId}-email`} name="email" type="email" required autocomplete="email" />
+	</div>
+
+	<div class="form-field stack tiny">
+		<label for={`${formId}-message`} class="form-label">Message</label>
+		<textarea id={`${formId}-message`} name="message" rows="6" required></textarea>
+	</div>
+
+	<div class="form-field">
+		<label class="form-check">
+			<input type="checkbox" name="consent" required />
+			<span>I agree to the processing of my data for the purpose of this enquiry.</span>
+		</label>
+	</div>
+
+	{recaptcha && <div data-netlify-recaptcha="true" />}
+
+	<div class="form-field">
+		<Button type="submit" variant="primary">Send message</Button>
+	</div>
+
+	<p class="form-help" data-status role="status" aria-live="polite"></p>
+</form>
+
+<script type="module" define:vars={{ formId, successText, errorText }}>
+	const form = document.getElementById(formId);
+	const statusEl = form.querySelector("[data-status]");
+	const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+
+	const setBusy = (busy) => {
+		form.setAttribute("aria-busy", busy ? "true" : "false");
+		if (!submitBtn) return;
+		if (busy) {
+			submitBtn.setAttribute("disabled", "true");
+			submitBtn.classList.add("is-loading"); // uses your .btn.is-loading spinner
+		} else {
+			submitBtn.removeAttribute("disabled");
+			submitBtn.classList.remove("is-loading");
+		}
+	};
+
+	const encodeFormData = (fd) => new URLSearchParams(Array.from(fd.entries())).toString();
+
+	form.addEventListener("submit", async (e) => {
+		// If JS fails for any reason, let the browser submit normally.
+		try {
+			e.preventDefault();
+
+			// Native HTML5 validation (no novalidate)
+			if (!form.checkValidity()) {
+				// small visual hint for invalid fields
+				form.querySelectorAll(":invalid").forEach((el) => {
+					el.classList.add("is-error");
+					el.setAttribute("aria-invalid", "true");
+				});
+				form.reportValidity();
+				return;
+			}
+			form.querySelectorAll(".is-error").forEach((el) => {
+				el.classList.remove("is-error");
+				el.removeAttribute("aria-invalid");
+			});
+
+			setBusy(true);
+			statusEl.textContent = "Sending…";
+
+			const formData = new FormData(form);
+			if (!formData.get("form-name")) {
+				formData.set("form-name", form.getAttribute("name") || "contact");
+			}
+
+			// Respect any explicit action=...; otherwise, post to "/"
+			const endpoint = form.getAttribute("action") || "/";
+
+			const res = await fetch(endpoint, {
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: encodeFormData(formData),
+			});
+
+			if (res.ok) {
+				form.reset();
+				statusEl.textContent = successText;
+			} else {
+				statusEl.textContent = errorText;
+			}
+		} catch {
+			// If anything explodes, fall back to a friendly error
+			statusEl.textContent = errorText;
+		} finally {
+			setBusy(false);
+		}
+	});
+</script>
+
+<style>
+	/* Tiny local cue for invalid fields (piggybacks your token colours) */
+	.is-error {
+		outline: 2px solid color-mix(in oklab, var(--colour--warning), white 60%);
+		outline-offset: 2px;
+	}
+</style>

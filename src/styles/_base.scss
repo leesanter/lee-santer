@@ -1,0 +1,128 @@
+/* ======================================================================
+   _base.scss — base/reset
+
+   - Low-specificity modern reset (box-sizing, margin trims)
+   - Smooth scrolling + full-height root
+   - Body typography via tokens (family, size, line-height, colours)
+   - Media defaults (block display, responsive sizing)
+   - Form elements inherit font/colour; buttons start unstyled
+   - Tokenised focus ring on all interactive elements
+   - Reduced-motion safety net
+   - Depends on: _tokens.scss, _theme.scss (semantic colours)
+====================================================================== */
+
+/* Box sizing */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* Smooth scroll + full-height root */
+html:focus-within {
+	scroll-behavior: smooth;
+}
+html,
+body {
+	height: 100%;
+}
+
+/* Body defaults (semantic colours) */
+body {
+	margin: 0;
+	font-family: var(--font-family--body);
+	font-size: var(--font--regular);
+	line-height: 1.6;
+	color: var(--text-colour);
+	background: var(--bg-colour);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+}
+
+/* Remove default margins so layout utilities control spacing */
+:where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, blockquote, figure, pre) {
+	margin: 0;
+}
+
+/* Images & media */
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+	display: block;
+	max-width: 100%;
+}
+img {
+	height: auto;
+}
+picture {
+	display: block;
+}
+
+/* Make SVG icons follow text colour by default */
+svg {
+	fill: currentColor;
+	stroke: currentColor;
+}
+
+/* Forms */
+button,
+input,
+textarea,
+select {
+	font: inherit;
+	color: inherit;
+}
+button {
+	background: none;
+	border: none;
+	padding: 0;
+}
+
+/* Links (colour will be set in _typography later) */
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* Tokenised focus ring for interactive controls */
+:where(
+		a[href],
+		button,
+		input,
+		select,
+		textarea,
+		[role='button'],
+		[tabindex]:not([tabindex='-1'])
+	):focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--focus-ring-colour);
+	border-radius: 0.25rem;
+}
+
+/* Tables & misc */
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+hr {
+	border: 0;
+	border-top: 1px solid var(--border-colour);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}

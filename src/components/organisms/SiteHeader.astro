@@ -1,0 +1,655 @@
+---
+/* ======================================================================
+   SiteHeader.astro — sticky header with dropdowns + mobile menu
+
+   - Desktop: hover dropdowns; Mobile: disclosure buttons (parent link stays clickable)
+   - Sticky, hides on scroll down / shows on scroll up (hooked to ScrollListener body classes)
+   - Starts transparent; adds .has-bg once page is scrolled a bit
+   - CTA button (optional) sits to the right of the nav
+   - Uses your tokens and utilities (.container, .btn, spacing, colours)
+====================================================================== */
+
+const ENV = import.meta.env;
+const SITE_NAME = ENV.PUBLIC_SITE_NAME ?? 'Site';
+
+const { pathname } = Astro.url;
+const currentPath = pathname.replace(/\/$/, '');
+
+/** Props (all optional)
+ * - logoHref?: string (default "/")
+ * - logoAlt?: string (default SITE_NAME)
+ * - logoSvg?: string (path to an SVG in /public or an imported asset)
+ * - nav?: Array<{ label: string, href: string, children?: {label:string, href:string}[] }>
+ * - cta?: { label: string, href: string }  (omit to hide)
+ * - transparent?: boolean (default true)
+ */
+const {
+	logoHref = '/',
+	logoAlt = SITE_NAME,
+	logoSvg = '/logo.svg', // e.g. "/logo.svg"
+	nav = [
+		{
+			label: 'Services',
+			href: '/services',
+			children: [
+				{ label: 'Web Design', href: '/services/website-design' },
+				{ label: 'eCommerce', href: '/services/ecommerce-website-development-design' },
+				{ label: 'Web Apps', href: '/services/web-app-development' },
+			],
+		},
+		{ label: 'About', href: '/about' },
+		{ label: 'Portfolio', href: '/portfolio' },
+		{ label: 'Contact', href: '/contact' },
+	],
+	cta,
+	transparent = true,
+} = Astro.props;
+
+// Compute active states
+function normalize(href: string) {
+	return href.replace(/\/$/, '');
+}
+const navWithState = nav.map((item) => {
+	const isActive = normalize(item.href) === currentPath;
+	const children = item.children?.map((c) => ({
+		...c,
+		isActive: normalize(c.href) === currentPath,
+	}));
+	const isActiveParent = Boolean(children?.some((c) => c.isActive));
+	return { ...item, isActive, isActiveParent, children };
+});
+---
+
+<header data-header class={`site-header${transparent ? ' is-transparent' : ''}`} role="banner">
+	<div class="site-header__inner container container--large">
+		<!-- Branding -->
+		<a href={logoHref} class="site-header__brand">
+			{
+				logoSvg ? (
+					<img src={logoSvg} alt={logoAlt} width="120" height="32" loading="eager" />
+				) : (
+					<span class="site-header__brand-text">{logoAlt}</span>
+				)
+			}
+		</a>
+
+		<!-- Primary nav -->
+		<nav class="site-nav" aria-label="Main">
+			<button
+				class="nav-toggle"
+				data-toggle
+				aria-controls="main-menu"
+				aria-expanded="false"
+				aria-label="Toggle navigation"
+			>
+				<span class="nav-toggle__bar"></span>
+				<span class="nav-toggle__bar"></span>
+				<span class="nav-toggle__bar"></span>
+			</button>
+
+			<div class="site-nav__panel" id="main-menu" data-menu aria-hidden="true">
+				<ul class="menu root">
+					{
+						navWithState.map((item, i) => {
+							const hasChildren =
+								Array.isArray(item.children) && item.children.length > 0;
+							const itemClass = [
+								'menu__item',
+								hasChildren ? 'has-children' : '',
+								item.isActive ? 'is-active' : '',
+								item.isActiveParent ? 'is-active-parent' : '',
+							]
+								.filter(Boolean)
+								.join(' ');
+							const id = `menu-item-${i}`;
+							const subId = `submenu-${i}`;
+							return (
+								<li class={itemClass}>
+									<div class="menu__linkwrap">
+										<a
+											href={item.href}
+											aria-current={item.isActive ? 'page' : undefined}
+											class="menu__link"
+										>
+											{item.label}
+										</a>
+
+										{hasChildren && (
+											// Mobile-only disclosure (keeps parent link clickable)
+											<button
+												class="submenu-toggle"
+												aria-controls={subId}
+												aria-expanded="false"
+												aria-label={`Toggle ${item.label} submenu`}
+												data-subtoggle
+											>
+												<svg
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													aria-hidden="true"
+												>
+													<path
+														d="M6 9l6 6 6-6"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+													/>
+												</svg>
+											</button>
+										)}
+									</div>
+
+									{hasChildren && (
+										<ul
+											class="menu sub"
+											id={subId}
+											aria-label={`${item.label} submenu`}
+										>
+											{item.children!.map((child) => (
+												<li
+													class={`menu__item ${child.isActive ? 'is-active' : ''}`}
+												>
+													<a
+														href={child.href}
+														class="menu__link"
+														aria-current={
+															child.isActive ? 'page' : undefined
+														}
+													>
+														{child.label}
+													</a>
+												</li>
+											))}
+										</ul>
+									)}
+								</li>
+							);
+						})
+					}
+
+					<li class="menu__item menu__cta">
+						<a href="/contact" class="btn btn--sm">Get a quote</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+	</div>
+</header>
+
+<style lang="scss">
+	/* ======================================================================
+      Header layout + behaviour
+  ====================================================================== */
+	/* Header-scoped colour semantics (adapt via [data-scheme]) */
+	.site-header {
+		/* defaults (inherit page scheme) */
+		--nav-bg-colour: transparent; /* header background when transparent */
+		--nav-panel-bg-colour: var(--bg-colour); /* mobile panel + dropdowns */
+		--nav-link-colour: var(--heading-colour); /* default link colour */
+		--nav-link-active-colour: var(--palette--primary); /* active state accent */
+		--nav-border-colour: var(--border-colour); /* borders in header */
+		--nav-icon-colour: var(--nav-link-colour); /* hamburger bars, chevrons */
+		--nav-hover-bg-colour: color-mix(in srgb, var(--nav-link-colour) 10%, var(--bg-colour));
+	}
+
+	/* Force light/dark header independent of page */
+	.site-header[data-scheme='light'] {
+		--nav-link-colour: var(--palette--neutral-900);
+		--nav-icon-colour: var(--nav-link-colour);
+		--nav-panel-bg-colour: var(--palette--white);
+	}
+	.site-header[data-scheme='dark'] {
+		--nav-link-colour: var(--palette--white);
+		--nav-icon-colour: var(--nav-link-colour);
+		--nav-panel-bg-colour: var(--palette--neutral-900);
+	}
+
+	$linkSizeDesktop: var(--size--regular);
+	$linkSizeMobile: $linkSizeDesktop;
+
+	/* Header container (fixed, full-width, transparent start) */
+	.site-header {
+		--header-pad-y: var(--size--small);
+
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 1000;
+
+		background: transparent;
+		transition:
+			background-color var(--duration) var(--ease-standard),
+			box-shadow var(--duration) var(--ease-standard),
+			transform var(--duration) var(--ease-standard);
+		will-change: background-color, box-shadow;
+
+		&.has-bg {
+			background: var(--nav-panel-bg-colour);
+			box-shadow: 0 1px 0 color-mix(in oklab, var(--nav-link-colour), white 85%);
+		}
+	}
+
+	/* Only affects transparent state. Add .on-dark (or data-overlay="dark") on pages with dark hero. */
+	.site-header.is-transparent:not(.has-bg).on-dark {
+		--heading-colour: var(--palette--white);
+		--text-colour: var(--palette--white);
+		--link-colour: var(--palette--white);
+		--link-hover-colour: var(--palette--white);
+		--border-colour: color-mix(in srgb, var(--palette--white) 30%, transparent);
+	}
+
+	.site-header__inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-block: var(--header-pad-y);
+		gap: var(--size--small);
+	}
+
+	/* Branding */
+	.site-header__brand {
+		display: inline-flex;
+		align-items: center;
+		min-height: 2rem;
+		text-decoration: none;
+		color: var(--nav-link-colour);
+		position: relative;
+		z-index: 1002; /* above panel */
+	}
+	.site-header__brand img {
+		display: block;
+		height: 1.5rem;
+		width: auto;
+	}
+	.site-header__brand-text {
+		font-weight: 700;
+		font-size: var(--font--medium);
+		letter-spacing: 0.01em;
+	}
+
+	/* ======================================================================
+      Nav structure
+  	====================================================================== */
+	.site-nav {
+		position: relative;
+		z-index: 1000;
+	}
+
+	/* Mobile toggle (hamburger) */
+	.nav-toggle {
+		appearance: none;
+		background: none;
+		border: 1px solid transparent;
+		padding: 0.5rem;
+		border-radius: 0.5rem;
+		cursor: pointer;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		z-index: 1002; /* ADD */
+		pointer-events: auto; /* ADD */
+	}
+	.nav-toggle:focus-visible {
+		box-shadow: 0 0 0 3px var(--focus-ring-colour);
+		outline: none;
+	}
+	.nav-toggle__bar {
+		width: 22px;
+		height: 2px;
+		background: var(--nav-icon-colour);
+		transition:
+			transform var(--duration) var(--ease-standard),
+			opacity var(--duration) var(--ease-standard);
+	}
+
+	/* Mobile panel (full screen, scrollable) */
+	.site-nav__panel {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+
+		min-height: 100dvh;
+
+		z-index: 1001; /* ADD */
+		background: var(--nav-panel-bg-colour);
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+		overscroll-behavior: contain; /* stop background bounce on iOS */
+
+		/* closed state */
+		transform: translateY(-4%);
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			opacity var(--duration) var(--ease-standard),
+			transform var(--duration) var(--ease-standard);
+
+		/* spacing: gutters + safe-areas (no header-height padding anymore) */
+		padding-top: calc(
+			var(--header-height, 56px) /* sit just below header */ + var(--size--large)
+		);
+		padding-bottom: max(var(--size--large), env(safe-area-inset-bottom));
+		padding-left: max(var(--container--pad-x), env(safe-area-inset-left));
+		padding-right: max(var(--container--pad-x), env(safe-area-inset-right));
+	}
+
+	/* Menu lists */
+	.menu.root {
+		display: grid;
+		gap: var(--size--small);
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		height: 100%;
+	}
+	.menu.sub {
+		list-style: none;
+		margin: 0;
+		padding: 0.25rem 0 0.5rem 0.75rem;
+		display: none;
+		gap: 0.25rem;
+
+		.menu__item {
+			margin-block: 0;
+		}
+	}
+	.menu__cta {
+		margin-top: 100%;
+		.btn {
+			width: 100%;
+		}
+	}
+	.menu__linkwrap {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.menu__link {
+		text-decoration: none;
+		color: var(--nav-link-colour);
+		padding: 0.375rem 0;
+		display: inline-flex;
+		align-items: center;
+	}
+	.menu__item.is-active > .menu__link,
+	.menu__item.is-active-parent > .menu__link {
+		color: var(--nav-link-active-colour);
+		font-weight: 600;
+	}
+
+	/* Mobile submenu disclosure button */
+	.submenu-toggle {
+		appearance: none;
+		border: 1px solid
+			color-mix(in srgb, var(--nav-border-colour) 65%, var(--nav-panel-bg-colour));
+		background: var(--nav-panel-bg-colour);
+		border-radius: 0.375rem;
+		inline-size: 2rem;
+		block-size: 2rem;
+		display: inline-grid;
+		place-items: center;
+	}
+	.submenu-toggle:focus-visible {
+		box-shadow: 0 0 0 3px var(--focus-ring-colour);
+		outline: none;
+	}
+
+	/* Open states (mobile) */
+	.site-nav.is-open .site-nav__panel {
+		opacity: 1;
+		transform: translateY(0);
+		pointer-events: auto;
+		visibility: visible; /* ADD */
+	}
+	.site-nav.is-open .nav-toggle__bar:nth-child(1) {
+		transform: translateY(6px) rotate(45deg);
+	}
+	.site-nav.is-open .nav-toggle__bar:nth-child(2) {
+		opacity: 0;
+	}
+	.site-nav.is-open .nav-toggle__bar:nth-child(3) {
+		transform: translateY(-6px) rotate(-45deg);
+	}
+	.menu__item.is-open > .menu__linkwrap > .submenu-toggle {
+		border-color: var(--nav-link-active-colour);
+	}
+	.menu__item.is-open > .menu.sub {
+		display: grid;
+	}
+
+	/* ======================================================================
+      Desktop
+  ====================================================================== */
+	@media (min-width: 992px) {
+		.nav-toggle {
+			display: none;
+		}
+		.site-nav__panel {
+			position: static;
+			transform: none;
+			opacity: 1;
+			pointer-events: auto;
+			background: transparent;
+			padding: 0;
+			min-height: auto;
+			overflow: visible;
+			visibility: visible;
+		}
+		.menu.root {
+			display: flex;
+			align-items: center;
+			gap: var(--size--medium);
+			height: auto;
+		}
+		.menu__link {
+			font-size: $linkSizeDesktop;
+		}
+		.menu__cta {
+			margin-left: var(--size--small);
+			margin-top: auto;
+			.btn {
+				width: auto;
+			}
+		}
+
+		/* Hover dropdowns with hover-bridge + chevron */
+		.menu__item.has-children {
+			position: relative;
+			--submenu-gap: 0.5rem;
+
+			/* BRIDGE: keep :hover while cursor crosses the gap */
+			&::after {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 100%;
+				height: var(--submenu-gap);
+			}
+		}
+
+		/* Parent chevron */
+		.menu__item.has-children > .menu__linkwrap > .menu__link {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.35rem;
+		}
+		.menu__item.has-children > .menu__linkwrap > .menu__link::after {
+			content: '▾';
+			font-size: 1rem;
+			line-height: 1;
+			transform-origin: 50% 45%;
+			transition:
+				transform var(--duration) var(--ease-standard),
+				opacity var(--duration) var(--ease-standard);
+			opacity: 0.85;
+		}
+
+		/* Submenu panel */
+		.menu__item.has-children > .menu.sub {
+			position: absolute;
+			left: 0;
+			top: calc(100% + var(--submenu-gap));
+			min-width: 14rem;
+			background: var(--nav-panel-bg-colour);
+			border: 1px solid var(--nav-border-colour);
+			display: none;
+			padding: 0.5rem;
+			box-shadow: 0 8px 24px color-mix(in srgb, var(--nav-link-colour) 15%, transparent);
+			z-index: 10;
+		}
+
+		/* KEEP OPEN: parent hover/focus OR hovering the submenu itself */
+		.menu__item.has-children:hover > .menu.sub,
+		.menu__item.has-children:focus-within > .menu.sub,
+		.menu__item.has-children > .menu.sub:hover {
+			display: grid;
+			gap: 0.25rem;
+		}
+
+		.menu.sub .menu__link {
+			padding: 0.375rem 0.5rem;
+			border-radius: calc(0.5rem - var(--button-radius));
+			width: 100%;
+		}
+		.menu.sub .menu__link:hover,
+		.menu.sub .menu__link:focus-visible {
+			background: var(--nav-hover-bg-colour);
+			outline: none;
+		}
+
+		/* Hide mobile disclosure button on desktop */
+		.menu__item.has-children > .menu__linkwrap > .submenu-toggle {
+			display: none;
+		}
+	}
+
+	/* ======================================================================
+      ScrollListener integration (hide/show on scroll)
+  	====================================================================== */
+	body.site-scroll--down .site-header {
+		transform: translateY(-100%);
+	}
+	body.site-scroll--up .site-header {
+		background: var(--nav-panel-bg-colour);
+		box-shadow: 0 1px 0 color-mix(in srgb, var(--nav-link-colour) 12%, transparent);
+	}
+	body.site-scroll--up .site-header,
+	body.site-scroll--inactive .site-header {
+		transform: translateY(0);
+	}
+
+	/* Optional: lock page scroll when mobile nav open */
+	body.no-scroll {
+		overflow: hidden;
+	}
+</style>
+
+<script is:inline>
+	(function () {
+		var header = document.querySelector('[data-header]');
+		var nav = document.querySelector('.site-nav');
+		var panel = document.querySelector('[data-menu]');
+		var toggle = document.querySelector('[data-toggle]');
+		var subToggles = Array.prototype.slice.call(document.querySelectorAll('[data-subtoggle]'));
+		if (!header || !nav || !panel || !toggle) return;
+		if (!toggle.getAttribute('type')) toggle.setAttribute('type', 'button');
+
+		function setHeaderHeight() {
+			var h = header.offsetHeight || 56;
+			document.documentElement.style.setProperty('--header-height', h + 'px');
+		}
+		// initial + after paint + on resize + when header’s size changes
+		setHeaderHeight();
+		requestAnimationFrame(setHeaderHeight);
+		window.addEventListener('load', setHeaderHeight);
+		window.addEventListener('resize', setHeaderHeight);
+		if ('ResizeObserver' in window) {
+			new ResizeObserver(setHeaderHeight).observe(header);
+		}
+
+		const firstMenuLink = panel.querySelector('.menu.root a');
+		function openNav() {
+			nav.classList.add('is-open');
+			panel.setAttribute('aria-hidden', 'false');
+			toggle.setAttribute('aria-expanded', 'true');
+			document.body.classList.add('no-scroll');
+			firstMenuLink?.focus();
+		}
+		function closeNav() {
+			nav.classList.remove('is-open');
+			panel.setAttribute('aria-hidden', 'true');
+			toggle.setAttribute('aria-expanded', 'false');
+			document.body.classList.remove('no-scroll');
+			subToggles.forEach(function (btn) {
+				btn.setAttribute('aria-expanded', 'false');
+				var li = btn.closest('.menu__item');
+				if (li) li.classList.remove('is-open');
+			});
+			toggle.focus();
+		}
+
+		toggle.addEventListener('click', function () {
+			nav.classList.contains('is-open') ? closeNav() : openNav();
+		});
+		document.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape' && nav.classList.contains('is-open')) closeNav();
+		});
+		subToggles.forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var li = btn.closest('.menu__item');
+				var expanded = btn.getAttribute('aria-expanded') === 'true';
+				btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+				if (li) li.classList.toggle('is-open', !expanded);
+			});
+		});
+
+		// --- Pin header to light scheme ONLY when it's solid ---
+		(function () {
+			var header = document.querySelector('[data-header]');
+			if (!header) return;
+
+			// Solid if: your ScrollListener marked the body, or you set .has-bg yourself,
+			// or we scrolled a tiny bit (fallback).
+			function isSolid() {
+				return (
+					document.body.classList.contains('site-scroll--up') ||
+					header.classList.contains('has-bg') ||
+					window.scrollY > 8
+				);
+			}
+
+			// Debounced apply to avoid thrash on rapid scroll
+			var rafId = 0;
+			function applyHeaderScheme() {
+				cancelAnimationFrame(rafId);
+				rafId = requestAnimationFrame(function () {
+					if (isSolid()) {
+						header.setAttribute('data-scheme', 'light'); // header subtree goes light
+					} else {
+						header.removeAttribute('data-scheme'); // inherit page scheme while transparent
+					}
+				});
+			}
+
+			// Initial + on scroll/resize/load
+			applyHeaderScheme();
+			window.addEventListener('load', applyHeaderScheme, { once: true });
+			window.addEventListener('resize', applyHeaderScheme, { passive: true });
+			window.addEventListener('scroll', applyHeaderScheme, { passive: true });
+
+			// If your ScrollListener toggles classes asynchronously, watch for them too
+			var mo = new MutationObserver(applyHeaderScheme);
+			mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+		})();
+	})();
+</script>

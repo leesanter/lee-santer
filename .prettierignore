@@ -1,0 +1,26 @@
+# Build outputs
+dist
+.astro
+
+# Dependencies
+node_modules
+
+# Coverage / snapshots
+coverage
+__snapshots__
+
+# Logs & maps
+*.log
+*.map
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Caches
+.cache

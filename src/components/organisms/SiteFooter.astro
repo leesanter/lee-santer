@@ -1,0 +1,301 @@
+---
+/*
+==============================================================================
+  SiteFooter.astro — starter footer (CTA + links + legal)
+  - Token-driven colours/spacing; dark by default
+  - CTA block, three link columns (editable), legal row
+  - Cookie prefs hook (window.showCookiePreferences from CookieConsent)
+  - Back-to-top link
+  - Props (all optional; good defaults for a starter):
+      - cta?: { heading?: string; buttonText?: string; buttonHref?: string }
+      - groups?: Array<{ title: string; items: Array<{ label: string; href: string }> }>
+      - email?: string
+============================================================================== */
+const ENV = import.meta.env;
+const SITE_NAME = ENV.PUBLIC_SITE_NAME ?? 'Site';
+const YEAR = new Date().getFullYear();
+
+const {
+	cta = {
+		heading: 'It all starts with a conversation.',
+		buttonText: 'Book a consultation.',
+		buttonHref: '/contact',
+	},
+	groups = [
+		{
+			title: 'New Projects',
+			items: [
+				{ label: 'Contact', href: '/contact' },
+				{ label: 'Book a consultation', href: '/contact' },
+				{ label: 'info@leesanter.co.uk', href: 'mailto:info@leesanter.co.uk' },
+			],
+		},
+		{
+			title: 'Navigation',
+			items: [
+				{ label: 'Home', href: '/' },
+				{ label: 'Expertise', href: '/services' },
+				{ label: 'Case Studies', href: '/portfolio' },
+			],
+		},
+		{
+			title: 'Information',
+			items: [
+				{ label: 'FAQs', href: '/faqs' },
+				{ label: 'About', href: '/about' },
+				{ label: 'Insights', href: '/blog' },
+			],
+		},
+	],
+	email = 'info@leesanter.co.uk',
+} = Astro.props;
+---
+
+<footer class="site-footer section--fill" data-footer data-scheme="dark">
+	<!-- ========================= CTA ========================= -->
+	<section class="footer-cta">
+		<div class="container container--large">
+			<div class="footer-cta__inner stack small center">
+				<h2 class="footer-cta__heading h1">{cta.heading}</h2>
+				<p>
+					<a class="btn btn--outline" href={cta.buttonHref}>{cta.buttonText}</a>
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- ========================= Main links ========================= -->
+	<section class="footer-main">
+		<div class="container container--large">
+			<!-- new inner wrapper so the border doesn't touch headings -->
+			<div class="footer-main__inner">
+				<div class="content-layout">
+					{
+						groups.map((group) => (
+							<nav
+								class="content-column span-4 tablet:span-6 mobile:span-12 stack small"
+								aria-labelledby={`f-${group.title.replace(/\s+/g, '-').toLowerCase()}`}
+							>
+								<h3
+									id={`f-${group.title.replace(/\s+/g, '-').toLowerCase()}`}
+									class="footer-title h5"
+								>
+									{group.title}
+								</h3>
+								<ul class="footer-list stack tiny">
+									{group.items.map((item) => (
+										<li>
+											<a class="footer-link" href={item.href}>
+												{item.label}
+											</a>
+										</li>
+									))}
+								</ul>
+							</nav>
+						))
+					}
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ========================= Legal row ========================= -->
+	<section class="footer-legal">
+		<div class="container container--large">
+			<div class="footer-legal__inner">
+				<p class="footer-copy">
+					Copyright © {YEAR}
+					{SITE_NAME}.<br />
+					All rights reserved. Trademarks and brands are the property of their respective owners.
+				</p>
+
+				<ul class="footer-legal__links">
+					<li><a class="footer-link" href="/privacy">Privacy Policy</a></li>
+					<li><a class="footer-link" href="/terms">Terms &amp; Conditions</a></li>
+					<li>
+						<a class="footer-link" href="/cookies" id="cookie-prefs-link"
+							>Cookie preferences</a
+						>
+					</li>
+					<li class="footer-top">
+						<a href="#" id="back-to-top" class="footer-link">Back to top</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+</footer>
+
+<style lang="scss">
+	/* ======================================================================
+   _footer.scss — footer styles scoped to component
+   - Scheme-driven (uses semantic tokens via data-scheme)
+   - Borders live on containers; spacing on inner wrappers
+	====================================================================== */
+
+	.site-footer {
+		/* Read from semantics (no bespoke footer palette) */
+		color: var(--text-colour);
+		background: var(--bg-colour);
+	}
+
+	/* ================= CTA ================= */
+	.footer-cta {
+		text-align: center;
+
+		.footer-cta__inner {
+			padding-block: var(--layout--section-y);
+		}
+
+		.footer-cta__heading {
+			color: var(--heading-colour);
+			letter-spacing: -0.01em;
+		}
+	}
+
+	/* ================= Main links ================= */
+	/* Border on container; spacing on inner wrapper */
+	.footer-main {
+		padding: 0;
+
+		> .container {
+			border-top: 1px solid var(--border-colour);
+		}
+
+		.footer-main__inner {
+			padding-block: var(--size--large);
+			padding-top: var(--size--large);
+		}
+
+		.footer-title {
+			font-weight: var(--weight--semibold);
+			color: var(--heading-colour);
+			font-size: var(--font--medium);
+		}
+
+		.footer-list {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			li {
+				margin-block: 0;
+			}
+		}
+
+		.footer-link {
+			color: var(--text-muted-colour);
+			text-decoration: none;
+			display: inline-block;
+			padding-block: 0;
+			text-underline-offset: 0.2em;
+
+			&:hover,
+			&:focus-visible {
+				color: var(--heading-colour);
+				text-decoration: underline;
+				outline: none;
+			}
+
+			@media (pointer: coarse) {
+				display: inline-block;
+				padding-block: 0.375rem;
+			}
+		}
+	}
+
+	/* ================= Legal row ================= */
+	.footer-legal {
+		padding: 0;
+
+		> .container {
+			border-top: 1px solid var(--border-colour);
+		}
+
+		.footer-legal__inner {
+			padding-block: var(--size--medium);
+			padding-top: var(--size--medium);
+
+			display: grid;
+			grid-template-columns: 1fr auto; /* copy | links */
+			align-items: end;
+			gap: var(--size--small);
+
+			@media (max-width: 768px) {
+				grid-template-columns: 1fr;
+				gap: var(--size--small);
+			}
+		}
+
+		.footer-copy {
+			color: var(--text-muted-colour);
+			font-size: var(--font--small);
+			line-height: 1.6;
+		}
+
+		.footer-legal__links {
+			--links-gap: var(--size--small);
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			display: flex;
+			gap: var(--links-gap);
+			flex-wrap: wrap;
+			font-size: var(--font--small);
+
+			a {
+				color: var(--text-muted-colour);
+			}
+			a:hover,
+			a:focus-visible {
+				color: var(--text-colour);
+				outline: none;
+				text-decoration: underline;
+			}
+
+			/* “Back to top” pushed right on desktop */
+			.footer-top {
+				margin-left: auto;
+				padding-left: calc(var(--links-gap) * 2);
+			}
+
+			@media (max-width: 768px) {
+				.footer-top {
+					margin-left: 0;
+					padding-left: 0;
+				}
+			}
+		}
+	}
+</style>
+
+<script is:inline>
+	/**
+	 * Enhancements:
+	 * - Smooth "Back to top" (fallback to native if not supported)
+	 * - Cookie preferences link opens CookieConsent dialog when available
+	 */
+	(function () {
+		var toTop = document.getElementById('back-to-top');
+		if (toTop) {
+			toTop.addEventListener('click', function (e) {
+				// Allow "#" default in very old browsers
+				e.preventDefault();
+				try {
+					window.scrollTo({ top: 0, behavior: 'smooth' });
+				} catch {
+					window.scrollTo(0, 0);
+				}
+			});
+		}
+
+		var cookieLink = document.getElementById('cookie-prefs-link');
+		if (cookieLink) {
+			cookieLink.addEventListener('click', function (e) {
+				if (typeof window.showCookiePreferences === 'function') {
+					e.preventDefault();
+					window.showCookiePreferences();
+				}
+			});
+		}
+	})();
+</script>

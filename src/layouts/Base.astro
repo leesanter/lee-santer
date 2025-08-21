@@ -1,0 +1,79 @@
+---
+/* ======================================================================
+   Base.astro — site shell/layout
+   - Imports main.scss once
+   - SEO + shared head assets (favicons/manifest/theme-color)
+   - Semantic landmarks + skip link
+====================================================================== */
+
+import "../styles/main.scss";
+import SEO from "../components/utils/SEO.astro";
+import HeadAssets from "../components/utils/HeadAssets.astro";
+import FontAssets from "../components/utils/FontAssets.astro";
+
+import SiteHeader from "../components/organisms/SiteHeader.astro";
+import SiteFooter from "../components/organisms/SiteFooter.astro";
+import ScrollListener from "../components/utils/ScrollListener.astro";
+import CookieConsent from "../components/utils/CookieConsent.astro";
+
+const ENV = import.meta.env;
+const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || "")
+	.split(",")
+	.map((s) => s.trim())
+	.filter(Boolean);
+const HTML_LANG = ENV.PUBLIC_HTML_LANG ?? "en-GB";
+
+const {
+	title,
+	description,
+	canonical,
+	noindex = false,
+	pageClass = "",
+	structuredData,
+	ogImage,
+	type,
+	publishedTime,
+	modifiedTime,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={HTML_LANG}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light" />
+
+		<SEO
+			{title}
+			{description}
+			{canonical}
+			{noindex}
+			{structuredData}
+			{ogImage}
+			type={type}
+			publishedTime={publishedTime}
+			modifiedTime={modifiedTime}
+		/>
+
+		<FontAssets files={fontPreloads.length ? fontPreloads : undefined} />
+		<HeadAssets />
+		<slot name="head" />
+	</head>
+	<body>
+		<a class="skip-to-content" href="#main">Skip to content</a>
+
+		<div class="page-wrapper">
+			<SiteHeader />
+
+			<main id="main" class:list={["main-wrapper", pageClass]} tabindex="-1">
+				<slot />
+			</main>
+
+			<SiteFooter />
+
+			<ScrollListener />
+			<CookieConsent />
+		</div>
+	</body>
+</html>

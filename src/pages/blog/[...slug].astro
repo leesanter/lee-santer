@@ -1,0 +1,48 @@
+---
+/* ======================================================================
+   /blog/[...slug].astro — content page (static, type-safe)
+   - Uses getStaticPaths() to build pages from the “blog” collection
+   - Filters out drafts in production
+   - Calls entry.render() to get <Content />
+====================================================================== */
+
+import type { CollectionEntry } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+
+export async function getStaticPaths() {
+	const { getCollection } = await import('astro:content');
+	const posts = await getCollection('blog', ({ data }) =>
+		import.meta.env.PROD ? !data.draft : true
+	);
+	return posts.map((entry) => ({
+		params: { slug: entry.slug },
+		props: { entry },
+	}));
+}
+
+interface Props {
+	entry: CollectionEntry<'blog'>;
+}
+
+const { entry } = Astro.props as Props;
+const { title, description, publishDate, updatedDate, heroImage, ogImage, canonical } = entry.data;
+
+// Coerce to URL strings (works for image() and plain strings)
+const heroSrc = typeof heroImage === 'string' ? heroImage : heroImage?.src;
+const ogSrc = typeof ogImage === 'string' ? ogImage : ogImage?.src;
+
+const { Content } = await entry.render();
+---
+
+<Article
+	title={title}
+	description={description}
+	publishedTime={publishDate?.toISOString?.()}
+	modifiedTime={updatedDate?.toISOString?.()}
+	heroImage={heroSrc}
+	ogImage={ogSrc}
+	canonical={canonical}
+	type="article"
+>
+	<Content />
+</Article>

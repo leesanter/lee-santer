@@ -1,0 +1,242 @@
+---
+/* ======================================================================
+   CookieConsent.astro — lightweight consent banner
+
+   - Versioned storage via PUBLIC_CONSENT_VERSION (respects GPC)
+   - Loads GTM only after “Accept all”
+   - Optional Consent Mode signalling (queued before GTM)
+   - Emits window event:  'cookie-consent' with { value, version, updatedAt }
+   - Uses your .btn utilities; tokens drive colours/radius
+====================================================================== */
+
+/**
+ * .env:
+ *   PUBLIC_GTM_ID="GTM-XXXXXXX"                 (optional)
+ *   PUBLIC_CONSENT_VERSION="1"                  (bump to re-prompt)
+ */
+
+const ENV = import.meta.env;
+const GTM_ID = ENV.PUBLIC_GTM_ID || '';
+const CONSENT_VERSION = Number(ENV.PUBLIC_CONSENT_VERSION || '1');
+const STORAGE_KEY = `cookie-consent.v${CONSENT_VERSION}`;
+---
+
+<div
+	id="cookie-consent"
+	class="cookie-banner hidden"
+	role="region"
+	aria-label="Cookie consent"
+	data-gtm-id={GTM_ID}
+	data-storage-key={STORAGE_KEY}
+	data-consent-version={String(CONSENT_VERSION)}
+	data-nosnippet
+	tabindex="-1"
+>
+	<div class="cookie-banner__inner stack small" data-scheme="light">
+		<p>
+			We use essential cookies to make our site work and optional analytics to improve it.
+			Read our <a href="/privacy">Privacy Policy</a>.
+		</p>
+
+		<div class="cookie-banner__actions">
+			<button id="cookie-essential" class="btn btn--outline btn--sm">Essential only</button>
+			<button id="cookie-accept" class="btn btn--sm">Accept all</button>
+		</div>
+	</div>
+</div>
+
+<style lang="scss">
+	.cookie-banner {
+		position: fixed;
+		inset: auto var(--size--medium) var(--size--medium) auto;
+		max-width: min(520px, 92vw);
+
+		/* Scheme-aware surface derived from theme tokens */
+		--banner-bg: color-mix(in srgb, var(--bg-colour) 92%, var(--heading-colour) 8%);
+		--banner-text: var(--text-colour);
+		--banner-border: var(--border-colour);
+		--banner-shadow: 0 6px 24px color-mix(in srgb, var(--heading-colour) 20%, transparent);
+
+		background: var(--banner-bg);
+		color: var(--banner-text);
+		font-size: var(--font--small);
+		padding: var(--size--small);
+		padding-bottom: max(var(--size--small), env(safe-area-inset-bottom)); /* iOS safe area */
+		border: 1px solid var(--banner-border);
+		box-shadow: var(--banner-shadow);
+		z-index: 9999;
+		border-radius: var(--button-radius);
+
+		&.hidden {
+			display: none;
+		}
+
+		/* kill UA ring if the container ever gets focus */
+		&:focus {
+			outline: none;
+		}
+
+		a {
+			color: var(--link-colour);
+			text-decoration: underline;
+		}
+		a:hover {
+			color: var(--link-hover-colour);
+		}
+
+		.cookie-banner__actions {
+			display: flex;
+			gap: var(--size--xsmall);
+			flex-wrap: wrap;
+		}
+	}
+
+	/* Full-width docked on small screens */
+	@media (max-width: 640px) {
+		.cookie-banner {
+			inset: auto 0 0 0;
+			max-width: 100%;
+			border-radius: var(--button-radius) var(--button-radius) 0 0;
+			border-left: 0;
+			border-right: 0;
+		}
+	}
+</style>
+
+<script type="module">
+	(() => {
+		const banner = document.getElementById('cookie-consent');
+		if (!banner) return;
+
+		const STORAGE_KEY = banner.dataset.storageKey || 'cookie-consent.v1';
+		const CONSENT_VERSION = Number(banner.dataset.consentVersion || '1');
+		const GTM_ID = banner.dataset.gtmId || '';
+
+		const btnAccept = document.getElementById('cookie-accept');
+		const btnEssential = document.getElementById('cookie-essential');
+
+		/* Helpers */
+		const nowISO = () => new Date().toISOString();
+
+		const readConsent = () => {
+			try {
+				return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+			} catch {
+				return null;
+			}
+		};
+
+		const writeConsent = (value) => {
+			const payload = { value, version: CONSENT_VERSION, updatedAt: nowISO() };
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+			} catch {}
+			// Let the rest of the app listen in
+			window.dispatchEvent(new CustomEvent('cookie-consent', { detail: payload }));
+		};
+
+		const removeBanner = () => banner?.remove();
+		const showBanner = () => {
+			banner?.classList.remove('hidden');
+			// Focus the first interactive element for a11y, avoid UA outline on the container
+			const firstFocusable = banner.querySelector(
+				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+			);
+			(firstFocusable instanceof HTMLElement ? firstFocusable : null)?.focus();
+		};
+
+		/* Optional: queue Consent Mode signals before GTM loads */
+		function setupConsentModeDefaults() {
+			if (!GTM_ID) return;
+			window.dataLayer = window.dataLayer || [];
+			window.gtag =
+				window.gtag ||
+				function () {
+					dataLayer.push(arguments);
+				};
+			// Default: only essential storage is granted
+			window.gtag('consent', 'default', {
+				ad_storage: 'denied',
+				analytics_storage: 'denied',
+				ad_user_data: 'denied',
+				ad_personalization: 'denied',
+				functionality_storage: 'granted',
+				security_storage: 'granted',
+			});
+		}
+
+		/* Load GTM after consent */
+		const loadGTM = () => {
+			if (!GTM_ID) return;
+			window.dataLayer = window.dataLayer || [];
+			window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+
+			// Signal granted consent (Consent Mode v2)
+			if (window.gtag) {
+				window.gtag('consent', 'update', {
+					ad_storage: 'granted',
+					analytics_storage: 'granted',
+					ad_user_data: 'granted',
+					ad_personalization: 'granted',
+				});
+			}
+
+			const s = document.createElement('script');
+			s.async = true;
+			s.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(GTM_ID)}`;
+			document.head.appendChild(s);
+		};
+
+		/* Public API to reopen preferences (e.g., footer link) */
+		window.showCookiePreferences = () => {
+			writeConsent('unknown');
+			document.body.appendChild(banner); // ensure back in DOM
+			banner.classList.add('hidden');
+			showBanner();
+		};
+
+		/* Respect Global Privacy Control (GPC) if no prior choice */
+		const gpc = 'globalPrivacyControl' in navigator && navigator.globalPrivacyControl === true;
+
+		/* Init */
+		setupConsentModeDefaults();
+
+		const existing = readConsent();
+
+		if (existing && existing.version === CONSENT_VERSION) {
+			if (existing.value === 'accepted') loadGTM();
+			// else: still essential-only, do nothing
+		} else if (gpc) {
+			writeConsent('essential');
+			// Banner remains hidden
+		} else {
+			showBanner();
+		}
+
+		/* Button handlers */
+		btnAccept?.addEventListener('click', () => {
+			writeConsent('accepted');
+			loadGTM();
+			removeBanner();
+		});
+
+		btnEssential?.addEventListener('click', () => {
+			writeConsent('essential');
+			removeBanner();
+		});
+
+		/* Keyboard: Escape chooses Essential (safe default) */
+		banner?.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') btnEssential?.click();
+		});
+
+		/* Sync across tabs/windows */
+		window.addEventListener('storage', (e) => {
+			if (e.key === STORAGE_KEY && e.newValue) {
+				const data = JSON.parse(e.newValue);
+				if (data?.value === 'accepted') loadGTM();
+				removeBanner();
+			}
+		});
+	})();
+</script>

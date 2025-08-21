@@ -1,0 +1,50 @@
+---
+/**
+ * HeadAssets.astro — favicons, manifest, theme-color (shared by Base/Minimal)
+ * --------------------------------------------------------------------------
+ * Put your files in /public and set any of these (optional) .env vars:
+ *
+ *   PUBLIC_FAVICON="/favicon.svg"             // SVG favicon (preferred)
+ *   PUBLIC_FAVICON_PNG_32="/favicon-32.png"   // optional PNG fallbacks
+ *   PUBLIC_FAVICON_PNG_16="/favicon-16.png"
+ *   PUBLIC_APPLE_TOUCH_ICON="/apple-touch-icon.png"  // 180×180
+ *   PUBLIC_MASK_ICON="/safari-pinned-tab.svg"        // monochrome SVG
+ *   PUBLIC_MASK_ICON_COLOR="#000000"
+ *   PUBLIC_MANIFEST="/site.webmanifest"
+ *   PUBLIC_THEME_COLOR="#ffffff"                      // light
+ *   PUBLIC_THEME_COLOR_DARK="#000000"                // optional dark
+ *
+ * Usage in layouts:
+ *   <HeadAssets />
+ */
+const ENV = import.meta.env;
+
+const FAVICON = ENV.PUBLIC_FAVICON || "/favicon.svg";
+const PNG32 = ENV.PUBLIC_FAVICON_PNG_32 || "";
+const PNG16 = ENV.PUBLIC_FAVICON_PNG_16 || "";
+const APPLE_TOUCH_ICON = ENV.PUBLIC_APPLE_TOUCH_ICON || "";
+const MASK_ICON = ENV.PUBLIC_MASK_ICON || "";
+const MASK_ICON_COLOR = ENV.PUBLIC_MASK_ICON_COLOR || "#000000";
+const MANIFEST = ENV.PUBLIC_MANIFEST || "/site.webmanifest";
+const THEME_COLOR_L = ENV.PUBLIC_THEME_COLOR || "#ffffff";
+const THEME_COLOR_D = ENV.PUBLIC_THEME_COLOR_DARK || "";
+
+const has = (s: string) => !!s && s.trim() !== "";
+---
+
+{has(FAVICON) && <link rel="icon" type="image/svg+xml" href={FAVICON} />}
+{has(PNG32) && <link rel="icon" type="image/png" sizes="32x32" href={PNG32} />}
+{has(PNG16) && <link rel="icon" type="image/png" sizes="16x16" href={PNG16} />}
+{has(APPLE_TOUCH_ICON) && <link rel="apple-touch-icon" sizes="180x180" href={APPLE_TOUCH_ICON} />}
+
+{has(MANIFEST) && <link rel="manifest" href={MANIFEST} />}
+
+{/* Theme colors (support light/dark if provided) */}
+<meta name="theme-color" content={THEME_COLOR_L} />
+{has(THEME_COLOR_D) && <meta name="theme-color" media="(prefers-color-scheme: dark)" content={THEME_COLOR_D} />}
+
+{/* Safari pinned tab (monochrome SVG) */}
+{has(MASK_ICON) && <link rel="mask-icon" href={MASK_ICON} color={MASK_ICON_COLOR} />}
+
+{/* Optional: Windows tile color uses the light theme color */}
+<meta name="msapplication-TileColor" content={THEME_COLOR_L} />

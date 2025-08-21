@@ -1,0 +1,22 @@
+:root {
+	--bg-colour: var(--palette--white);
+	--heading-colour: var(--palette--neutral-900);
+	--text-colour: var(--palette--neutral-600);
+	--text-muted-colour: var(--palette--neutral-500);
+	--link-colour: var(--palette--primary);
+	--link-hover-colour: var(--palette--neutral-900);
+	--border-colour: color-mix(in srgb, var(--palette--neutral-900) 15%, transparent);
+	--focus-ring-colour: var(--palette--primary);
+}
+
+/* Dark scheme override (attach to body/section/header as needed) */
+[data-scheme='dark'] {
+	--bg-colour: var(--palette--neutral-900);
+	--heading-colour: var(--palette--white);
+	--text-colour: #e6e6e6; /* ~90% white for readable body copy */
+	--text-muted-colour: #ffffff99; /* secondary only */
+	--link-colour: var(--palette--primary);
+	--link-hover-colour: var(--palette--white);
+	--border-colour: color-mix(in srgb, var(--palette--white) 20%, transparent);
+	--focus-ring-colour: var(--palette--primary);
+}

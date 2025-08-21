@@ -1,0 +1,132 @@
+---
+/**
+ * ScrollListener
+ * ------------------------------------------------------------
+ * Body classes:
+ *  - site-scroll--inactive : at very top (0px)
+ *  - site-scroll--active   : once user has scrolled
+ *  - site-scroll--up / site-scroll--down : last detected direction
+ *
+ * Extras:
+ *  - If the mobile menu is open (body.no-scroll), we force "inactive"
+ *    so the header stays visible and states don’t flicker.
+ */
+---
+
+<script is:inline>
+	(() => {
+		const body = document.body;
+
+		const DELTA_THRESHOLD = 8; // ignore tiny deltas / touchpad noise
+		const TOP_LOCK_PX = 2; // treat <= 2px as "top"
+
+		let lastY = window.scrollY || 0;
+		let lastDirection = null; // 'up' | 'down' | null
+		let ticking = false;
+		let hasActivated = lastY > TOP_LOCK_PX;
+
+		function setTopState() {
+			body.classList.add("site-scroll--inactive");
+			body.classList.remove("site-scroll--active", "site-scroll--up", "site-scroll--down");
+			lastDirection = null;
+			hasActivated = false;
+		}
+
+		function setActiveOnce() {
+			if (!hasActivated) {
+				body.classList.remove("site-scroll--inactive");
+				body.classList.add("site-scroll--active");
+				hasActivated = true;
+			}
+		}
+
+		function applyDirection(direction) {
+			if (direction === "down") {
+				body.classList.add("site-scroll--down");
+				body.classList.remove("site-scroll--up");
+			} else {
+				body.classList.add("site-scroll--up");
+				body.classList.remove("site-scroll--down");
+			}
+			body.dispatchEvent(new CustomEvent("scroll:direction", { detail: { direction, y: window.scrollY } }));
+		}
+
+		function onRaf() {
+			// If menu is open / body locked, hold "inactive" and bail
+			if (body.classList.contains("no-scroll")) {
+				body.classList.add("site-scroll--inactive");
+				body.classList.remove("site-scroll--up", "site-scroll--down");
+				ticking = false;
+				return;
+			}
+
+			const y = window.scrollY || 0;
+
+			// Top handling
+			if (y <= TOP_LOCK_PX) {
+				setTopState();
+				lastY = 0;
+				ticking = false;
+				return;
+			}
+
+			setActiveOnce();
+
+			const delta = y - lastY;
+			if (Math.abs(delta) > DELTA_THRESHOLD) {
+				const direction = delta > 0 ? "down" : "up";
+				if (direction !== lastDirection) {
+					applyDirection(direction);
+					lastDirection = direction;
+				}
+				lastY = y;
+			}
+
+			ticking = false;
+		}
+
+		function onScroll() {
+			if (!ticking) {
+				requestAnimationFrame(onRaf);
+				ticking = true;
+			}
+		}
+
+		function onResize() {
+			lastY = window.scrollY || 0;
+			if (lastY <= TOP_LOCK_PX) setTopState();
+		}
+
+		function onVisibility() {
+			if (document.visibilityState === "visible") {
+				lastY = window.scrollY || 0;
+				if (lastY <= TOP_LOCK_PX) setTopState();
+			}
+		}
+
+		// Init
+		if ((window.scrollY || 0) <= TOP_LOCK_PX) {
+			setTopState();
+		} else {
+			setActiveOnce();
+			body.classList.add("site-scroll--up");
+			lastDirection = "up";
+		}
+
+		// Listeners
+		window.addEventListener("scroll", onScroll, { passive: true });
+		window.addEventListener("resize", onResize, { passive: true });
+		window.addEventListener("orientationchange", onResize, { passive: true });
+		document.addEventListener("visibilitychange", onVisibility);
+
+		// Cleanup
+		const teardown = () => {
+			window.removeEventListener("scroll", onScroll);
+			window.removeEventListener("resize", onResize);
+			window.removeEventListener("orientationchange", onResize);
+			document.removeEventListener("visibilitychange", onVisibility);
+		};
+		window.addEventListener("pagehide", teardown, { once: true });
+		window.addEventListener("beforeunload", teardown, { once: true });
+	})();
+</script>

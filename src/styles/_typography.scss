@@ -1,0 +1,162 @@
+/* ======================================================================
+   _typography.scss — typography
+   - Base element styles (headings, links, lists)
+   - .prose for CMS/Rich Text spacing and rhythm
+   - Uses --font-family--body / --font-family--heading
+   - Headings have no baked margins; spacing via .prose or utilities
+====================================================================== */
+
+body {
+	font-family: var(--font-family--body);
+	font-size: var(--font--regular);
+	line-height: 1.6; /* consistent readable base */
+	text-rendering: optimizeLegibility;
+
+	/* colour & background now live in _base.scss (semantic, scheme-aware) */
+	/* color: var(--text-colour); */
+	/* background: var(--bg-colour); */
+}
+
+/* Headings inherit heading family and colours */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--font-family--heading);
+	color: var(--heading-colour);
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+	font-weight: var(--weight--semibold);
+	/* Better multi-line titles */
+	text-wrap: balance;
+}
+
+/* Map element sizes to tokens */
+h1 {
+	font-size: var(--font--heading-1);
+}
+h2 {
+	font-size: var(--font--heading-2);
+}
+h3 {
+	font-size: var(--font--heading-3);
+}
+h4 {
+	font-size: var(--font--heading-4);
+}
+h5 {
+	font-size: var(--font--heading-5);
+}
+h6 {
+	font-size: var(--font--heading-6);
+}
+
+/* Lead / intro paragraph (mixes toward headings but stays scheme-safe) */
+.lede {
+	font-size: var(--font--large);
+	line-height: 1.5;
+	color: color-mix(in srgb, var(--heading-colour) 70%, var(--text-colour));
+}
+
+/* Links */
+a {
+	color: var(--link-colour); /* centralises link theming */
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.15em;
+}
+a:hover {
+	color: var(--link-hover-colour); /* better than brightness() for contrast */
+}
+
+/* Lists (plain, un-classed) */
+ul:not([class]),
+ol:not([class]) {
+	padding-inline-start: 1.25em;
+	margin-block: var(--size--small); /* space above/below the list */
+}
+ul:not([class]) > li,
+ol:not([class]) > li {
+	margin: 0;
+}
+ul:not([class]) > li + li,
+ol:not([class]) > li + li {
+	margin-top: 0.25em; /* gentle item gap */
+}
+
+/* Blockquote (brand accent, not scheme-dependent) */
+blockquote {
+	padding-inline-start: 1rem;
+	border-inline-start: 4px solid var(--palette--primary);
+	font-style: italic;
+}
+
+/* Code */
+code,
+pre,
+kbd,
+samp {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+		'Courier New', monospace;
+}
+pre {
+	padding: 1rem;
+	background: color-mix(in srgb, var(--heading-colour) 6%, var(--bg-colour));
+	border: 1px solid var(--border-colour);
+	border-radius: var(--radius--s);
+	overflow: auto;
+}
+
+/* -------------------------------------
+   PROSE (Rich Text / CMS)
+   Only apply when you wrap content in .prose
+------------------------------------- */
+.prose {
+	--prose-gap: var(--size--small);
+	--prose-gap-heading: var(--size--medium);
+	--prose-indent: 1.25em;
+
+	max-width: var(--prose-max, 65ch);
+	line-height: 1.7;
+
+	> * + * {
+		margin-block-start: var(--prose-gap);
+	}
+
+	:where(h1, h2, h3, h4, h5, h6) {
+		margin: 0;
+	}
+	:where(h1, h2, h3, h4, h5, h6) + * {
+		margin-block-start: var(--prose-gap-heading);
+	}
+
+	/* Lists inside prose */
+	:where(ul, ol) {
+		padding-inline-start: var(--prose-indent);
+		margin-block: var(--prose-gap);
+	}
+	:where(ul, ol) :where(ul, ol) {
+		margin-block-start: 0.5em;
+	} /* nested list top spacing */
+	:where(ul, ol) > :where(li + li) {
+		margin-top: 0.35em;
+	} /* gentle item gap */
+
+	figure {
+		display: block;
+	}
+	figcaption {
+		font-size: var(--font--small);
+		color: var(--text-muted-colour); /* better than opacity for contrast */
+		margin-top: 0.5em;
+	}
+}
+
+/* Trim outer space in prose containers */
+.prose > :first-child {
+	margin-block-start: 0;
+}
+.prose > :last-child {
+	margin-block-end: 0;
+}

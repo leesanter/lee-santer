@@ -1,0 +1,35 @@
+---
+const {
+	href,
+	variant = "primary", // "primary" | "secondary" | "outline" | "text"
+	size = "", // "" | "sm" | "lg"
+	block = false, // true -> full width
+	disabled = false,
+	loading = false,
+	external = false,
+	class: extra = "",
+	...attrs
+} = Astro.props;
+
+const Tag = href ? "a" : "button";
+const classes = [
+	"btn",
+	variant && variant !== "primary" ? `btn--${variant}` : "",
+	size ? `btn--${size}` : "",
+	block ? "btn--block" : "",
+	loading ? "is-loading" : "",
+	disabled ? "is-disabled" : "",
+	extra,
+]
+	.filter(Boolean)
+	.join(" ");
+
+const rel = external ? "noopener noreferrer" : undefined;
+const target = external ? "_blank" : undefined;
+---
+
+<Fragment>
+	<Tag class={classes} href={href} {...Tag === "button" ? { disabled } : {}} rel={rel} target={target} {...attrs}>
+		<slot />
+	</Tag>
+</Fragment>
