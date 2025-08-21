@@ -1,7 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-// or
-// import Minimal from "../layouts/Minimal.astro";
+import CaseStudyCard from '../components/molecules/CaseStudyCard.astro';
 
 export const prerender = true;
 
@@ -10,14 +9,48 @@ const description = 'Who I am and how I work.';
 ---
 
 <Base {title} {description}>
-	<section class="section--first" style="min-height: 400vh;">
-		<div class="container section-layout">
-			<div class="stack large" style="text-align: center;">
-				<h1>Portfolio Site Starter</h1>
-				<p>
-					A clean Astro boilerplate with SCSS, scroll effects, and smart layout tools —
-					ready to go.
-				</p>
+	<section data-bg-color="light" class="section">
+		<div class="container container--large">
+			<div class="section-layout">
+				<div class="content-layout">
+					<div class="content-column span-10">
+						<div class="stack large">
+							<div
+								class="slide-in-right--02"
+								style="transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg); transform-style: preserve-3d; opacity: 1;"
+							>
+								<h2>
+									Hello! I’m Lee. I help start-ups, growing businesses and
+									agencies design and launch stand-out <a
+										href="#"
+										class="hero-link">websites</a
+									>, <a href="#" class="hero-link">brand identities</a> and <a
+										href="#"
+										class="hero-link">visual experiences</a
+									> that make an impact.
+								</h2>
+							</div>
+							<div
+								class="slide-in-right--04"
+								style="transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg); transform-style: preserve-3d; opacity: 1;"
+							>
+								<div class="button-wrapper">
+									<a
+										href="https://calendly.com/lee-santer/15min-consultation"
+										target="_blank"
+										class="btn btn--outline">Book a consultation.</a
+									>
+									<div class="hide-tablet">
+										<a class="btn btn--text" href="/case-studies"
+											>See examples of my work.</a
+										>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<CaseStudyCard />
 			</div>
 		</div>
 	</section>

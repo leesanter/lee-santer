@@ -7,7 +7,8 @@
      <FontAssets files={["/fonts/Your.woff2", "/fonts/Your-Italic.woff2"]} />
 ====================================================================== */
 
-const { files = ["/fonts/InterVariable.woff2", "/fonts/InterVariable-Italic.woff2"] } = Astro.props as { files?: string[] };
+const { files = ['/fonts/OpenSans-Semibold.woff2', '/fonts/HelveticaNeue-Medium.otf'] } =
+	Astro.props as { files?: string[] };
 ---
 
 {files.map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}

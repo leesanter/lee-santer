@@ -3,16 +3,18 @@
    - Variable font, swap, full weight range
 ====================================================================== */
 @font-face {
-	font-family: "Inter";
-	src: url("/fonts/InterVariable.woff2") format("woff2-variations");
-	font-weight: 100 900;
+	font-family: 'Open Sans';
+	src: url('/fonts/OpenSans-Semibold.woff2') format('woff2-variations');
+	font-weight: 600;
 	font-style: normal;
 	font-display: swap;
 }
 @font-face {
-	font-family: "Inter";
-	src: url("/fonts/InterVariable-Italic.woff2") format("woff2-variations");
-	font-weight: 100 900;
-	font-style: italic;
+	font-family: 'Helvetica Neue LS';
+	src: local('HelveticaNeue-Medium'), local('Helvetica Neue Medium'),
+		url('/fonts/HelveticaNeue-Medium.woff2') format('woff2'),
+		url('/fonts/HelveticaNeue-Medium.otf') format('opentype');
+	font-weight: 500;
+	font-style: normal;
 	font-display: swap;
 }

@@ -6,3 +6,6 @@
 
 - 2025-08-21: Header transitions sync (solid/transparent)
   Files: components/organisms/SiteHeader.astro
+
+
+- 2025-08-21: Fix SEO comp to actually use correct titles and what not?! - To Do

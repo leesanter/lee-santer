@@ -252,10 +252,10 @@ input[type='search'] {
 	justify-content: center;
 	gap: 0.5rem;
 	font: inherit;
-	font-weight: 600;
+	font-weight: var(--weight--medium);
 	text-decoration: none;
 
-	padding: 0.75rem 1.25rem;
+	padding: 1.5rem 2.5rem;
 	border: 1px solid var(--btn-border);
 	border-radius: var(--btn-radius);
 	background: var(--btn-bg);
@@ -296,7 +296,7 @@ input[type='search'] {
 .btn--text {
 	background: transparent;
 	border-color: transparent;
-	padding: 0;
+	// padding: 0;
 	--btn-text: var(--heading-colour);
 	color: var(--btn-text);
 }

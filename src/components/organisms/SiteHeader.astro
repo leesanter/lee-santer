@@ -28,17 +28,9 @@ const {
 	logoAlt = SITE_NAME,
 	logoSvg = '/logo.svg', // e.g. "/logo.svg"
 	nav = [
-		{
-			label: 'Services',
-			href: '/services',
-			children: [
-				{ label: 'Web Design', href: '/services/website-design' },
-				{ label: 'eCommerce', href: '/services/ecommerce-website-development-design' },
-				{ label: 'Web Apps', href: '/services/web-app-development' },
-			],
-		},
-		{ label: 'About', href: '/about' },
-		{ label: 'Portfolio', href: '/portfolio' },
+		{ label: 'Services', href: '/services' },
+		{ label: 'Case Studies', href: '/about' },
+		{ label: 'About', href: '/portfolio' },
 		{ label: 'Contact', href: '/contact' },
 	],
 	cta,
@@ -64,13 +56,7 @@ const navWithState = nav.map((item) => {
 	<div class="site-header__inner container container--large">
 		<!-- Branding -->
 		<a href={logoHref} class="site-header__brand">
-			{
-				logoSvg ? (
-					<img src={logoSvg} alt={logoAlt} width="120" height="32" loading="eager" />
-				) : (
-					<span class="site-header__brand-text">{logoAlt}</span>
-				)
-			}
+			<span class="logo-ls"> leesanter </span>
 		</a>
 
 		<!-- Primary nav -->
@@ -170,7 +156,7 @@ const navWithState = nav.map((item) => {
 					}
 
 					<li class="menu__item menu__cta">
-						<a href="/contact" class="btn btn--sm">Get a quote</a>
+						<a href="/portal/login" class="btn btn--outline">Client Portal</a>
 					</li>
 				</ul>
 			</div>
@@ -206,8 +192,7 @@ const navWithState = nav.map((item) => {
 		--nav-panel-bg-colour: var(--palette--neutral-900);
 	}
 
-	$linkSizeDesktop: var(--size--regular);
-	$linkSizeMobile: $linkSizeDesktop;
+	$linkSizeDesktop: var(--font--medium);
 
 	/* Header container (fixed, full-width, transparent start) */
 	.site-header {
@@ -218,6 +203,8 @@ const navWithState = nav.map((item) => {
 		left: 0;
 		right: 0;
 		z-index: 1000;
+
+		font-size: $linkSizeDesktop;
 
 		background: transparent;
 		transition:
@@ -265,9 +252,9 @@ const navWithState = nav.map((item) => {
 		width: auto;
 	}
 	.site-header__brand-text {
-		font-weight: 700;
-		font-size: var(--font--medium);
-		letter-spacing: 0.01em;
+		// font-weight: 700;
+		// font-size: var(--font--medium);
+		// letter-spacing: 0.01em;
 	}
 
 	/* ======================================================================
@@ -450,9 +437,9 @@ const navWithState = nav.map((item) => {
 			gap: var(--size--medium);
 			height: auto;
 		}
-		.menu__link {
-			font-size: $linkSizeDesktop;
-		}
+		// .menu__link {
+		// 	font-size: $linkSizeDesktop;
+		// }
 		.menu__cta {
 			margin-left: var(--size--small);
 			margin-top: auto;

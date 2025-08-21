@@ -1,3 +1,5 @@
+Bootstrapped from astro-starter@v1.1.1
+
 # Astro Starter — Minimal, Accessible, Client-Ready
 
 A clean Astro starter focused on real-world delivery:
