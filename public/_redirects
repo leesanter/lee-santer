@@ -1,0 +1,2 @@
+/expertise            /services           301
+/expertise/:category  /services/:category 301
