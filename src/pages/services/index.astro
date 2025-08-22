@@ -1,0 +1,187 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { pickFeaturedForServicesHub, mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+// Optional: allow pinning a featured case by slug later (env or site config)
+// const explicit = import.meta.env.PUBLIC_SERVICES_HUB_FEATURE;
+
+const featured = await pickFeaturedForServicesHub(/* explicit */);
+
+const CATS = [
+	{
+		slug: 'strategy',
+		title: 'Strategy',
+		blurb: 'Clarity, focus, and a plan that actually ships.',
+	},
+	{
+		slug: 'design',
+		title: 'Design',
+		blurb: 'Interfaces that feel obvious, and look considered.',
+	},
+	{
+		slug: 'development',
+		title: 'Development',
+		blurb: 'Fast, accessible builds you can actually maintain.',
+	},
+	{ slug: 'growth', title: 'Growth', blurb: 'Iterate with data: CRO, maintenance, measurement.' },
+];
+
+const HOW = [
+	'Discovery & goals',
+	'Positioning & structure',
+	'Design exploration',
+	'Build & integrate',
+	'QA, accessibility, performance',
+	'Launch & learn',
+];
+
+// Basic meta (wire to your SEO component when ready)
+const pageTitle = 'Expertise — Lee Santer';
+const pageDesc = 'Strategy, Design, Development, and Growth services, plus a featured case study.';
+---
+
+<Base>
+	<header class="section container stack">
+		<h1 class="h1">Expertise</h1>
+		<p class="lede">
+			I help founders and teams clarify their story, design clear interfaces, and ship fast,
+			accessible websites.
+		</p>
+	</header>
+
+	<section class="section container">
+		<h2 class="h2">Who I’m a fit for</h2>
+		<ul class="bullets">
+			<li>Founder-led companies that value clarity and craft.</li>
+			<li>Teams who want performance, accessibility, and longevity over trends.</li>
+			<li>Projects that need a partner from strategy → design → build.</li>
+		</ul>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">Services</h2>
+		<div class="tiles">
+			{
+				CATS.map((c) => (
+					<a class="tile" href={`/services/${c.slug}`}>
+						<h3 class="tile__title">{c.title}</h3>
+						<p class="tile__blurb">{c.blurb}</p>
+						<span class="tile__cta">Explore {c.title} →</span>
+					</a>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">How I work</h2>
+		<ol class="steps">
+			{HOW.map((s) => <li>{s}</li>)}
+		</ol>
+	</section>
+
+	{
+		featured && (
+			<section class="section container">
+				<h2 class="h2">Featured case study</h2>
+				<div class="work-grid">
+					<WorkCard
+						entry={featured}
+						services={mapDisplayServicesToLinks(featured.data.displayServices)}
+					/>
+				</div>
+			</section>
+		)
+	}
+
+	<section class="section container">
+		<h2 class="h2">FAQs</h2>
+		<details>
+			<summary>How do you price projects?</summary><p>
+				Fixed price for defined briefs; day rate for explorations or retainers. Clear
+				milestones; no surprise fees.
+			</p>
+		</details>
+		<details>
+			<summary>Which platform is right for me?</summary><p>
+				Custom (primarily Astro) for performance/control; Webflow for editor access;
+				WordPress for existing estates; Shopify for ecommerce. I’ll recommend the right fit.
+			</p>
+		</details>
+		<details>
+			<summary>Can you work with our existing brand/site?</summary><p>
+				Yes. I improve clarity, performance and accessibility without a risky rebuild.
+			</p>
+		</details>
+		<details>
+			<summary>Performance & accessibility?</summary><p>
+				Non-negotiable. I target AA and an LCP ≤ 1.8s.
+			</p>
+		</details>
+		<details>
+			<summary>Availability?</summary><p>
+				Typical lead time 1–3 weeks; small retainers available.
+			</p>
+		</details>
+	</section>
+</Base>
+
+<style>
+	.section {
+		padding-block: var(--section-y, 4rem);
+	}
+	.container {
+		width: min(1100px, 92vw);
+		margin-inline: auto;
+	}
+	.stack > * + * {
+		margin-top: 0.75rem;
+	}
+
+	.tiles {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: 1rem;
+	}
+	.tile {
+		display: grid;
+		gap: 0.5rem;
+		padding: 1rem;
+		border: 1px solid var(--border-colour, #ddd);
+		border-radius: var(--radius--l, 14px);
+		text-decoration: none;
+		color: inherit;
+	}
+	.tile__title {
+		margin: 0;
+	}
+	.tile__blurb {
+		margin: 0;
+		color: var(--text-muted-colour, #666);
+	}
+	.tile__cta {
+		margin-top: 0.25rem;
+		text-decoration: underline;
+	}
+
+	.bullets {
+		padding-left: 1rem;
+	}
+	.bullets li {
+		margin: 0.25rem 0;
+	}
+
+	.steps {
+		padding-left: 1rem;
+	}
+	.steps li {
+		margin: 0.25rem 0;
+	}
+
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+</style>

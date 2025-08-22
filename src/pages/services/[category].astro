@@ -1,0 +1,184 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { pickSelectedForCategory, mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+// Build static routes — keep it simple (no `as const`, no arrow)
+export function getStaticPaths() {
+	return [
+		{ params: { category: 'strategy' } },
+		{ params: { category: 'design' } },
+		{ params: { category: 'development' } },
+		{ params: { category: 'growth' } },
+	];
+}
+
+// Params & helpers
+const categoryParam = (Astro.params.category as string) || 'strategy';
+const VALID = ['strategy', 'design', 'development', 'growth'];
+const slug = VALID.includes(categoryParam) ? categoryParam : 'strategy';
+const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// ---- Prefilled copy for Strategy ----
+const STRATEGY = {
+	intro: 'Position your brand, structure your content, and make the next steps obvious.',
+	problems: [
+		'Message is unclear or inconsistent across pages.',
+		'Navigation/IA makes it hard to find key info.',
+		'Too much content with no prioritisation.',
+		'No clear plan for what to ship next.',
+	],
+	approach: [
+		'Discovery & goals (context, constraints, success metrics).',
+		'Positioning & messaging (one-pager that aligns the team).',
+		'Information architecture & navigation (sitemap, page purpose).',
+		'Content strategy & plan (what to write, for whom, and when).',
+		'Roadmap & priorities (low-risk steps that move the needle).',
+	],
+	deliverables: [
+		'Positioning & messaging one-pager.',
+		'Audience & jobs-to-be-done notes.',
+		'IA sitemap & page outline docs.',
+		'Content plan (editorial backlog and briefs).',
+		'Prioritised roadmap with milestones.',
+	],
+	faqs: [
+		{
+			q: 'What’s the output of a strategy engagement?',
+			a: 'Clear positioning, IA, a content plan, and a prioritised delivery roadmap.',
+		},
+		{
+			q: 'Do we need strategy if we already have copy?',
+			a: 'Usually. Structure and priorities change outcomes more than extra words.',
+		},
+	],
+};
+
+// Placeholder copy for other categories (fill in later)
+const FALLBACK = {
+	intro: 'Short intro for this category.',
+	problems: ['Problem statement 1', 'Problem statement 2', 'Problem statement 3'],
+	approach: ['Step 1', 'Step 2', 'Step 3'],
+	deliverables: ['Deliverable 1', 'Deliverable 2', 'Deliverable 3'],
+	faqs: [
+		{ q: 'Common question 1', a: 'Short, clear answer.' },
+		{ q: 'Common question 2', a: 'Short, clear answer.' },
+	],
+};
+
+const copy = slug === 'strategy' ? STRATEGY : FALLBACK;
+
+// Deterministic Selected project for this category
+const selected = await pickSelectedForCategory(titleCase(slug) as any);
+
+// Meta (plug into your SEO later)
+const pageTitle = `${titleCase(slug)} Services — Lee Santer`;
+const pageDesc = `Outcomes, approach and selected work for ${slug}.`;
+---
+
+<Base>
+	<header class="section container stack">
+		<h1 class="h1">{titleCase(slug)} Services</h1>
+		<p class="lede">{copy.intro}</p>
+	</header>
+
+	<section class="section container grid-two">
+		<div>
+			<h2 class="h2">Problems I solve</h2>
+			<ul class="bullets">
+				{copy.problems.map((p) => <li>{p}</li>)}
+			</ul>
+		</div>
+		<div>
+			<h2 class="h2">Approach</h2>
+			<ol class="steps">
+				{copy.approach.map((s) => <li>{s}</li>)}
+			</ol>
+		</div>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">Deliverables</h2>
+		<ul class="bullets">
+			{copy.deliverables.map((d) => <li>{d}</li>)}
+		</ul>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">Selected project</h2>
+		{
+			selected ? (
+				<div class="work-grid">
+					<WorkCard
+						entry={selected}
+						services={mapDisplayServicesToLinks(selected.data.displayServices)}
+					/>
+				</div>
+			) : (
+				<p>
+					Case study coming soon. In the meantime, <a href="/contact">let’s chat</a>.
+				</p>
+			)
+		}
+		<p class="mt"><a href={`/work/${slug}`}>See all {slug} work →</a></p>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">FAQs</h2>
+		{
+			copy.faqs.map((f) => (
+				<details>
+					<summary>{f.q}</summary>
+					<p>{f.a}</p>
+				</details>
+			))
+		}
+	</section>
+</Base>
+
+<style>
+	.section {
+		padding-block: var(--section-y, 4rem);
+	}
+	.container {
+		width: min(1100px, 92vw);
+		margin-inline: auto;
+	}
+	.stack > * + * {
+		margin-top: 0.75rem;
+	}
+
+	.grid-two {
+		display: grid;
+		gap: 2rem;
+		grid-template-columns: 1fr;
+	}
+	@media (min-width: 900px) {
+		.grid-two {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+
+	.bullets {
+		padding-left: 1rem;
+	}
+	.bullets li {
+		margin: 0.25rem 0;
+	}
+
+	.steps {
+		padding-left: 1rem;
+	}
+	.steps li {
+		margin: 0.25rem 0;
+	}
+
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+	.mt {
+		margin-top: 1rem;
+	}
+</style>
