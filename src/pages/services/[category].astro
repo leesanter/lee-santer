@@ -1,0 +1,137 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { pickSelectedForCategory, mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+// Build static routes
+export const getStaticPaths = () =>
+	[
+		{ params: { category: 'strategy' } },
+		{ params: { category: 'design' } },
+		{ params: { category: 'development' } },
+		{ params: { category: 'growth' } },
+	] as const;
+
+type CatSlug = 'strategy' | 'design' | 'development' | 'growth';
+type Category = 'Strategy' | 'Design' | 'Development' | 'Growth';
+
+const { category } = Astro.params;
+const slug = category as CatSlug;
+const titleCase = (s: CatSlug): Category => (s.charAt(0).toUpperCase() + s.slice(1)) as Category;
+
+// Deterministic Selected project for this category
+const selected = await pickSelectedForCategory(titleCase(slug));
+
+const pageTitle = `${titleCase(slug)} Services — Lee Santer`;
+const pageDesc = `Outcomes, approach and selected work for ${titleCase(slug).toLowerCase()}.`;
+---
+
+<Base>
+	<header class="section container stack">
+		<h1 class="h1">{titleCase(slug)} Services</h1>
+		<p class="lede">
+			Short intro about what changes for clients when they hire you for {
+				titleCase(slug).toLowerCase()
+			}.
+		</p>
+	</header>
+
+	<section class="section container grid-two">
+		<div>
+			<h2 class="h2">Problems I solve</h2>
+			<ul class="bullets">
+				<li>Problem statement 1</li>
+				<li>Problem statement 2</li>
+				<li>Problem statement 3</li>
+			</ul>
+		</div>
+		<div>
+			<h2 class="h2">Approach</h2>
+			<ol class="steps">
+				<li>Step 1</li>
+				<li>Step 2</li>
+				<li>Step 3</li>
+			</ol>
+		</div>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">Deliverables</h2>
+		<ul class="bullets">
+			<li>Deliverable 1</li>
+			<li>Deliverable 2</li>
+			<li>Deliverable 3</li>
+		</ul>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">Selected project</h2>
+		{
+			selected ? (
+				<div class="work-grid">
+					<WorkCard
+						entry={selected}
+						services={mapDisplayServicesToLinks(selected.data.displayServices)}
+					/>
+				</div>
+			) : (
+				<p>
+					Case study coming soon. In the meantime, <a href="/contact">let’s chat</a>.
+				</p>
+			)
+		}
+		<p class="mt">
+			<a href={`/work/${slug}`}>See all {titleCase(slug).toLowerCase()} work →</a>
+		</p>
+	</section>
+
+	<section class="section container">
+		<h2 class="h2">FAQs</h2>
+		<details><summary>Common question 1</summary><p>Short, clear answer.</p></details>
+		<details><summary>Common question 2</summary><p>Short, clear answer.</p></details>
+		<details><summary>Common question 3</summary><p>Short, clear answer.</p></details>
+	</section>
+</Base>
+
+<style>
+	.section {
+		padding-block: var(--section-y, 4rem);
+	}
+	.container {
+		width: min(1100px, 92vw);
+		margin-inline: auto;
+	}
+	.stack > * + * {
+		margin-top: 0.75rem;
+	}
+	.grid-two {
+		display: grid;
+		gap: 2rem;
+		grid-template-columns: 1fr;
+	}
+	@media (min-width: 900px) {
+		.grid-two {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+	.bullets {
+		padding-left: 1rem;
+	}
+	.bullets li {
+		margin: 0.25rem 0;
+	}
+	.steps {
+		padding-left: 1rem;
+	}
+	.steps li {
+		margin: 0.25rem 0;
+	}
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+	.mt {
+		margin-top: 1rem;
+	}
+</style>
