@@ -13,7 +13,7 @@ export const getStaticPaths = async () => {
 
 const { slug } = Astro.params;
 
-// Load current entry + all (for related items)
+// Load current entry + all (newest → oldest)
 const all = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
 	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
 );
@@ -32,23 +32,9 @@ const completed = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numer
 	new Date(data.completedDate)
 );
 
-// Related (same workFilterCategory first, then recent)
-const pool = all.filter((e) => e.slug !== slug);
-const byDateDesc = (a, b) =>
-	new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime();
-
-let related = pool
-	.filter((e) => e.data.workFilterCategory === data.workFilterCategory)
-	.sort(byDateDesc)
-	.slice(0, 2);
-
-if (related.length < 2) {
-	const fillers = pool
-		.filter((e) => !related.some((r) => r.slug === e.slug))
-		.sort(byDateDesc)
-		.slice(0, 2 - related.length);
-	related = [...related, ...fillers];
-}
+// Next case study (round-robin, newest → oldest)
+const currentIndex = all.findIndex((e) => e.slug === slug);
+const nextEntry = all.length > 1 ? all[(currentIndex + 1) % all.length] : null;
 
 const title = `${data.title} — Work — Lee Santer`;
 const description = data.summary;
@@ -142,32 +128,14 @@ const description = data.summary;
 	</article>
 
 	{
-		data.metrics && data.metrics.length > 0 && (
+		nextEntry && (
 			<section class="section container">
-				<h2 class="h2">Results</h2>
-				<dl class="metrics">
-					{data.metrics.map((m) => (
-						<>
-							<dt>{m.label}</dt>
-							<dd>{m.value}</dd>
-						</>
-					))}
-				</dl>
-			</section>
-		)
-	}
-
-	{
-		related.length > 0 && (
-			<section class="section container">
-				<h2 class="h2">More work</h2>
+				<h2 class="h2">Next case study</h2>
 				<div class="work-grid">
-					{related.map((e) => (
-						<WorkCard
-							entry={e}
-							services={mapDisplayServicesToLinks(e.data.displayServices)}
-						/>
-					))}
+					<WorkCard
+						entry={nextEntry}
+						services={mapDisplayServicesToLinks(nextEntry.data.displayServices)}
+					/>
 				</div>
 			</section>
 		)
@@ -221,11 +189,6 @@ const description = data.summary;
 	}
 	.gallery {
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	}
-	.metrics {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 0.5rem 1rem;
 	}
 	.work-grid {
 		display: grid;
