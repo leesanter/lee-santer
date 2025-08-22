@@ -2,7 +2,7 @@
 title: "Forma"
 slug: "forma"
 summary: "A crisp, restrained site for a modern architecture studio—clarity first, imagery-led."
-hero: "../../assets/case-studies/forma/hero.avif"
+hero: "../../assets/case-studies/forma/forma_thumbnail.jpg"
 heroAlt: "Homepage of Forma with large architectural imagery and a restrained layout"
 completedDate: 2025-04-01
 displayServices:
@@ -16,7 +16,7 @@ sections:
       A muted palette, considered typography, and a strong grid underpin the identity.
       Imagery is given room to breathe; interactivity is minimal and purposeful.
     gallery:
-      - "../../assets/case-studies/forma/gallery-01.avif"
+      - "../../assets/case-studies/forma/forma_thumbnail.jpg"
   - title: "Development Approach"
     prose: |
       Built in Webflow with a flexible CMS. Consistent hierarchy, responsive behaviour,
@@ -26,8 +26,6 @@ highlightInExpertise: ["Strategy"]   # editorially highlight in only one categor
 highlightPriority: 1
 workFilterCategory: "Strategy"
 internalTags: ["Architecture", "CMS"]
-ogImage: "../../assets/case-studies/forma/og.jpg"
-draft: true
+ogImage: "../../assets/case-studies/forma/forma_thumbnail.jpg"
+draft: false
 ---
-
-{/* Optional long-form narrative can live here (MDX). Keep it short if the structured sections already cover the story. */}

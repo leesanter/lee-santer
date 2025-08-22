@@ -1,0 +1,86 @@
+---
+import Base from '../../layouts/Base.astro';
+
+import { getCollection } from 'astro:content';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+// "All" view – no filtering here
+const entries = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
+	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
+);
+
+const title = 'Work — Lee Santer';
+const description = 'Selected case studies across strategy, design, development and growth.';
+
+const pathFor = (cat: 'all' | 'strategy' | 'design' | 'development' | 'growth') =>
+	cat === 'all' ? '/work' : `/work/${cat}`;
+---
+
+<Base {title} {description}>
+	<section class="section container container--large">
+		<header class="stack">
+			<h1 class="h1">Work</h1>
+			<p class="lede">Selected projects. Filter by focus area.</p>
+
+			<nav aria-label="Filter projects by category">
+				<ul class="filter-chips" role="list">
+					{
+						['all', 'strategy', 'design', 'development', 'growth'].map((cat) => (
+							<li>
+								<a
+									href={pathFor(cat as any)}
+									aria-current={cat === 'all' ? 'page' : undefined}
+									class={`chip ${cat === 'all' ? 'chip--active' : ''}`}
+								>
+									{cat.slice(0, 1).toUpperCase() + cat.slice(1)}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
+		</header>
+	</section>
+
+	<section class="section container">
+		<div class="work-grid">
+			{
+				entries.map((entry) => (
+					<WorkCard
+						entry={entry}
+						services={mapDisplayServicesToLinks(entry.data.displayServices)}
+					/>
+				))
+			}
+		</div>
+	</section>
+</Base>
+
+<style lang="scss">
+	.filter-chips {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		padding: 0;
+		margin: 0;
+		list-style: none;
+	}
+	.chip {
+		display: inline-block;
+		padding: 0.5rem 0.75rem;
+		border-radius: 999px;
+		text-decoration: none;
+		border: 1px solid var(--border-colour, #ddd);
+	}
+	.chip--active {
+		border-color: currentColor;
+		font-weight: 600;
+	}
+
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+</style>
