@@ -3,11 +3,11 @@ title: "Hello, Kent"
 slug: "hello-kent"
 summary: "Short update on moving the portfolio to Astro with a content-first approach."
 date: 2025-08-20
-hero: "../../assets/insights/hello-kent/hero.avif"
+hero: "../../assets/insights/hello-kent/hero.jpg"
 heroAlt: "Abstract shapes forming a K"
 tags: ["Front-end", "Strategy"]
-ogImage: "../../assets/insights/hello-kent/og.jpg"
-draft: true
+ogImage: "../../assets/insights/hello-kent/hero.jpg"
+draft: false
 ---
 
 Quick note on the rebuild approach: content model first, then primitives, then lists,

@@ -1,0 +1,165 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import { readingTimeFromMarkdown } from '../../lib/readingTime';
+
+export async function getStaticPaths() {
+	const all = await getCollection('insights', ({ data }) => !data.draft);
+	return all.map((e) => ({ params: { slug: e.slug } }));
+}
+
+const { slug } = Astro.params;
+const all = (await getCollection('insights', ({ data }) => !data.draft)).sort(
+	(a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+const entry = all.find((e) => e.slug === slug);
+if (!entry) {
+	Astro.response.status = 404;
+	throw new Error('Post not found');
+}
+
+const { title, summary, hero, heroAlt = '', date, tags = [] } = entry.data;
+const { Content } = await entry.render();
+const { minutes } = readingTimeFromMarkdown(entry.body ?? '');
+
+const currentIndex = all.findIndex((e) => e.slug === slug);
+const nextEntry = all.length > 1 ? all[(currentIndex + 1) % all.length] : null;
+
+const formatted = new Intl.DateTimeFormat('en-GB', {
+	day: '2-digit',
+	month: 'long',
+	year: 'numeric',
+}).format(new Date(date));
+
+const pageTitle = `${title} — Insights — Lee Santer`;
+const pageDesc = summary;
+---
+
+<Base>
+	<header class="section container stack">
+		<p class="eyebrow">Insight</p>
+		<h1 class="h1">{title}</h1>
+		<p class="lede">{summary}</p>
+		<p class="meta">
+			<time dateTime={new Date(date).toISOString()}>{formatted}</time>
+			<span aria-hidden="true"> · </span>
+			<span>{minutes} min read</span>
+			{
+				tags.length > 0 && (
+					<>
+						<span aria-hidden="true"> · </span>
+						<span>{tags.join(' · ')}</span>
+					</>
+				)
+			}
+		</p>
+	</header>
+
+	<section class="hero container">
+		<Image
+			src={hero}
+			alt={heroAlt}
+			widths={[768, 1024, 1440, 1920]}
+			sizes="(min-width: 1200px) 1100px, 92vw"
+			loading="eager"
+			decoding="async"
+		/>
+	</section>
+
+	<article class="section container prose">
+		<Content />
+	</article>
+
+	{
+		nextEntry && (
+			<section class="section container">
+				<h2 class="h2">Next article</h2>
+				<a class="insight-next" href={`/insights/${nextEntry.slug}`}>
+					<figure class="insight-next__media">
+						<Image
+							src={nextEntry.data.hero}
+							alt={nextEntry.data.heroAlt || ''}
+							widths={[480, 768, 1024]}
+							sizes="(min-width: 800px) 50vw, 100vw"
+							loading="lazy"
+							decoding="async"
+						/>
+					</figure>
+					<div class="insight-next__content">
+						<p class="insight-next__meta">
+							{new Intl.DateTimeFormat('en-GB', {
+								day: '2-digit',
+								month: 'short',
+								year: 'numeric',
+							}).format(new Date(nextEntry.data.date))}{' '}
+							· {readingTimeFromMarkdown(nextEntry.body ?? '').minutes} min read
+						</p>
+						<h3 class="insight-next__title">{nextEntry.data.title}</h3>
+						<p class="insight-next__summary">{nextEntry.data.summary}</p>
+					</div>
+				</a>
+			</section>
+		)
+	}
+</Base>
+
+<style>
+	.section {
+		padding-block: var(--section-y, 4rem);
+	}
+	.container {
+		width: min(1100px, 92vw);
+		margin-inline: auto;
+	}
+	.stack > * + * {
+		margin-top: 0.75rem;
+	}
+	.eyebrow {
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		font-size: 0.9rem;
+		color: var(--text-muted-colour, #666);
+		margin: 0;
+	}
+	.meta {
+		margin: 0;
+		color: var(--text-muted-colour, #666);
+	}
+	.hero :where(img, picture) {
+		width: 100%;
+		height: auto;
+		display: block;
+		border-radius: var(--radius--xl, 16px);
+	}
+	.prose :where(p, ul, ol, blockquote, h2, h3) {
+		margin-block: 0.75rem;
+	}
+	.prose :where(h2, h3) {
+		margin-top: 1.5rem;
+	}
+	.insight-next {
+		display: grid;
+		gap: 0.5rem;
+		text-decoration: none;
+		color: inherit;
+	}
+	.insight-next__media :where(img, picture) {
+		width: 100%;
+		height: auto;
+		display: block;
+		border-radius: var(--radius--l, 14px);
+	}
+	.insight-next__meta {
+		margin: 0;
+		font-size: 0.9rem;
+		color: var(--text-muted-colour, #666);
+	}
+	.insight-next__title {
+		margin: 0;
+	}
+	.insight-next__summary {
+		margin: 0;
+		color: var(--text-muted-colour, #555);
+	}
+</style>
