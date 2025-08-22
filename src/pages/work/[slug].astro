@@ -1,0 +1,198 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+// Build static paths for every published case study
+export const getStaticPaths = async () => {
+	const all = await getCollection('case-studies', ({ data }) => !data.draft);
+	return all.map((e) => ({ params: { slug: e.slug } }));
+};
+
+const { slug } = Astro.params;
+
+// Load current entry + all (newest → oldest)
+const all = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
+	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
+);
+
+const entry = all.find((e) => e.slug === slug);
+if (!entry) {
+	Astro.response.status = 404;
+	throw new Error('Case study not found');
+}
+
+const { data } = entry;
+
+// Meta
+const svcLinks = mapDisplayServicesToLinks(data.displayServices);
+const completed = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(
+	new Date(data.completedDate)
+);
+
+// Next case study (round-robin, newest → oldest)
+const currentIndex = all.findIndex((e) => e.slug === slug);
+const nextEntry = all.length > 1 ? all[(currentIndex + 1) % all.length] : null;
+
+const title = `${data.title} — Work — Lee Santer`;
+const description = data.summary;
+---
+
+<Base>
+	<header class="section container stack">
+		<p class="eyebrow">Case study</p>
+		<h1 class="h1">{data.title}</h1>
+
+		<ul class="meta" role="list">
+			<li><strong>Completed:</strong> {completed}</li>
+			{
+				svcLinks.length > 0 && (
+					<li class="services">
+						<strong>What I did:</strong>
+						{svcLinks.map((s, i) => (
+							<>
+								{i > 0 && <span aria-hidden="true"> · </span>}
+								{s.href ? <a href={s.href}>{s.label}</a> : <span>{s.label}</span>}
+							</>
+						))}
+					</li>
+				)
+			}
+			{
+				data.siteUrl && (
+					<li>
+						<a href={data.siteUrl} rel="noopener noreferrer" target="_blank">
+							View Site
+						</a>
+					</li>
+				)
+			}
+		</ul>
+	</header>
+
+	<section class="hero container">
+		<Image
+			src={data.hero}
+			alt={data.heroAlt}
+			widths={[768, 1024, 1440, 1920]}
+			sizes="(min-width: 1200px) 1100px, 92vw"
+			loading="eager"
+			decoding="async"
+		/>
+	</section>
+
+	{
+		data.galleryTop && data.galleryTop.length > 0 && (
+			<section class="section container">
+				<div class="gallery grid">
+					{data.galleryTop.map((img) => (
+						<div class="gallery__item">
+							<Image
+								src={img}
+								alt={`${data.title} gallery image`}
+								widths={[768, 1024, 1440]}
+								sizes="(min-width: 900px) 50vw, 92vw"
+							/>
+						</div>
+					))}
+				</div>
+			</section>
+		)
+	}
+
+	<article class="section container stack-lg">
+		{
+			data.sections.map((section) => (
+				<section class="case-section">
+					<h2 class="h2">{section.title}</h2>
+					<div class="prose" set:html={section.prose} />
+					{section.gallery && section.gallery.length > 0 && (
+						<div class="gallery grid">
+							{section.gallery.map((img) => (
+								<div class="gallery__item">
+									<Image
+										src={img}
+										alt={`${data.title} gallery image`}
+										widths={[768, 1024, 1440]}
+										sizes="(min-width: 900px) 50vw, 92vw"
+									/>
+								</div>
+							))}
+						</div>
+					)}
+				</section>
+			))
+		}
+	</article>
+
+	{
+		nextEntry && (
+			<section class="section container">
+				<h2 class="h2">Next case study</h2>
+				<div class="work-grid">
+					<WorkCard
+						entry={nextEntry}
+						services={mapDisplayServicesToLinks(nextEntry.data.displayServices)}
+					/>
+				</div>
+			</section>
+		)
+	}
+</Base>
+
+<style>
+	.section {
+		padding-block: var(--section-y, 4rem);
+	}
+	.container {
+		width: min(1100px, 92vw);
+		margin-inline: auto;
+	}
+	.stack > * + * {
+		margin-top: 0.75rem;
+	}
+	.stack-lg > * + * {
+		margin-top: 2rem;
+	}
+	.eyebrow {
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		font-size: 0.9rem;
+		color: var(--text-muted-colour, #666);
+		margin: 0;
+	}
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+		padding: 0;
+		margin: 0.5rem 0 0;
+		list-style: none;
+	}
+	.meta .services a {
+		text-decoration: underline;
+	}
+	.hero :where(img, picture) {
+		width: 100%;
+		height: auto;
+		display: block;
+		border-radius: var(--radius--xl, 16px);
+	}
+	.case-section .prose :where(p) {
+		margin-block: 0.75rem;
+	}
+	.grid {
+		display: grid;
+		gap: 1rem;
+	}
+	.gallery {
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	}
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+</style>
