@@ -1,0 +1,111 @@
+---
+import Base from '../../layouts/Base.astro';
+
+import { getCollection } from 'astro:content';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+type Category = 'all' | 'strategy' | 'design' | 'development' | 'growth';
+
+const url = Astro.url; // robust in static & SSR builds
+const param = (url.searchParams.get('category') || 'all').toLowerCase() as Category;
+const allowed: Category[] = ['all', 'strategy', 'design', 'development', 'growth'];
+const activeCategory: Category = allowed.includes(param) ? param : 'all';
+
+const toTitleCase = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
+
+// fetch visible (non-draft) case studies, newest first
+const entries = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
+	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
+);
+
+const filtered =
+	activeCategory === 'all'
+		? entries
+		: entries.filter((e) => e.data.workFilterCategory.toLowerCase() === activeCategory);
+
+// basic SEO — wire to your SEO component later
+const title = 'Work — Lee Santer';
+const description = 'Selected case studies across strategy, design, development and growth.';
+---
+
+<Base {title} {description}>
+	<section class="section container container--large">
+		<header class="stack">
+			<h1 class="h1">Work</h1>
+			<p class="lede">Selected projects. Filter by focus area.</p>
+
+			<nav aria-label="Filter projects by category">
+				<ul class="filter-chips" role="list">
+					{
+						['all', 'strategy', 'design', 'development', 'growth'].map((cat) => {
+							const isActive = activeCategory === cat;
+							const href = cat === 'all' ? '/work' : `/work?category=${cat}`;
+							return (
+								<li>
+									<a
+										href={href}
+										aria-current={isActive ? 'page' : undefined}
+										class={`chip ${isActive ? 'chip--active' : ''}`}
+									>
+										{toTitleCase(cat)}
+									</a>
+								</li>
+							);
+						})
+					}
+				</ul>
+			</nav>
+		</header>
+	</section>
+
+	{
+		filtered.length === 0 ? (
+			<section class="section container container--large">
+				<p>
+					No projects yet for <strong>{toTitleCase(activeCategory)}</strong>. Try a
+					different filter.
+				</p>
+			</section>
+		) : (
+			<section class="section container container--large">
+				<div class="work-grid">
+					{filtered.map((entry) => (
+						<WorkCard
+							entry={entry}
+							services={mapDisplayServicesToLinks(entry.data.displayServices)}
+						/>
+					))}
+				</div>
+			</section>
+		)
+	}
+</Base>
+
+<style lang="scss">
+	.filter-chips {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		padding: 0;
+		margin: 0;
+		list-style: none;
+	}
+	.chip {
+		display: inline-block;
+		padding: 0.5rem 0.75rem;
+		border-radius: 999px;
+		text-decoration: none;
+		border: 1px solid var(--border-colour, #ddd);
+	}
+	.chip--active {
+		border-color: currentColor;
+		font-weight: 600;
+	}
+
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+</style>
