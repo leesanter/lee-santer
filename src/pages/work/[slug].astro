@@ -4,7 +4,6 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import WorkCard from '../../components/molecules/WorkCard.astro';
 import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
-import { Markdown } from 'astro/components'; // if this import errors, swap <Markdown> for <div set:html={...} />
 
 // Build static paths for every published case study
 export const getStaticPaths = async () => {
@@ -122,9 +121,7 @@ const description = data.summary;
 			data.sections.map((section) => (
 				<section class="case-section">
 					<h2 class="h2">{section.title}</h2>
-					{/* If Markdown import fails in your setup, replace the next line with:
-            <div class="prose" set:html={section.prose} /> */}
-					<Markdown content={section.prose} />
+					<div class="prose" set:html={section.prose} />
 					{section.gallery && section.gallery.length > 0 && (
 						<div class="gallery grid">
 							{section.gallery.map((img) => (
