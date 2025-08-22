@@ -1,0 +1,125 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+// ✅ Build the four static routes without referencing outer vars
+export const getStaticPaths = () => [
+	{ params: { category: 'strategy' } },
+	{ params: { category: 'design' } },
+	{ params: { category: 'development' } },
+	{ params: { category: 'growth' } },
+];
+
+// Safe local source of truth for labels
+const CATS = ['strategy', 'design', 'development', 'growth'] as const;
+type Cat = (typeof CATS)[number];
+
+const { category } = Astro.params;
+
+// Validate (should be valid thanks to getStaticPaths, but keep safe guard)
+const active: Cat = (CATS as readonly string[]).includes(category as string)
+	? (category as Cat)
+	: 'strategy';
+
+// Load & filter entries
+// AFTER (correct)
+const entries = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
+	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
+);
+
+const filtered = entries.filter((e) => e.data.workFilterCategory.toLowerCase() === active);
+
+const title = `Work — ${active.slice(0, 1).toUpperCase() + active.slice(1)} — Lee Santer`;
+const description = `Case studies focused on ${active}.`;
+
+const pathFor = (cat: 'all' | Cat) => (cat === 'all' ? '/work' : `/work/${cat}`);
+---
+
+<Base>
+	<header class="section container stack">
+		<h1 class="h1">Work</h1>
+		<p class="lede">Selected projects. Filter by focus area.</p>
+
+		<nav aria-label="Filter projects by category">
+			<ul class="filter-chips" role="list">
+				{
+					(['all', ...CATS] as const).map((cat) => (
+						<li>
+							<a
+								href={pathFor(cat as any)}
+								aria-current={cat === active ? 'page' : undefined}
+								class={`chip ${cat === active ? 'chip--active' : ''}`}
+							>
+								{cat.slice(0, 1).toUpperCase() + cat.slice(1)}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+	</header>
+
+	{
+		filtered.length === 0 ? (
+			<section class="section container">
+				<p>
+					No projects yet for{' '}
+					<strong>{active.slice(0, 1).toUpperCase() + active.slice(1)}</strong>. Try a
+					different filter.
+				</p>
+			</section>
+		) : (
+			<section class="section container">
+				<div class="work-grid">
+					{filtered.map((entry) => (
+						<WorkCard
+							entry={entry}
+							services={mapDisplayServicesToLinks(entry.data.displayServices)}
+						/>
+					))}
+				</div>
+			</section>
+		)
+	}
+</Base>
+
+<style>
+	.section {
+		padding-block: var(--section-y, 4rem);
+	}
+	.container {
+		width: min(1100px, 92vw);
+		margin-inline: auto;
+	}
+	.stack > * + * {
+		margin-top: 0.75rem;
+	}
+
+	.filter-chips {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		padding: 0;
+		margin: 0;
+		list-style: none;
+	}
+	.chip {
+		display: inline-block;
+		padding: 0.5rem 0.75rem;
+		border-radius: 999px;
+		text-decoration: none;
+		border: 1px solid var(--border-colour, #ddd);
+	}
+	.chip--active {
+		border-color: currentColor;
+		font-weight: 600;
+	}
+
+	.work-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+</style>
