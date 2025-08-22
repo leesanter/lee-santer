@@ -1,27 +1,65 @@
-/* ======================================================================
-   src/content/config.ts — Astro Content Collections
-   - Defines a "blog" collection using Zod schemas (via astro:content)
-   - Fields: title, description, publishDate, updatedDate?, heroImage?,
-             tags[], draft (default false), ogImage?, canonical?
-   - MD files go in /src/content/blog/*.md
-   - Use `getCollection("blog")` and `getEntry("blog", slug)` in pages
-====================================================================== */
-import { defineCollection, z } from "astro:content";
+import { defineCollection, z } from 'astro:content';
 
-const blog = defineCollection({
-  type: "content",
-  schema: ({ image }) =>
-    z.object({
+/**
+ * Content Collections schema
+ * - case-studies: drives /work and /services selections
+ * - insights: drives /insights
+ *
+ * Notes:
+ * - We use explicit `slug` to keep URLs stable even if filenames change.
+ * - `heroAlt` is required for accessibility.
+ * - `displayServices` are decorative; deep-links are resolved via a Service Anchor Map during render.
+ */
+
+const CategoryEnum = z.enum(['Strategy', 'Design', 'Development', 'Growth']);
+const LayoutHintEnum = z.enum(['text', 'text+gallery', 'full-bleed']);
+
+const caseStudies = defineCollection({
+  type: 'content',
+  schema: ({ image }) => z.object({
+    title: z.string(),
+    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/,{ message: 'Use lowercase-kebab-case' }),
+    summary: z.string().max(160, 'Keep summaries ≤160 characters'),
+    hero: image(),
+    heroAlt: z.string().min(2, 'Provide meaningful alt text for the hero image'),
+    completedDate: z.coerce.date(),
+    displayServices: z.array(z.string()).min(1),
+    siteUrl: z.string().url().optional(),
+    sections: z.array(z.object({
       title: z.string(),
-      description: z.string().optional(),
-      publishDate: z.coerce.date().optional(),
-      updatedDate: z.coerce.date().optional(),
-      heroImage: z.union([image(), z.string()]).optional(),
-      ogImage: z.union([image(), z.string()]).optional(),
-      canonical: z.string().url().optional(),
-      draft: z.boolean().default(false),
-      tags: z.array(z.string()).default([]),
-    }),
+      prose: z.string(), // Short markdown/MDX prose
+      gallery: z.array(image()).optional(),
+      layoutHint: LayoutHintEnum.optional(),
+    })).min(1),
+    metrics: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+    galleryTop: z.array(image()).optional(),
+    ogImage: image().optional(),
+    featured: z.boolean().default(false),
+    draft: z.boolean().default(false),
+    expertiseCategories: z.array(CategoryEnum).min(1).max(3),
+    highlightInExpertise: z.array(CategoryEnum).default([]),
+    highlightPriority: z.number().int().positive().default(999),
+    workFilterCategory: CategoryEnum,
+    internalTags: z.array(z.string()).default([]),
+  }),
 });
 
-export const collections = { blog };
+const insights = defineCollection({
+  type: 'content',
+  schema: ({ image }) => z.object({
+    title: z.string(),
+    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/,{ message: 'Use lowercase-kebab-case' }),
+    summary: z.string().max(160),
+    date: z.coerce.date(),
+    hero: image(),
+    heroAlt: z.string().optional().default(''),
+    tags: z.array(z.string()).default([]), // internal-only tags for related content (no routes)
+    ogImage: image().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = {
+  'case-studies': caseStudies,
+  insights,
+};
