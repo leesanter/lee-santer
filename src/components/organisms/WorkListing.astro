@@ -12,17 +12,17 @@ interface Props {
 	active?: AllOrCat; // 'all' | 'strategy' | 'design' | 'development' | 'growth'
 	lede?: string; // optional line above filters
 }
-const { entries, active = 'all', lede = 'Selected projects. Filter by focus area.' } = Astro.props;
+const { entries, active = 'all', lede = 'Filter by focus area.' } = Astro.props;
 
-const pathFor = (cat: AllOrCat) => (cat === 'all' ? '/work' : `/work/${cat}`);
+const pathFor = (cat: AllOrCat) => (cat === 'all' ? '/work#projects' : `/work/${cat}#projects`);
 const label = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 ---
 
-<section class="section">
+<section class="section" id="projects">
 	<div class="container container--large">
 		<div class="section-layout">
-			<div class="stack small">
-				{lede && <p class="lede">{lede}</p>}
+			<div class="stack tiny">
+				{lede && <p>{lede}</p>}
 
 				<nav aria-label="Filter projects by category">
 					<ul class="filter-chips" role="list">
@@ -58,3 +58,23 @@ const label = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 		</div>
 	</div>
 </section>
+
+<style lang="scss">
+	#projects {
+		scroll-margin-top: calc(var(--header-height, 56px) + var(--size--medium));
+	}
+
+	.work-grid {
+		flex-direction: column;
+		grid-template-rows: auto auto;
+		grid-auto-columns: 1fr;
+		justify-content: flex-start;
+		width: 100%;
+		display: flex;
+		gap: var(--size--large);
+
+		list-style: none;
+
+		padding: 0;
+	}
+</style>
