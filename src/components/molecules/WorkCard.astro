@@ -2,79 +2,180 @@
 import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 
+interface ServiceLink {
+	label: string;
+}
+
 interface Props {
 	entry: CollectionEntry<'case-studies'>;
-	services: { label: string; href: string | null }[];
+	services: ServiceLink[]; // labels only (non-clickable)
 }
 
 const { entry, services } = Astro.props;
-const { data } = entry;
-const href = `/work/${entry.slug}`; // ✅ use system slug
+const href = `/work/${entry.slug}`;
+const { title, hero, heroAlt = '' } = entry.data;
 ---
 
 <article class="work-card">
-	<a class="work-card__link" href={href}>
-		<figure class="work-card__media">
+	<!-- Big linked media -->
+	<a class="work-card__media" href={href} aria-label={`View case study: ${title}`}>
+		<div class="work-card__image-wrap" data-parallax>
 			<Image
-				src={data.hero}
-				alt={data.heroAlt}
-				widths={[480, 768, 1024, 1440]}
-				sizes="(min-width: 1100px) 33vw, (min-width: 700px) 50vw, 100vw"
+				src={hero}
+				alt={heroAlt}
+				class="work-card__image"
+				widths={[640, 960, 1280, 1600]}
+				sizes="(min-width: 1100px) 1100px, 92vw"
 				loading="lazy"
 				decoding="async"
 			/>
-		</figure>
-		<div class="work-card__content">
-			<h3 class="work-card__title">{data.title}</h3>
-			<p class="work-card__summary">{data.summary}</p>
-			<p class="work-card__services">
-				{
-					services.map((s, i) => (
-						<>
-							{i > 0 && (
-								<span class="sep" aria-hidden="true">
-									{' '}
-									·{' '}
-								</span>
-							)}
-							{s.href ? <a href={s.href}>{s.label}</a> : <span>{s.label}</span>}
-						</>
-					))
-				}
-			</p>
+			<!-- optional reveal layer (wired later) -->
+			<div class="work-card__revealer" aria-hidden="true" data-reveal></div>
 		</div>
 	</a>
+
+	<!-- Non-interactive overlay copy -->
+	<div class="work-card__overlay text-override-light">
+		<h3 class="work-card__title">{title}</h3>
+		{
+			services.length > 0 && (
+				<ul class="work-card__services" role="list">
+					{services.map((s) => (
+						<li>{s.label}</li>
+					))}
+				</ul>
+			)
+		}
+	</div>
+
+	<!-- Text CTA bottom-right over the image (separate link; no nesting) -->
+	<p class="work-card__cta">
+		<a class="work-card__cta-link" href={href}>View case study →</a>
+	</p>
 </article>
 
-<style>
+<style lang="scss">
 	.work-card {
-		display: block;
-	}
-	.work-card__link {
-		display: grid;
-		gap: 0.5rem;
-		text-decoration: none;
-		color: inherit;
-	}
-	.work-card__media :where(img, picture) {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: var(--size--medium);
 		width: 100%;
-		height: auto;
+		overflow: hidden;
+	}
+
+	/* Media block */
+	.work-card__media {
+		position: relative;
 		display: block;
-		border-radius: var(--radius--l, 14px);
+		width: 100%;
+		max-height: 90vh;
+	}
+	.work-card__image-wrap {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		width: 100%;
+		height: 100%;
+		aspect-ratio: 3/2;
+	}
+	.work-card__image {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 120%;
+		object-fit: cover;
+		object-position: 50% 50%;
+		filter: brightness(0.55);
+		will-change: transform;
+		transform-style: preserve-3d;
+	}
+
+	/* Reveal hook (inactive for now) */
+	.work-card__revealer {
+		display: none;
+		position: absolute;
+		inset: 0;
+		width: 110%;
+		height: 100%;
+		z-index: 2;
+		background: #fff;
+	}
+	body[data-body-bg='light'] .work-card__revealer {
+		background-color: var(--colour--white);
+	}
+
+	/* Overlay copy */
+	.work-card__overlay {
+		pointer-events: none;
+		position: absolute;
+		left: var(--size--large);
+		right: var(--size--large);
+		bottom: var(--size--large);
+		z-index: 3;
 	}
 	.work-card__title {
 		margin: 0;
-	}
-	.work-card__summary {
-		margin: 0;
-		color: var(--text-muted-colour, #555);
+		font-size: var(--font--heading-1);
 	}
 	.work-card__services {
-		margin: 0;
-		color: var(--text-muted-colour, #666);
-		font-size: 0.95rem;
+		margin: 0.5rem 0 0;
+		padding: 0;
+		list-style: none;
+		line-height: 1.4;
+
+		li {
+			font-size: var(--font--medium);
+		}
 	}
-	.work-card__services a {
+	.work-card__services li + li {
+		margin-top: 0.15rem;
+	}
+
+	/* Text CTA */
+	.work-card__cta {
+		margin: 0;
+		position: absolute;
+		right: var(--size--large);
+		bottom: var(--size--large);
+		z-index: 4;
+	}
+	.work-card__cta-link {
+		color: var(--colour--white);
 		text-decoration: underline;
+		text-underline-offset: 0.12em;
+		text-decoration-thickness: from-font;
+		font-weight: var(--weight--medium);
+	}
+	.work-card__cta-link:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 3px;
+		border-radius: 4px;
+	}
+
+	/* Hover affordance (desktop only) */
+	@media (hover: hover) {
+		.work-card__media:hover .work-card__image {
+			filter: brightness(0.5) contrast(1.02);
+			transform: scale(1.01);
+			transition:
+				transform 0.25s ease,
+				filter 0.25s ease;
+		}
+	}
+
+	/* Mobile spacing tweaks */
+	@media (max-width: 640px) {
+		.work-card__overlay {
+			left: var(--size--medium);
+			right: var(--size--medium);
+			bottom: var(--size--medium);
+		}
+		.work-card__cta {
+			right: var(--size--medium);
+			bottom: var(--size--medium);
+		}
 	}
 </style>
