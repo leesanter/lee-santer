@@ -4,42 +4,58 @@
    - Component spacing (.stack) and document flow spacing (.flow)
    - Grid helpers (section-layout, content-layout, span utilities)
    ======================================================================== */
-
 /* -------------------------------------
-   Global section rhythm
+   Section rhythm
 ------------------------------------- */
-/* SECTION RHYTHM — apply to any sectioning element via .section */
+/* 1) Default: every section has TOP padding only */
 :where(.section) {
-	padding-block: var(--layout--section-y);
+	padding-top: var(--layout--section-y);
+	padding-bottom: 0;
 }
 
-/* Optional fill */
-:where(.section--fill) {
-	background: var(--bg-colour);
-}
-
-/* First section under the fixed header gets extra top space */
-main > :where(.section):first-of-type:not(.is-flush) {
+/* 2) First section gets extra space for the fixed header */
+main > :where(.section):first-child:not(.is-flush) {
 	padding-top: calc(var(--header-height, 56px) + var(--layout--section-y));
 }
 
-/* Force that offset even if it's not first, via utility */
-:where(.first-section) {
-	padding-top: calc(var(--header-height, 56px) + var(--size--large));
+/* 3) Last section gets BOTTOM padding so the page never kisses the footer */
+main > :where(.section):last-child {
+	padding-bottom: var(--layout--section-y);
 }
 
-/* Remove top offset when you want the hero flush */
-:where(.is-flush) {
+/* 4) Filled band: be symmetric inside the coloured block */
+:where(.section--fill) {
+	padding-top: var(--layout--section-y);
+	padding-bottom: var(--layout--section-y);
+}
+
+/* 5) Prevent double gap after a filled section:
+      if a filled section is followed by any section, don't add that next section's top padding */
+// :where(.section--fill) + .section {
+// 	padding-top: 0;
+// }
+
+/* Edge cases & helpers ----------------------------------- */
+
+/* If you want two filled sections to both stay perfectly symmetric AND meet with no double spacing,
+   opt-in on the previous one to drop its bottom (so the next can keep its top). */
+.section--join-next {
+	padding-bottom: 0 !important;
+}
+
+/* Remove extra header offset on the first section (use for truly flush heroes) */
+.is-flush {
 	padding-top: 0 !important;
 }
 
-/* Modifiers */
-:where(.section--tight) {
-	padding-block: var(--size--large);
+/* Density modifiers */
+.section--tight {
+	padding-top: var(--size--large);
 }
-:where(.section--loose) {
-	padding-block: var(--size--xlarge);
+.section--loose {
+	padding-top: var(--size--xlarge);
 }
+/* When these are on the last section, they’ll combine with rule (3) for bottom space */
 
 /* Make in-page anchors (e.g., #pricing) not hide under the header */
 :where(h1[id], h2[id], h3[id], h4[id], h5[id], h6[id], section[id], [data-anchor]) {
