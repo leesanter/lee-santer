@@ -8,36 +8,36 @@
 /* -------------------------------------
    Global section rhythm
 ------------------------------------- */
-section {
-	/* FIX: use the defined token name */
+/* SECTION RHYTHM — apply to any sectioning element via .section */
+:where(.section) {
 	padding-block: var(--layout--section-y);
 }
 
-/* Optional: scheme-aware fill (opt-in) */
-.section--fill {
+/* Optional fill */
+:where(.section--fill) {
 	background: var(--bg-colour);
 }
 
-/* Default first section gets space = header + a bit of rhythm */
-main > section:first-of-type:not(.is-flush) {
+/* First section under the fixed header gets extra top space */
+main > :where(.section):first-of-type:not(.is-flush) {
 	padding-top: calc(var(--header-height, 56px) + var(--layout--section-y));
 }
 
-/* Utility: force space even if it isn't the first, or when you prefer class-based control */
-.first-section {
+/* Force that offset even if it's not first, via utility */
+:where(.first-section) {
 	padding-top: calc(var(--header-height, 56px) + var(--size--large));
 }
 
-/* Utility: remove space (e.g., hero that sits flush under header) */
-.is-flush {
+/* Remove top offset when you want the hero flush */
+:where(.is-flush) {
 	padding-top: 0 !important;
 }
 
-/* Optional section modifiers */
-.section--tight {
+/* Modifiers */
+:where(.section--tight) {
 	padding-block: var(--size--large);
 }
-.section--loose {
+:where(.section--loose) {
 	padding-block: var(--size--xlarge);
 }
 

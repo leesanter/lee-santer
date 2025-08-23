@@ -1,0 +1,60 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
+
+const CATS = ['strategy', 'design', 'development', 'growth'] as const;
+type Cat = (typeof CATS)[number];
+type AllOrCat = Cat | 'all';
+
+interface Props {
+	entries: CollectionEntry<'case-studies'>[]; // already filtered/sorted by the page
+	active?: AllOrCat; // 'all' | 'strategy' | 'design' | 'development' | 'growth'
+	lede?: string; // optional line above filters
+}
+const { entries, active = 'all', lede = 'Selected projects. Filter by focus area.' } = Astro.props;
+
+const pathFor = (cat: AllOrCat) => (cat === 'all' ? '/work' : `/work/${cat}`);
+const label = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
+---
+
+<section class="section">
+	<div class="container container--large">
+		<div class="section-layout">
+			<div class="stack small">
+				{lede && <p class="lede">{lede}</p>}
+
+				<nav aria-label="Filter projects by category">
+					<ul class="filter-chips" role="list">
+						{
+							(['all', ...CATS] as const).map((cat) => (
+								<li>
+									<a
+										href={pathFor(cat as AllOrCat)}
+										aria-current={cat === active ? 'page' : undefined}
+										class={`chip ${cat === active ? 'chip--active' : ''}`}
+									>
+										{label(cat as string)}
+									</a>
+								</li>
+							))
+						}
+					</ul>
+				</nav>
+			</div>
+
+			<ul class="work-grid" role="list">
+				{
+					entries.map((entry) => (
+						<li>
+							<WorkCard
+								entry={entry}
+								services={mapDisplayServicesToLinks(entry.data.displayServices)}
+							/>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</div>
+</section>
