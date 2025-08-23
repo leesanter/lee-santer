@@ -8,8 +8,9 @@
 
 body {
 	font-family: var(--font-family--body);
-	font-size: var(--font--regular);
-	line-height: 1.6; /* consistent readable base */
+	font-size: var(--font-size--body);
+	font-weight: var(--font-weight--body);
+	line-height: var(--leading--body);
 	text-rendering: optimizeLegibility;
 
 	/* colour & background now live in _base.scss (semantic, scheme-aware) */
@@ -27,10 +28,17 @@ h6 {
 	font-family: var(--font-family--heading);
 	color: var(--heading-colour);
 	line-height: 1.15;
-	letter-spacing: -0.01em;
-	font-weight: var(--weight--semibold);
-	/* Better multi-line titles */
+	font-weight: var(--font-weight--heading);
 	text-wrap: balance;
+}
+
+/* Only larger heads get slight negative tracking */
+h1,
+h2 {
+	letter-spacing: -0.015em;
+}
+h3 {
+	letter-spacing: -0.01em;
 }
 
 /* Map element sizes to tokens */
@@ -108,17 +116,15 @@ pre {
 	overflow: auto;
 }
 
-/* -------------------------------------
-   PROSE (Rich Text / CMS)
-   Only apply when you wrap content in .prose
-------------------------------------- */
+/* PROSE (Rich Text / CMS) */
 .prose {
 	--prose-gap: var(--size--small);
 	--prose-gap-heading: var(--size--medium);
 	--prose-indent: 1.25em;
 
-	max-width: var(--prose-max, 65ch);
-	line-height: 1.7;
+	/* Use a token, default to 68ch if unset */
+	max-width: var(--prose-max, 68ch);
+	line-height: 1.6; /* slightly tighter with your larger base size */
 
 	> * + * {
 		margin-block-start: var(--prose-gap);
@@ -126,12 +132,13 @@ pre {
 
 	:where(h1, h2, h3, h4, h5, h6) {
 		margin: 0;
+		text-wrap: balance;
 	}
 	:where(h1, h2, h3, h4, h5, h6) + * {
 		margin-block-start: var(--prose-gap-heading);
 	}
 
-	/* Lists inside prose */
+	/* Lists */
 	:where(ul, ol) {
 		padding-inline-start: var(--prose-indent);
 		margin-block: var(--prose-gap);
@@ -141,15 +148,89 @@ pre {
 	} /* nested list top spacing */
 	:where(ul, ol) > :where(li + li) {
 		margin-top: 0.35em;
-	} /* gentle item gap */
+	}
+	:where(ol) {
+		list-style: decimal;
+	}
+	:where(ul) {
+		list-style: disc;
+	}
 
+	/* Links */
+	a {
+		text-decoration: underline;
+		text-underline-offset: 0.12em;
+		color: var(--link-colour);
+	}
+	a:hover {
+		text-decoration-thickness: from-font;
+	}
+	a:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 2px;
+	}
+
+	/* Quotes */
+	blockquote {
+		margin: var(--prose-gap) 0;
+		padding-inline: 1rem;
+		border-inline-start: 3px solid var(--border-colour);
+		color: var(--text-muted-colour);
+	}
+
+	/* Code */
+	:where(code, kbd) {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+			'Courier New', monospace;
+		font-size: 0.95em;
+		background: var(--surface-muted);
+		padding: 0.1em 0.35em;
+		border-radius: 0.35em;
+	}
+	pre {
+		overflow: auto;
+		padding: 0.85rem 1rem;
+		border-radius: var(--radius--m);
+		background: var(--surface-muted);
+	}
+	pre code {
+		background: transparent;
+		padding: 0;
+	}
+
+	/* Tables */
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		overflow-x: auto;
+		display: block;
+	}
+	th,
+	td {
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid var(--border-colour);
+		text-align: left;
+	}
+	thead th {
+		font-weight: 600;
+	}
+	tbody tr:hover {
+		background: var(--surface-subtle);
+	}
+
+	/* Media */
 	figure {
 		display: block;
 	}
 	figcaption {
 		font-size: var(--font--small);
-		color: var(--text-muted-colour); /* better than opacity for contrast */
+		color: var(--text-muted-colour);
 		margin-top: 0.5em;
+	}
+
+	/* Long words/URLs */
+	:where(p, li) {
+		overflow-wrap: anywhere;
 	}
 }
 

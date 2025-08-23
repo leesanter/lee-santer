@@ -8,6 +8,7 @@
    - CTA button (optional) sits to the right of the nav
    - Uses your tokens and utilities (.container, .btn, spacing, colours)
 ====================================================================== */
+import LogoRaw from '../../assets/brand/wordmark.svg?raw';
 
 const ENV = import.meta.env;
 const SITE_NAME = ENV.PUBLIC_SITE_NAME ?? 'Site';
@@ -26,7 +27,6 @@ const currentPath = pathname.replace(/\/$/, '');
 const {
 	logoHref = '/',
 	logoAlt = SITE_NAME,
-	logoSvg = '/logo.svg', // e.g. "/logo.svg"
 	nav = [
 		{
 			label: 'Services',
@@ -63,14 +63,9 @@ const navWithState = nav.map((item) => {
 <header data-header class={`site-header${transparent ? ' is-transparent' : ''}`} role="banner">
 	<div class="site-header__inner container container--large">
 		<!-- Branding -->
-		<a href={logoHref} class="site-header__brand">
-			{
-				logoSvg ? (
-					<img src={logoSvg} alt={logoAlt} width="120" height="32" loading="eager" />
-				) : (
-					<span class="site-header__brand-text">{logoAlt}</span>
-				)
-			}
+		<a href={logoHref} class="site-header__brand" aria-label="Lee Santer — Home">
+			<span class="sr-only">Lee Santer</span>
+			<span class="logo" aria-hidden="true" set:html={LogoRaw} />
 		</a>
 
 		<!-- Primary nav -->
@@ -259,15 +254,14 @@ const navWithState = nav.map((item) => {
 		position: relative;
 		z-index: 1002; /* above panel */
 	}
-	.site-header__brand img {
-		display: block;
-		height: 1.5rem;
-		width: auto;
-	}
-	.site-header__brand-text {
-		font-weight: 700;
-		font-size: var(--font--medium);
-		letter-spacing: 0.01em;
+	.site-header__brand {
+		.logo {
+			:global(svg) {
+				display: block;
+				height: 1.5rem;
+				width: auto;
+			}
+		}
 	}
 
 	/* ======================================================================
