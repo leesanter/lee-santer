@@ -29,6 +29,7 @@ const { title, hero, heroAlt = '' } = entry.data;
 				loading="lazy"
 				decoding="async"
 			/>
+			<span class="work-card__scrim" aria-hidden="true"></span>
 			<!-- optional reveal layer (wired later) -->
 			<div class="work-card__revealer" aria-hidden="true" data-reveal></div>
 		</div>
@@ -88,7 +89,6 @@ const { title, hero, heroAlt = '' } = entry.data;
 		height: 120%;
 		object-fit: cover;
 		object-position: 50% 50%;
-		filter: brightness(0.55);
 		will-change: transform;
 		transform-style: preserve-3d;
 	}
@@ -154,15 +154,27 @@ const { title, hero, heroAlt = '' } = entry.data;
 		border-radius: 4px;
 	}
 
-	/* Hover affordance (desktop only) */
+	/* Darken via overlay scrim */
+	.work-card__scrim {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background: rgba(0, 0, 0, 0.45); /* ≈ brightness(0.55) */
+		transition: opacity 0.2s ease; /* cheap */
+	}
+
+	/* Subtle affordance on desktop only (no zoom) */
 	@media (hover: hover) {
-		.work-card__media:hover .work-card__image {
-			filter: brightness(0.5) contrast(1.02);
-			transform: scale(1.01);
-			transition:
-				transform 0.25s ease,
-				filter 0.25s ease;
+		.work-card__media:hover .work-card__scrim {
+			opacity: 0.5;
 		}
+	}
+
+	/* Keep your focus ring (no transforms needed) */
+	.work-card__media:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 4px;
+		border-radius: var(--radius--xl, 16px);
 	}
 
 	/* Mobile spacing tweaks */
