@@ -1,4 +1,4 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection, z, image } from 'astro:content';
 
 /**
  * Content Collections schema
@@ -16,36 +16,49 @@ const LayoutHintEnum = z.enum(['text', 'text+gallery', 'full-bleed']);
 
 const caseStudies = defineCollection({
   type: 'content',
-  schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      summary: z.string().max(160, 'Keep summaries ≤160 characters'),
-      hero: image(),
-      heroAlt: z.string().min(2, 'Provide meaningful alt text for the hero image'),
-      completedDate: z.coerce.date(),
-      displayServices: z.array(z.string()).min(1),
-      siteUrl: z.string().url().optional(),
-      sections: z
-        .array(
-          z.object({
-            title: z.string(),
-            prose: z.string(), // short markdown/MDX prose
-            gallery: z.array(image()).optional(),
-            layoutHint: LayoutHintEnum.optional(),
-          }),
-        )
-        .min(1),
-      metrics: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
-      galleryTop: z.array(image()).optional(),
-      ogImage: image().optional(),
-      featured: z.boolean().default(false),
-      draft: z.boolean().default(false),
-      expertiseCategories: z.array(CategoryEnum).min(1).max(3),
-      highlightInExpertise: z.array(CategoryEnum).default([]),
-      highlightPriority: z.number().int().positive().default(999),
-      workFilterCategory: CategoryEnum,
-      internalTags: z.array(z.string()).default([]),
-    }),
+  schema: z.object({
+    title: z.string(),
+    summary: z.string().optional(),
+    // 🔒 image metadata (AstroImage only)
+    hero: image(),
+    heroAlt: z.string().default(''),
+    completedDate: z.string(), // or z.date().transform(...) if you prefer
+    displayServices: z.array(z.string()).default([]),
+
+    // ✅ canonical field name
+    siteUrl: z.string().url().optional(),
+
+    sections: z
+      .array(
+        z.object({
+          title: z.string(),
+          prose: z.string(), // markdown string
+        })
+      )
+      .default([]),
+
+    // 🔒 gallery images as image()
+    galleries: z
+      .array(
+        z.object({
+          images: z.array(
+            z.object({
+              src: image(),
+              alt: z.string().optional(),
+            })
+          ),
+        })
+      )
+      .default([]),
+
+    expertiseCategories: z.enum(['Strategy', 'Design', 'Development', 'Growth']).array().default([]),
+    highlightInExpertise: z.enum(['Strategy', 'Design', 'Development', 'Growth']).array().default([]),
+    highlightPriority: z.number().optional(),
+    workFilterCategory: z.enum(['Strategy', 'Design', 'Development', 'Growth']),
+    internalTags: z.array(z.string()).default([]),
+    ogImage: image().optional(),
+    draft: z.boolean().default(false),
+  }),
 });
 
 const insights = defineCollection({
