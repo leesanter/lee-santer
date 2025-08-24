@@ -11,14 +11,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.4.2",
     "astro": "^5.12.5",
-      "@astrojs/sitemap": "^3.4.2"
+    "marked": "^16.2.0"
   },
   "devDependencies": {
     "@astrojs/rss": "^4.0.12",
     "sass": "^1.89.2",
     "sharp": "^0.34.3"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "packageManager": "npm@10"
 }
