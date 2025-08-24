@@ -20,7 +20,7 @@ const label = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 
 <section class="section" id="projects">
 	<div class="container container--large">
-		<div class="section-layout">
+		<div class="stack">
 			<div class="stack tiny">
 				{lede && <p>{lede}</p>}
 
@@ -32,7 +32,7 @@ const label = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 									<a
 										href={pathFor(cat as AllOrCat)}
 										aria-current={cat === active ? 'page' : undefined}
-										class={`chip ${cat === active ? 'chip--active' : ''}`}
+										class={`btn btn--sm btn--outline ${cat === active ? 'btn--active' : ''}`}
 									>
 										{label(cat as string)}
 									</a>
