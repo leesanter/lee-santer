@@ -63,3 +63,13 @@ export function mapDisplayServicesToLinks(labels: string[]) {
     return { label, href };
   });
 }
+
+/** Next case study in newest→oldest order, with wrap-around. */
+export function pickNextCaseStudy(all: Case[], current: Case): Case | null {
+  if (!all || all.length === 0) return null;
+  // Ensure we’re operating on newest→oldest
+  const sorted = [...all].sort(byDateDesc);
+  const idx = sorted.findIndex((e) => e.slug === current.slug);
+  const nextIdx = idx === -1 ? 0 : (idx + 1) % sorted.length;
+  return sorted[nextIdx] ?? null;
+}
