@@ -1,88 +1,67 @@
 import { defineCollection, z } from 'astro:content';
 
-/**
- * Content Collections schema
- * - case-studies: drives /work and /services selections
- * - insights: drives /insights
- *
- * Notes:
- * - We use explicit `slug` to keep URLs stable even if filenames change.
- * - `heroAlt` is required for accessibility.
- * - `displayServices` are decorative; deep-links are resolved via a Service Anchor Map during render.
- */
+const CATEGORIES = z.enum(['Strategy', 'Design', 'Development', 'Growth']);
 
-const CategoryEnum = z.enum(['Strategy', 'Design', 'Development', 'Growth']);
-const LayoutHintEnum = z.enum(['text', 'text+gallery', 'full-bleed']);
-
-const caseStudies = defineCollection({
+const services = defineCollection({
   type: 'content',
-  schema: ({ image }) =>
-    z.object({
+  schema: z.object({
+    title: z.string(),
+    category: CATEGORIES,
+    anchor: z.string().optional(),           // defaults to file slug (serviceKey)
+    intro: z.string().optional(),
+    body: z.string().optional(),
+    outcomes: z.array(z.string()).optional(),
+    deliverables: z.array(z.string()).optional(),
+    order: z.number().int().nonnegative().default(999),
+    draft: z.boolean().default(false),
+  }),
+});
+
+const work = defineCollection({
+  type: 'content',
+  schema: ({ image }) => z.object({
+    title: z.string(),
+    summary: z.string(),
+    featuredImage: image(),
+    featuredAlt: z.string(),
+    serviceCategory: CATEGORIES,             // for /work filter only
+    services: z.array(z.string()).default([]), // serviceKeys (filenames)
+    siteUrl: z.string().url().optional(),
+    completedDate: z.coerce.date(),
+    featuredHome: z.boolean().default(false),
+    featureWeight: z.number().optional(),
+    sections: z.array(z.object({
       title: z.string(),
-      summary: z.string().optional(),
-
-      // Images are real ImageMetadata (AstroImage only; no fallbacks)
-      hero: image(),
-      heroAlt: z.string().default(''),
-
-      // Dates are real Dates everywhere
-      completedDate: z.coerce.date(),
-
-      displayServices: z.array(z.string()).default([]),
-
-      // Canonical external link
-      siteUrl: z.string().url().optional(),
-
-      // Case study “rich sections”
-      sections: z
-        .array(z.object({ title: z.string(), prose: z.string() }))
-        .default([]),
-
-      // Simple gallery rows; first image per row for now
-      galleries: z
-        .array(
-          z.object({
-            images: z.array(
-              z.object({
-                src: image(),
-                alt: z.string().optional(),
-              })
-            ),
-          })
-        )
-        .default([]),
-
-      expertiseCategories: z
-        .array(z.enum(['Strategy', 'Design', 'Development', 'Growth']))
-        .default([]),
-      highlightInExpertise: z
-        .array(z.enum(['Strategy', 'Design', 'Development', 'Growth']))
-        .default([]),
-      highlightPriority: z.number().optional(),
-      workFilterCategory: z.enum(['Strategy', 'Design', 'Development', 'Growth']),
-
-      internalTags: z.array(z.string()).default([]),
-      ogImage: image().optional(),
-      draft: z.boolean().default(false),
-    }),
+      body: z.string(),
+      image: image().optional(),
+      imageAlt: z.string().optional(),
+      imageAlign: z.enum(['left','right','full']).default('right'),
+    })).default([]),
+    gallery: z.array(image()).optional(),
+    testimonial: z.object({
+      quote: z.string(),
+      personName: z.string(),
+      role: z.string().optional(),
+      company: z.string().optional(),
+    }).optional(),
+    ogImage: image().optional(),
+    draft: z.boolean().default(false),
+  }),
 });
 
 const insights = defineCollection({
   type: 'content',
-  schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      summary: z.string().max(160),
-      date: z.coerce.date(),
-      hero: image(),
-      heroAlt: z.string().optional().default(''),
-      tags: z.array(z.string()).default([]), // internal-only; no routes
-      ogImage: image().optional(),
-      draft: z.boolean().default(false),
-    }),
+  schema: ({ image }) => z.object({
+    title: z.string(),
+    summary: z.string(),
+    date: z.coerce.date(),
+    featuredImage: image().optional(),
+    featuredAlt: z.string().optional(),
+    author: z.string().default('Lee Santer'),
+    tags: z.array(z.string()).default([]),
+    ogImage: image().optional(),
+    draft: z.boolean().default(false),
+  }),
 });
 
-export const collections = {
-  'case-studies': caseStudies,
-  insights,
-};
+export const collections = { services, work, insights };
