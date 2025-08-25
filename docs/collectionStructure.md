@@ -12,7 +12,7 @@ src/
       design/prototyping-and-usability-testing.md   # draft: true
       development/custom-website-development.md
       development/webflow-implementations.md
-      development/wordpress-existing-sites.md
+      development/wordpress-development.md
       development/shopify-builds.md
       development/performance-and-core-web-vitals.md  # draft: true
       development/accessibility-development.md        # draft: true
