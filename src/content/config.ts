@@ -19,32 +19,51 @@ const caseStudies = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      summary: z.string().max(160, 'Keep summaries ≤160 characters'),
+      summary: z.string().optional(),
+
+      // Images are real ImageMetadata (AstroImage only; no fallbacks)
       hero: image(),
-      heroAlt: z.string().min(2, 'Provide meaningful alt text for the hero image'),
+      heroAlt: z.string().default(''),
+
+      // Dates are real Dates everywhere
       completedDate: z.coerce.date(),
-      displayServices: z.array(z.string()).min(1),
+
+      displayServices: z.array(z.string()).default([]),
+
+      // Canonical external link
       siteUrl: z.string().url().optional(),
+
+      // Case study “rich sections”
       sections: z
+        .array(z.object({ title: z.string(), prose: z.string() }))
+        .default([]),
+
+      // Simple gallery rows; first image per row for now
+      galleries: z
         .array(
           z.object({
-            title: z.string(),
-            prose: z.string(), // short markdown/MDX prose
-            gallery: z.array(image()).optional(),
-            layoutHint: LayoutHintEnum.optional(),
-          }),
+            images: z.array(
+              z.object({
+                src: image(),
+                alt: z.string().optional(),
+              })
+            ),
+          })
         )
-        .min(1),
-      metrics: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
-      galleryTop: z.array(image()).optional(),
-      ogImage: image().optional(),
-      featured: z.boolean().default(false),
-      draft: z.boolean().default(false),
-      expertiseCategories: z.array(CategoryEnum).min(1).max(3),
-      highlightInExpertise: z.array(CategoryEnum).default([]),
-      highlightPriority: z.number().int().positive().default(999),
-      workFilterCategory: CategoryEnum,
+        .default([]),
+
+      expertiseCategories: z
+        .array(z.enum(['Strategy', 'Design', 'Development', 'Growth']))
+        .default([]),
+      highlightInExpertise: z
+        .array(z.enum(['Strategy', 'Design', 'Development', 'Growth']))
+        .default([]),
+      highlightPriority: z.number().optional(),
+      workFilterCategory: z.enum(['Strategy', 'Design', 'Development', 'Growth']),
+
       internalTags: z.array(z.string()).default([]),
+      ogImage: image().optional(),
+      draft: z.boolean().default(false),
     }),
 });
 
