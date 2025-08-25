@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllServices } from '../../lib/content';
+const services = await getAllServices();
+const groups =
+	Object.groupBy?.(services, (s) => s.data.category) ??
+	services.reduce(
+		(acc, s) => {
+			(acc[s.data.category] ||= []).push(s);
+			return acc;
+		},
+		{} as Record<string, typeof services>
+	);
+---
+
+<Base>
+	<h1>Services</h1>
+	{
+		(['Strategy', 'Design', 'Development', 'Growth'] as const).map((cat) => (
+			<section>
+				<h2>
+					<a href={`/services/${cat.toLowerCase()}`}>{cat}</a>
+				</h2>
+				<ul>
+					{(groups[cat] ?? []).map((s) => (
+						<li>
+							<a
+								href={`/services/${cat.toLowerCase()}#${s.data.anchor ?? s.slug.split('/').pop()}`}
+							>
+								{s.data.title}
+							</a>
+						</li>
+					))}
+				</ul>
+			</section>
+		))
+	}
+</Base>
