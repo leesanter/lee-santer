@@ -1,0 +1,34 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllPosts, nextPrev } from '../../lib/content';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('insights', (p) => !p.data.draft);
+	return posts.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const all = await getAllPosts();
+const entry = all.find((e) => e.slug === slug)!;
+const { next, prev } = nextPrev(all, slug!);
+---
+
+<Base>
+	<article>
+		{
+			entry.data.featuredImage && (
+				<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt || ''} />
+			)
+		}
+		<h1>{entry.data.title}</h1>
+		<p>{entry.data.summary}</p>
+		<slot />
+		{/* MDX body renders automatically */}
+	</article>
+
+	<nav aria-label="Post navigation">
+		{prev && <a href={`/insights/${prev.slug}`}>← {prev.data.title}</a>}
+		{next && <a href={`/insights/${next.slug}`}>{next.data.title} →</a>}
+	</nav>
+</Base>
