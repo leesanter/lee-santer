@@ -1,0 +1,30 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllServices } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return ['strategy','design','development','growth'].map((c) => ({ params: { category: c }}));
+}
+
+const category = Astro.params.category!;
+const proper = category.charAt(0).toUpperCase() + category.slice(1) as 'Strategy'|'Design'|'Development'|'Growth';
+const services = (await getAllServices()).filter(s => s.data.category === proper);
+---
+
+<Base>
+  <h1>{proper}</h1>
+  {services.map(svc => {
+    const key = svc.slug.split('/').pop()!;
+    const anchor = svc.data.anchor ?? key;
+    return (
+      <section id={anchor}>
+        <h2>{svc.data.title}</h2>
+        {svc.data.intro && <p>{svc.data.intro}</p>}
+        {svc.data.body && <div set:html={await Astro.markdown(svc.data.body)} />}
+        {svc.data.outcomes?.length && (
+          <ul>{svc.data.outcomes.map(o => <li>{o}</li>)}</ul>
+        )}
+      </section>
+    );
+  })}
+</Base>
