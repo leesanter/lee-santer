@@ -19,7 +19,7 @@ const raw = (Astro.params.category as string) || 'strategy';
 const active: Cat = (CATS as readonly string[]).includes(raw) ? (raw as Cat) : 'strategy';
 
 const all = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
-	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
+	(a, b) => b.data.completedDate.getTime() - a.data.completedDate.getTime()
 );
 
 const entries = all.filter((e) => e.data.workFilterCategory.toLowerCase() === active);

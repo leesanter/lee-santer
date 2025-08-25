@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import WorkListing from '../../components/organisms/WorkListing.astro';
 
 const entries = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
-	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
+	(a, b) => b.data.completedDate.getTime() - a.data.completedDate.getTime()
 );
 
 const title = 'Work — Lee Santer';

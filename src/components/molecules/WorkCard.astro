@@ -2,16 +2,15 @@
 import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 
-interface ServiceLink {
-	label: string;
-}
+type Case = CollectionEntry<'case-studies'>;
+type ServiceLink = { label: string; href?: string | null };
 
 interface Props {
-	entry: CollectionEntry<'case-studies'>;
-	services: ServiceLink[]; // labels only (non-clickable)
+	entry: Case;
+	services: ServiceLink[];
 }
 
-const { entry, services } = Astro.props;
+const { entry, services } = Astro.props as Props;
 const href = `/work/${entry.slug}`;
 const { title, hero, heroAlt = '' } = entry.data;
 ---

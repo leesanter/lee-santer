@@ -1,49 +1,50 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection, getEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
 import { Image as AstroImage } from 'astro:assets';
 import WorkCard from '../../components/molecules/WorkCard.astro';
-import { mapDisplayServicesToLinks, pickNextCaseStudy } from '../../lib/caseStudies';
+import { mapDisplayServicesToLinks, pickNextCaseStudy, byDateDesc } from '../../lib/caseStudies';
 import { mdToHtml } from '../../lib/md';
 
+type Case = CollectionEntry<'case-studies'>;
+
 export async function getStaticPaths() {
-	const all = await getCollection('case-studies');
+	const all = (await getCollection('case-studies')) as Case[];
 	return all.map((e) => ({ params: { slug: e.slug } }));
 }
 
 const { slug } = Astro.params as { slug: string };
-const entry = await getEntry('case-studies', slug);
+const entry = (await getEntry('case-studies', slug)) as Case | undefined;
 if (!entry) throw new Error(`Case study not found: ${slug}`);
 
 const {
 	title,
 	summary,
-	hero, // ImageMetadata (from image())
+	hero,
 	heroAlt = '',
 	displayServices = [],
 	completedDate,
-	siteUrl, // canonical
+	siteUrl,
 	sections = [],
 	galleries = [],
 } = entry.data;
 
 const services = mapDisplayServicesToLinks(displayServices);
+
 const formattedDate = completedDate
-	? new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(
-			new Date(completedDate)
-		)
+	? new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(completedDate)
 	: null;
 
-const all = (await getCollection('case-studies', ({ data }) => !data.draft)).sort(
-	(a, b) => new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime()
-);
+const all = (await getCollection('case-studies', ({ data }) => !data.draft)) as Case[];
+all.sort(byDateDesc);
 const nextEntry = pickNextCaseStudy(all, entry);
 
 const pageTitle = `${title} — Case Study — Lee Santer`;
 const description = summary ?? `Case study: ${title}.`;
 ---
 
-<Base title={pageTitle} description={description}>
+<Base {title} description={description}>
 	<!-- HERO -->
 	<header class="section is-flush case-hero">
 		<figure class="case-hero__media" data-parallax>
@@ -68,7 +69,6 @@ const description = summary ?? `Case study: ${title}.`;
 		<div class="container container--large">
 			<div class="section-layout">
 				<div class="content-layout">
-					<!-- Left: meta -->
 					<div class="content-column span-4">
 						<div class="stack medium">
 							{
@@ -112,7 +112,6 @@ const description = summary ?? `Case study: ${title}.`;
 						</div>
 					</div>
 
-					<!-- Right: Project Overview -->
 					<div class="content-column span-8">
 						{
 							sections[0] && (
@@ -125,7 +124,7 @@ const description = summary ?? `Case study: ${title}.`;
 					</div>
 				</div>
 
-				<!-- Image after overview -->
+				<!-- Overview image -->
 				{
 					galleries[0]?.images?.[0] && (
 						<div class="image-wrap case-image">
@@ -143,7 +142,7 @@ const description = summary ?? `Case study: ${title}.`;
 					)
 				}
 
-				<!-- Remaining sections interleaved with images -->
+				<!-- Interleave: section → image -->
 				{
 					sections.slice(1).map((s, idx) => (
 						<>

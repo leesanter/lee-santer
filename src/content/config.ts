@@ -1,4 +1,4 @@
-import { defineCollection, z, image } from 'astro:content';
+import { defineCollection, z } from 'astro:content';
 
 /**
  * Content Collections schema
@@ -16,49 +16,55 @@ const LayoutHintEnum = z.enum(['text', 'text+gallery', 'full-bleed']);
 
 const caseStudies = defineCollection({
   type: 'content',
-  schema: z.object({
-    title: z.string(),
-    summary: z.string().optional(),
-    // 🔒 image metadata (AstroImage only)
-    hero: image(),
-    heroAlt: z.string().default(''),
-    completedDate: z.string(), // or z.date().transform(...) if you prefer
-    displayServices: z.array(z.string()).default([]),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      summary: z.string().optional(),
 
-    // ✅ canonical field name
-    siteUrl: z.string().url().optional(),
+      // Images are real ImageMetadata (AstroImage only; no fallbacks)
+      hero: image(),
+      heroAlt: z.string().default(''),
 
-    sections: z
-      .array(
-        z.object({
-          title: z.string(),
-          prose: z.string(), // markdown string
-        })
-      )
-      .default([]),
+      // Dates are real Dates everywhere
+      completedDate: z.coerce.date(),
 
-    // 🔒 gallery images as image()
-    galleries: z
-      .array(
-        z.object({
-          images: z.array(
-            z.object({
-              src: image(),
-              alt: z.string().optional(),
-            })
-          ),
-        })
-      )
-      .default([]),
+      displayServices: z.array(z.string()).default([]),
 
-    expertiseCategories: z.enum(['Strategy', 'Design', 'Development', 'Growth']).array().default([]),
-    highlightInExpertise: z.enum(['Strategy', 'Design', 'Development', 'Growth']).array().default([]),
-    highlightPriority: z.number().optional(),
-    workFilterCategory: z.enum(['Strategy', 'Design', 'Development', 'Growth']),
-    internalTags: z.array(z.string()).default([]),
-    ogImage: image().optional(),
-    draft: z.boolean().default(false),
-  }),
+      // Canonical external link
+      siteUrl: z.string().url().optional(),
+
+      // Case study “rich sections”
+      sections: z
+        .array(z.object({ title: z.string(), prose: z.string() }))
+        .default([]),
+
+      // Simple gallery rows; first image per row for now
+      galleries: z
+        .array(
+          z.object({
+            images: z.array(
+              z.object({
+                src: image(),
+                alt: z.string().optional(),
+              })
+            ),
+          })
+        )
+        .default([]),
+
+      expertiseCategories: z
+        .array(z.enum(['Strategy', 'Design', 'Development', 'Growth']))
+        .default([]),
+      highlightInExpertise: z
+        .array(z.enum(['Strategy', 'Design', 'Development', 'Growth']))
+        .default([]),
+      highlightPriority: z.number().optional(),
+      workFilterCategory: z.enum(['Strategy', 'Design', 'Development', 'Growth']),
+
+      internalTags: z.array(z.string()).default([]),
+      ogImage: image().optional(),
+      draft: z.boolean().default(false),
+    }),
 });
 
 const insights = defineCollection({

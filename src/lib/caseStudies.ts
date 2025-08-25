@@ -1,14 +1,15 @@
-import { getCollection, CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
 import { SERVICE_ANCHORS } from '../data/serviceAnchors';
 
 export type Category = 'Strategy' | 'Design' | 'Development' | 'Growth';
 export type Case = CollectionEntry<'case-studies'>;
 
-const byDateDesc = (a: Case, b: Case) =>
-  new Date(b.data.completedDate).getTime() - new Date(a.data.completedDate).getTime();
+export const byDateDesc = (a: Case, b: Case) =>
+  b.data.completedDate.getTime() - a.data.completedDate.getTime();
 
-export async function getAllCaseStudies() {
-  const entries = await getCollection('case-studies', ({ data }) => !data.draft);
+export async function getAllCaseStudies(): Promise<Case[]> {
+  const entries = (await getCollection('case-studies', ({ data }) => !data.draft)) as Case[];
   return entries.sort(byDateDesc);
 }
 
@@ -24,7 +25,6 @@ export async function pickSelectedForCategory(category: Category): Promise<Case 
   const highlighted = eligible.filter((c) => (c.data.highlightInExpertise || []).includes(category));
   const pool = highlighted.length ? highlighted : eligible;
 
-  // Sort by priority then recency
   const sorted = pool.sort((a, b) => {
     const pa = a.data.highlightPriority ?? 999;
     const pb = b.data.highlightPriority ?? 999;
@@ -35,41 +35,18 @@ export async function pickSelectedForCategory(category: Category): Promise<Case 
   return sorted[0] ?? null;
 }
 
-/** Pick one featured case for the /services hub. */
-export async function pickFeaturedForServicesHub(explicitSlug?: string): Promise<Case | null> {
-  const all = await getAllCaseStudies();
-  if (explicitSlug) {
-    const match = all.find((c) => c.slug === explicitSlug || c.data.slug === explicitSlug);
-    if (match) return match;
-  }
-  // Lowest priority across all highlighted, then recency; else most recent overall
-  const highlighted = all.filter((c) => (c.data.highlightInExpertise || []).length > 0);
-  const pool = highlighted.length ? highlighted : all;
-  const sorted = pool.sort((a, b) => {
-    const pa = a.data.highlightPriority ?? 999;
-    const pb = b.data.highlightPriority ?? 999;
-    if (pa !== pb) return pa - pb;
-    return byDateDesc(a, b);
-  });
-  return sorted[0] ?? null;
-}
-
-/** Map display services to optional deep links using the anchor map. */
-export function mapDisplayServicesToLinks(labels: string[]) {
-  return labels.map((label) => {
-    const entry = SERVICE_ANCHORS[label];
-    if (!entry) return { label, href: null as string | null };
-    const href = `/services/${entry.category.toLowerCase()}#${entry.anchor}`;
-    return { label, href };
-  });
-}
-
-/** Next case study in newest→oldest order, with wrap-around. */
 export function pickNextCaseStudy(all: Case[], current: Case): Case | null {
-  if (!all || all.length === 0) return null;
-  // Ensure we’re operating on newest→oldest
   const sorted = [...all].sort(byDateDesc);
   const idx = sorted.findIndex((e) => e.slug === current.slug);
   const nextIdx = idx === -1 ? 0 : (idx + 1) % sorted.length;
   return sorted[nextIdx] ?? null;
+}
+
+/** Map display service labels → optional deep links (cards can ignore href) */
+export function mapDisplayServicesToLinks(labels: string[]) {
+  return labels.map((label) => {
+    const entry = SERVICE_ANCHORS[label];
+    if (!entry) return { label, href: null as string | null };
+    return { label, href: `/services/${entry.category.toLowerCase()}#${entry.anchor}` };
+  });
 }
