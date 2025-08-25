@@ -50,3 +50,26 @@ export function mapDisplayServicesToLinks(labels: string[]) {
     return { label, href: `/services/${entry.category.toLowerCase()}#${entry.anchor}` };
   });
 }
+
+export async function pickFeaturedForServicesHub(explicitSlug?: string): Promise<Case | null> {
+  const all = await getAllCaseStudies();
+
+  // If a specific slug is provided (via config/env) prefer that
+  if (explicitSlug) {
+    const match = all.find((c) => c.slug === explicitSlug || (c as any).data.slug === explicitSlug);
+    if (match) return match;
+  }
+
+  // Otherwise: among all highlighted, pick lowest priority → newest; fallback to newest overall
+  const highlighted = all.filter((c) => (c.data.highlightInExpertise || []).length > 0);
+  const pool = highlighted.length ? highlighted : all;
+
+  const sorted = pool.sort((a, b) => {
+    const pa = a.data.highlightPriority ?? 999;
+    const pb = b.data.highlightPriority ?? 999;
+    if (pa !== pb) return pa - pb;
+    return byDateDesc(a, b);
+  });
+
+  return sorted[0] ?? null;
+}
