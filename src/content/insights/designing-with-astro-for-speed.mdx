@@ -1,0 +1,20 @@
+---
+title: "Designing with Astro for speed (without looking bare)"
+summary: "How to keep pages visually rich while still shipping sub-second LCP and tight CLS."
+date: 2025-08-10
+featuredImage: ../../assets/insights/astro-speed/cover.jpg
+featuredAlt: "Abstract shapes suggesting speed"
+author: "Lee Santer"
+tags: ["Astro", "Performance", "Design"]
+draft: false
+---
+
+## The tension: pace vs polish
+
+Most ‘fast’ sites look empty because we cut the wrong things. The trick is ruthlessly trimming **what the browser has to do first**, not the design itself…
+
+- Inline only critical CSS, defer the rest.
+- Prefer native elements; sprinkle interactivity, don’t drown in it.
+- Optimise image aspect ratios up-front; stop relying on layout shifts.
+
+Wrap it all in a component discipline so the choices stick.
