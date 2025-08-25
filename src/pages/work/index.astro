@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllWork } from '../../lib/content';
+const url = new URL(Astro.request.url);
+const filter = url.searchParams.get('category'); // 'Strategy' | 'Design' | ...
+const all = await getAllWork();
+const items = filter ? all.filter((w) => w.data.serviceCategory === filter) : all;
+---
+
+<Base>
+	<h1>Work</h1>
+
+	<!-- Example filter UI (swap for your own): -->
+	<nav aria-label="Filter">
+		{
+			['Strategy', 'Design', 'Development', 'Growth'].map((cat) => (
+				<a
+					href={`/work?category=${cat}`}
+					aria-current={filter === cat ? 'page' : undefined}
+				>
+					{cat}
+				</a>
+			))
+		}
+		{filter && <a href="/work">Clear</a>}
+	</nav>
+
+	<ul>
+		{
+			items.map(({ slug, data }) => (
+				<li>
+					<a href={`/work/${slug}`}>
+						<img src={data.featuredImage.src} alt={data.featuredAlt} />
+						<h2>{data.title}</h2>
+						<p>{data.summary}</p>
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</Base>
