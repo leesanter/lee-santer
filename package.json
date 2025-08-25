@@ -16,6 +16,7 @@
     "marked": "^16.2.0"
   },
   "devDependencies": {
+    "@astrojs/mdx": "^4.3.4",
     "@astrojs/rss": "^4.0.12",
     "sass": "^1.89.2",
     "sharp": "^0.34.3"
