@@ -30,10 +30,12 @@ const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
     {entry.data.sections.map(s => (
       <section id={s.title.toLowerCase().replace(/\s+/g,'-')}>
         <h2>{s.title}</h2>
-        <div set:html={await Astro.markdown(s.body)} />
+        <!-- Expect HTML in s.body -->
+        <div set:html={s.body} />
         {s.image && <img src={s.image.src} alt={s.imageAlt || ''} />}
       </section>
     ))}
+
   </article>
 
   <nav aria-label="Post navigation">
