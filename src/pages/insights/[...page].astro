@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { POSTS_PER_PAGE } from '../../lib/constants';
+import InsightCard from '../../components/molecules/InsightCard.astro';
 
 export async function getStaticPaths({ paginate }) {
 	const posts = await getCollection('insights', (p) => !p.data.draft);
@@ -14,17 +15,11 @@ const { page } = Astro.props;
 
 <Base>
 	<h1>Insights</h1>
-	<ul>
+	<ul class="post-list">
 		{
 			page.data.map((p) => (
 				<li>
-					<a href={`/insights/${p.slug}`}>
-						{p.data.featuredImage && (
-							<img src={p.data.featuredImage.src} alt={p.data.featuredAlt || ''} />
-						)}
-						<h2>{p.data.title}</h2>
-						<p>{p.data.summary}</p>
-					</a>
+					<InsightCard entry={p} />
 				</li>
 			))
 		}
