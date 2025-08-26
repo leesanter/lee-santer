@@ -30,6 +30,7 @@ const settings = await getSiteSettings();
 type Props = {
 	title?: string;
 	description?: string;
+	modifiedTime?: string | Date;
 	image?: string | ImageMetadata;
 	canonical?: string;
 	noindex?: boolean;
@@ -92,6 +93,14 @@ if (import.meta.env.DEV) {
 		console.warn(`[SEO] Description > 160 chars (${description.length}).`);
 	}
 }
+
+/* Modified */
+const modifiedISO = props.modifiedTime
+	? (typeof props.modifiedTime === 'string'
+			? new Date(props.modifiedTime)
+			: props.modifiedTime
+		).toISOString()
+	: undefined;
 
 /* Canonical */
 function toAbs(u?: string) {

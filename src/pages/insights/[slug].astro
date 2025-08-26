@@ -14,7 +14,14 @@ const entry = all.find((e) => e.slug === slug)!;
 const { next, prev } = nextPrev(all, slug!);
 ---
 
-<Base>
+<Base
+	title={entry.data.title}
+	seoTitleTemplate="%s | Insights"
+	description={entry.data.summary}
+	seoImage={entry.data.ogImage ?? entry.data.featuredImage}
+	type="article"
+	publishedTime={entry.data.date}
+>
 	<article>
 		{
 			entry.data.featuredImage && (
