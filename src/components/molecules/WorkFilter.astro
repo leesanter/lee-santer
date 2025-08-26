@@ -1,15 +1,28 @@
 ---
 import { CATEGORIES, toSlug } from '../../lib/categories';
-const { active } = Astro.props as { active?: string | null }; // "design" etc.
+
+type Props = { active?: string | null; activeClass?: string };
+const { active = null, activeClass = 'btn--active' } = Astro.props as Props;
+
+const linkClass = (on: boolean) => `btn btn--sm btn--outline${on ? ` ${activeClass}` : ''}`;
+const isAllActive = active == null;
 ---
 
-<nav aria-label="Filter">
-	<a href="/work" aria-current={!active ? 'page' : undefined}>All</a>
+<nav class="work-filter" aria-label="Filter">
+	<a href="/work" class={linkClass(isAllActive)} aria-current={isAllActive ? 'page' : undefined}>
+		All
+	</a>
+
 	{
 		CATEGORIES.map((cat) => {
 			const slug = toSlug(cat);
+			const on = active === slug;
 			return (
-				<a href={`/work/${slug}`} aria-current={active === slug ? 'page' : undefined}>
+				<a
+					href={`/work/${slug}`}
+					class={linkClass(on)}
+					aria-current={on ? 'page' : undefined}
+				>
 					{cat}
 				</a>
 			);
