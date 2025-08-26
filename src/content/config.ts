@@ -1,7 +1,19 @@
 import { defineCollection, z } from 'astro:content';
 
-const CATEGORIES = z.enum(['Strategy', 'Design', 'Development', 'Growth']);
+const site = defineCollection({
+  type: 'data',
+  schema: z.object({
+    siteName: z.string(),
+    defaultDescription: z.string(),
+    defaultOgImage: z.string().optional(), // absolute or /path
+    twitterHandle: z.string().optional(),  // e.g. '@leesanter'
+    brandLogoPath: z.string().optional(),  // e.g. '/src/assets/brand/logo.svg'
+    // Optional: keep if you really want it here (env should still win):
+    siteUrl: z.string().url().optional(),
+  }),
+});
 
+const CATEGORIES = z.enum(['Strategy', 'Design', 'Development', 'Growth']);
 const services = defineCollection({
   type: 'content',
   schema: z.object({
@@ -64,4 +76,4 @@ const insights = defineCollection({
   }),
 });
 
-export const collections = { services, work, insights };
+export const collections = { site, services, work, insights };

@@ -1,143 +1,205 @@
 ---
-/* ======================================================================
-   SEO.astro — SEO & social meta
-
-   - Env-driven defaults (see .env.example)
-   - Builds canonical from Astro.site (or PUBLIC_SITE_URL fallback)
-   - Resolves relative og:image to absolute URL
-   - Optional global noindex via PUBLIC_NOINDEX_ALL=true
-   - Supports JSON-LD (object or array) and og:image:alt
-====================================================================== */
-
-/**
- * .env (see .env.example):
- *   PUBLIC_SITE_NAME, PUBLIC_SITE_LOCALE, PUBLIC_HTML_LANG,
- *   PUBLIC_DEFAULT_TITLE, PUBLIC_DEFAULT_DESCRIPTION,
- *   PUBLIC_OG_IMAGE, PUBLIC_TWITTER, PUBLIC_SITE_URL (optional),
- *   PUBLIC_NOINDEX_ALL (optional: "true" to noindex entire site, e.g. staging)
+/** Smart SEO with auto title templating + JSON-LD
+ * Env expected (set in .env / CI):
+ *  PUBLIC_SITE_NAME
+ *  PUBLIC_SITE_URL              e.g. https://leesanter.co.uk
+ *  PUBLIC_DEFAULT_TITLE         (optional)
+ *  PUBLIC_DEFAULT_DESCRIPTION
+ *  PUBLIC_OG_IMAGE              (optional absolute or /path)
+ *  PUBLIC_TWITTER               e.g. @leesanter (optional)
+ *  INDEXING=true|false          (robots)
  *
  * Props:
- * - title?: string (page title, without site name)
- * - description?: string
- * - canonical?: string (absolute URL) – if omitted, built from Astro.site (or PUBLIC_SITE_URL)
- * - ogImage?: string (absolute or path starting with "/")
- * - ogImageAlt?: string
- * - type?: "website" | "article" (default "website")
- * - noindex?: boolean
- * - appendSiteName?: boolean (default true) – appends “ — {SITE_NAME}”
- * - titleSeparator?: string (default " — ")
- * - publishedTime?: ISO (article)
- * - modifiedTime?: ISO (article)
- * - structuredData?: object | object[] (JSON-LD)
+ *  - title?: string
+ *  - description?: string
+ *  - image?: string | ImageMetadata  // og:image; absolute or /path or ESM image
+ *  - canonical?: string              // absolute; defaults to SITE_URL + pathname
+ *  - noindex?: boolean
+ *  - type?: 'website'|'article'|'creativework' (default 'website')
+ *  - publishedTime?: string|Date     // for article/creativework
+ *  - author?: string                 // for article
+ *  - appendSiteName?: boolean|'auto' // default 'auto'
+ *  - titleTemplate?: string          // e.g. '%s | Freelance Web & Brand Designer in Kent'
+ *  - structuredData?: Record<string,any> | Record<string,any>[]
  */
 
-import type { ImageMetadata } from "astro";
+import type { ImageMetadata } from 'astro';
+import { getSiteSettings } from '../../lib/content';
+const settings = await getSiteSettings();
 
-const ENV = import.meta.env;
+type Props = {
+	title?: string;
+	description?: string;
+	image?: string | ImageMetadata;
+	canonical?: string;
+	noindex?: boolean;
+	type?: 'website' | 'article' | 'creativework';
+	publishedTime?: string | Date;
+	author?: string;
+	appendSiteName?: boolean | 'auto';
+	titleTemplate?: string;
+	structuredData?: any | any[];
+};
 
-const SITE_NAME       = ENV.PUBLIC_SITE_NAME ?? "Site";
-const LOCALE          = ENV.PUBLIC_SITE_LOCALE ?? "en_GB";
-const HTML_LANG       = ENV.PUBLIC_HTML_LANG ?? "en-GB";
-const DEFAULT_TITLE   = ENV.PUBLIC_DEFAULT_TITLE ?? "Website";
-const DEFAULT_DESC    = ENV.PUBLIC_DEFAULT_DESCRIPTION ?? "";
-const DEFAULT_OG      = ENV.PUBLIC_OG_IMAGE ?? "/og-default.jpg";
-const TWITTER         = ENV.PUBLIC_TWITTER ?? "";
-const PUBLIC_SITE_URL = ENV.PUBLIC_SITE_URL;
-const GLOBAL_NOINDEX  = (ENV.PUBLIC_NOINDEX_ALL ?? "").toLowerCase() === "true";
+const props = Astro.props as Props;
 
-type Type = "website" | "article";
-interface Props {
-  title?: string;
-  description?: string;
-  canonical?: string;
-  ogImage?: string | ImageMetadata;      // ← allow both
-  ogImageAlt?: string;
-  type?: Type;
-  noindex?: boolean;
-  appendSiteName?: boolean;
-  titleSeparator?: string;
-  publishedTime?: string;
-  modifiedTime?: string;
-  structuredData?: object | object[];
+const SITE_NAME = settings?.siteName ?? import.meta.env.PUBLIC_SITE_NAME ?? '';
+const SITE_URL = import.meta.env.PUBLIC_SITE_URL ?? settings?.siteUrl ?? '';
+const DEFAULT_TITLE = import.meta.env.PUBLIC_DEFAULT_TITLE ?? SITE_NAME;
+const DEFAULT_DESC =
+	settings?.defaultDescription ?? import.meta.env.PUBLIC_DEFAULT_DESCRIPTION ?? '';
+const DEFAULT_OG = settings?.defaultOgImage ?? import.meta.env.PUBLIC_OG_IMAGE ?? '';
+const TWITTER = settings?.twitterHandle ?? import.meta.env.PUBLIC_TWITTER ?? '';
+const INDEXING = String(import.meta.env.INDEXING ?? 'true').toLowerCase() !== 'false';
+
+const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/index.html';
+
+/* Title building */
+const baseTitle = (props.title?.trim() || (isHome ? SITE_NAME : DEFAULT_TITLE)).trim();
+const includesSiteName = (t: string) =>
+	SITE_NAME && t.toLowerCase().includes(SITE_NAME.toLowerCase());
+
+let fullTitle = baseTitle;
+const mode = props.appendSiteName ?? 'auto';
+
+if (props.titleTemplate) {
+	// Explicit template wins. Replace %s with the baseTitle (or site name if empty)
+	fullTitle = props.titleTemplate.replace('%s', baseTitle || SITE_NAME);
+} else if (mode === true) {
+	fullTitle =
+		includesSiteName(baseTitle) || !SITE_NAME ? baseTitle : `${baseTitle} | ${SITE_NAME}`;
+} else if (mode === 'auto') {
+	if (isHome) {
+		// Home: prefer just the site name (no duplication)
+		fullTitle = SITE_NAME || baseTitle;
+	} else {
+		fullTitle =
+			includesSiteName(baseTitle) || !SITE_NAME ? baseTitle : `${baseTitle} | ${SITE_NAME}`;
+	}
+} else {
+	// mode === false
+	fullTitle = baseTitle;
 }
 
-const {
-  title = DEFAULT_TITLE,
-  description = DEFAULT_DESC,
-  canonical,
-  ogImage,                                 // ← no default here
-  ogImageAlt,
-  type = "website",
-  noindex = false,
-  appendSiteName = true,
-  titleSeparator = " — ",
-  publishedTime,
-  modifiedTime,
-  structuredData
-} = Astro.props as Props;
+/* Description */
+const description = props.description?.trim() || DEFAULT_DESC;
 
-const base = Astro.site ?? (PUBLIC_SITE_URL ? new URL(PUBLIC_SITE_URL) : undefined);
-
-// Canonical (unchanged)
-let canonicalUrl = canonical;
-if (!canonicalUrl && base) {
-  canonicalUrl = new URL(Astro.url.pathname + Astro.url.search + Astro.url.hash, base).toString();
+if (import.meta.env.DEV) {
+	if (fullTitle.length > 60) {
+		console.warn(`[SEO] Title > 60 chars (${fullTitle.length}): ${fullTitle}`);
+	}
+	if (description && description.length > 160) {
+		console.warn(`[SEO] Description > 160 chars (${description.length}).`);
+	}
 }
 
-// Coerce ogImage to a string and fall back to DEFAULT_OG in /public
-const ogRaw =
-  typeof ogImage === "string" ? ogImage : ogImage?.src ?? DEFAULT_OG;
-
-// Ensure og:image is absolute when possible
-function toAbsolute(u: string | undefined) {
-  if (!u) return u;
-  try {
-    return new URL(u).toString(); // already absolute?
-  } catch {
-    if (base && u.startsWith("/")) return new URL(u, base).toString();
-    return u;
-  }
+/* Canonical */
+function toAbs(u?: string) {
+	if (!u) return undefined;
+	try {
+		return new URL(u, SITE_URL).href;
+	} catch {
+		return u;
+	}
 }
-const ogImageResolved = toAbsolute(ogRaw);
+const canonical =
+	props.canonical || (SITE_URL ? new URL(Astro.url.pathname, SITE_URL).href : undefined);
 
-const finalTitle = appendSiteName && title
-  ? `${title}${titleSeparator}${SITE_NAME}`
-  : (title || SITE_NAME);
+/* OG image -> absolute URL */
+let ogImage: string | undefined;
+const img = props.image;
+if (typeof img === 'string') ogImage = toAbs(img);
+else if (img && typeof img === 'object' && 'src' in img)
+	ogImage = toAbs((img as ImageMetadata).src);
+else if (DEFAULT_OG) ogImage = toAbs(DEFAULT_OG);
 
-const isArticle = type === "article";
-const shouldNoindex = GLOBAL_NOINDEX || noindex;
+/* Robots */
+const robots = props.noindex || !INDEXING ? 'noindex, nofollow' : 'index, follow';
+
+/* Open Graph basics */
+const ogType = props.type ?? 'website';
+
+/* JSON-LD */
+const ld: any[] = [];
+
+if (SITE_NAME || SITE_URL) {
+	ld.push({
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: SITE_NAME || undefined,
+		url: SITE_URL || undefined,
+		logo: undefined, // add if/when you have a brand logo URL
+	});
+	ld.push({
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: SITE_NAME || undefined,
+		url: SITE_URL || undefined,
+		potentialAction: {
+			'@type': 'SearchAction',
+			target: `${SITE_URL}/search?q={query}`,
+			'query-input': 'required name=query',
+		},
+	});
+}
+
+const publishedISO = props.publishedTime
+	? (typeof props.publishedTime === 'string'
+			? new Date(props.publishedTime)
+			: props.publishedTime
+		).toISOString()
+	: undefined;
+
+if (ogType === 'article') {
+	ld.push({
+		'@context': 'https://schema.org',
+		'@type': 'Article',
+		headline: baseTitle,
+		datePublished: publishedISO,
+		author: props.author ? { '@type': 'Person', name: props.author } : undefined,
+		image: ogImage ? [ogImage] : undefined,
+		mainEntityOfPage: canonical ? { '@type': 'WebPage', '@id': canonical } : undefined,
+	});
+} else if (ogType === 'creativework') {
+	ld.push({
+		'@context': 'https://schema.org',
+		'@type': 'CreativeWork',
+		name: baseTitle,
+		datePublished: publishedISO,
+		image: ogImage ? [ogImage] : undefined,
+		url: canonical,
+	});
+}
+
+// Allow pages to add/override JSON-LD
+if (props.structuredData) {
+	if (Array.isArray(props.structuredData)) ld.push(...props.structuredData);
+	else ld.push(props.structuredData);
+}
 ---
 
-<!-- Note: language is set on <html> in layouts; this meta is just a hint -->
-<meta http-equiv="content-language" content={HTML_LANG} />
-<title>{finalTitle}</title>
-
+<!-- Core -->
+<title>{fullTitle}</title>
 {description && <meta name="description" content={description} />}
-{shouldNoindex && <meta name="robots" content="noindex, nofollow" />}
 
-{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+<!-- Canonical + robots -->
+{canonical && <link rel="canonical" href={canonical} />}
+<meta name="robots" content={robots} />
 
-<meta property="og:type" content={type} />
-<meta property="og:locale" content={LOCALE} />
+<!-- Open Graph -->
 <meta property="og:site_name" content={SITE_NAME} />
-<meta property="og:title" content={finalTitle} />
+<meta property="og:title" content={fullTitle} />
 {description && <meta property="og:description" content={description} />}
-{canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-{ogImageResolved && <meta property="og:image" content={ogImageResolved} />}
-{ogImageResolved && ogImageResolved.startsWith("https://") && <meta property="og:image:secure_url" content={ogImageResolved} />}
-{ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+<meta property="og:type" content={ogType} />
+{canonical && <meta property="og:url" content={canonical} />}
+{ogImage && <meta property="og:image" content={ogImage} />}
 
-<meta name="twitter:card" content="summary_large_image" />
+<!-- Twitter -->
 {TWITTER && <meta name="twitter:site" content={TWITTER} />}
-<meta name="twitter:title" content={finalTitle} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
 {description && <meta name="twitter:description" content={description} />}
-{ogImageResolved && <meta name="twitter:image" content={ogImageResolved} />}
+{ogImage && <meta name="twitter:image" content={ogImage} />}
 
-{isArticle && publishedTime && <meta property="article:published_time" content={publishedTime} />}
-{isArticle && modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
-
-{structuredData && (
-  Array.isArray(structuredData)
-    ? structuredData.map((obj) => <script type="application/ld+json">{JSON.stringify(obj)}</script>)
-    : <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-)}
+<!-- JSON-LD -->
+{ld.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(ld)} />}

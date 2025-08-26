@@ -1,4 +1,19 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { getEntry } from 'astro:content';
+
+export type SiteSettings = {
+  siteName: string;
+  defaultDescription: string;
+  defaultOgImage?: string;
+  twitterHandle?: string;
+  brandLogoPath?: string;
+  siteUrl?: string;
+};
+
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  const entry = await getEntry('site', 'settings');
+  return entry?.data ?? null;
+}
 
 export type Service = CollectionEntry<'services'>;
 export type Work = CollectionEntry<'work'>;
