@@ -1,39 +1,31 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getAllWork } from '../../lib/content';
-const url = new URL(Astro.request.url);
-const filter = url.searchParams.get('category'); // 'Strategy' | 'Design' | ...
+import WorkFilter from '../../components/molecules/WorkFilter.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import { getAllWork, mapServiceKeysToLinks } from '../../lib/content';
+
 const all = await getAllWork();
-const items = filter ? all.filter((w) => w.data.serviceCategory === filter) : all;
+const cards = await Promise.all(
+	all.map(async (w) => ({
+		href: `/work/${w.slug}`,
+		title: w.data.title,
+		summary: w.data.summary,
+		img: w.data.featuredImage,
+		alt: w.data.featuredAlt,
+		chips: await mapServiceKeysToLinks(w.data.services),
+	}))
+);
 ---
 
-<Base>
+<Base title="Work" description="Selected projects.">
 	<h1>Work</h1>
+	<WorkFilter active={null} />
 
-	<!-- Example filter UI (swap for your own): -->
-	<nav aria-label="Filter">
+	<ul class="work-grid">
 		{
-			['Strategy', 'Design', 'Development', 'Growth'].map((cat) => (
-				<a
-					href={`/work?category=${cat}`}
-					aria-current={filter === cat ? 'page' : undefined}
-				>
-					{cat}
-				</a>
-			))
-		}
-		{filter && <a href="/work">Clear</a>}
-	</nav>
-
-	<ul>
-		{
-			items.map(({ slug, data }) => (
+			cards.map((c) => (
 				<li>
-					<a href={`/work/${slug}`}>
-						<img src={data.featuredImage.src} alt={data.featuredAlt} />
-						<h2>{data.title}</h2>
-						<p>{data.summary}</p>
-					</a>
+					<WorkCard {...c} />
 				</li>
 			))
 		}

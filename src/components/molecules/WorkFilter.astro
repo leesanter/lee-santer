@@ -1,0 +1,18 @@
+---
+import { CATEGORIES, toSlug } from '../../lib/categories';
+const { active } = Astro.props as { active?: string | null }; // "design" etc.
+---
+
+<nav aria-label="Filter">
+	<a href="/work" aria-current={!active ? 'page' : undefined}>All</a>
+	{
+		CATEGORIES.map((cat) => {
+			const slug = toSlug(cat);
+			return (
+				<a href={`/work/${slug}`} aria-current={active === slug ? 'page' : undefined}>
+					{cat}
+				</a>
+			);
+		})
+	}
+</nav>
