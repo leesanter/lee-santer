@@ -1,24 +1,118 @@
 ---
 import Base from '../layouts/Base.astro';
-// or
-// import Minimal from "../layouts/Minimal.astro";
+import { getWorkForHome, getAllPosts, mapServiceKeysToLinks } from '../lib/content';
 
 export const prerender = true;
 
 const title = 'Lee Santer';
-const description = 'Who I am and how I work.';
+const description = 'Web design, branding & front-end development.';
+
+// Featured Work (limit 4; ordered by featureWeight then completedDate)
+const featuredWork = await getWorkForHome(4);
+
+// Pre-resolve service chips for each card (do async work in front-matter)
+const workCards = await Promise.all(
+	featuredWork.map(async (w) => ({
+		slug: w.slug,
+		title: w.data.title,
+		summary: w.data.summary,
+		img: w.data.featuredImage,
+		alt: w.data.featuredAlt,
+		services: await mapServiceKeysToLinks(w.data.services),
+	}))
+);
+
+// Latest Insights (grab a few; index page still handles pagination)
+const latestInsights = (await getAllPosts()).slice(0, 3);
 ---
 
 <Base {title} {description}>
-	<section class="section--first" style="min-height: 400vh;">
-		<div class="container section-layout">
-			<div class="stack large" style="text-align: center;">
-				<h1>Portfolio Site Starter</h1>
-				<p>
-					A clean Astro boilerplate with SCSS, scroll effects, and smart layout tools —
-					ready to go.
-				</p>
+	<!-- Hero: keep or replace with your header/scroll test -->
+	<section class="section">
+		<div class="container container--large">
+			<div class="stack large" style="text-align:center;">
+				<h1>Driven brands, no matter the industry.</h1>
+				<p>Strategy, design, and front-end builds that feel considered and fast.</p>
 			</div>
 		</div>
 	</section>
-</Base>
+
+	<!-- Featured Work -->
+	<section class="section" aria-labelledby="home-work">
+		<div class="container container--large">
+			<h2 id="home-work">Featured work</h2>
+
+			{
+				workCards.length === 0 ? (
+					<p>
+						Flag up to four case studies with <code>featuredHome: true</code> to
+						populate this section.
+					</p>
+				) : (
+					<ul class="work-grid">
+						{workCards.map((card) => (
+							<li class="work-card">
+								<a href={`/work/${card.slug}`}>
+									<img src={card.img.src} alt={card.alt} loading="lazy" />
+									<h3>{card.title}</h3>
+									<p>{card.summary}</p>
+								</a>
+
+								{card.services.length > 0 && (
+									<p class="chips">
+										{card.services.map((s) =>
+											s.href ? (
+												<a href={s.href}>{s.label}</a>
+											) : (
+												<span>{s.label}</span>
+											)
+										)}
+									</p>
+								)}
+							</li>
+						))}
+					</ul>
+				)
+			}
+
+			<p class="see-all"><a href="/work">See all work →</a></p>
+		</div>
+	</section>
+
+	<!-- Latest Insights -->
+	<section class="section" aria-labelledby="home-insights">
+		<div class="container container--large">
+			<h2 id="home-insights">Latest insights</h2>
+
+			{
+				latestInsights.length === 0 ? (
+					<p>
+						Add a couple of posts in <code>src/content/insights</code> to populate this
+						section.
+					</p>
+				) : (
+					<ul class="post-list">
+						{latestInsights.map((p) => (
+							<li class="post-card">
+								<a href={`/insights/${p.slug}`}>
+									{p.data.featuredImage && (
+										<img
+											src={p.data.featuredImage.src}
+											alt={p.data.featuredAlt || ''}
+											loading="lazy"
+										/>
+									)}
+									<h3>{p.data.title}</h3>
+									<p>{p.data.summary}</p>
+								</a>
+							</li>
+						))}
+					</ul>
+				)
+			}
+
+			<p class="see-all"><a href="/insights">All insights →</a></p>
+		</div>
+		</section
+	</section></Base
+>
