@@ -191,6 +191,12 @@ if (props.structuredData) {
 <title>{fullTitle}</title>
 {description && <meta name="description" content={description} />}
 
+{
+	modifiedISO && (ogType === 'article' || ogType === 'creativework') && (
+		<meta property="article:modified_time" content={modifiedISO} />
+	)
+}
+
 <!-- Canonical + robots -->
 {canonical && <link rel="canonical" href={canonical} />}
 <meta name="robots" content={robots} />
