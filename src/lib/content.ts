@@ -57,3 +57,23 @@ export async function getAllPosts(): Promise<Post[]> {
   const posts = await getCollection('insights', p => !p.data.draft);
   return posts.sort(byDateDesc);
 }
+
+export type WorkTestimonial = {
+  quote: string;
+  personName: string;
+  role?: string;
+  company?: string;
+  workTitle: string;
+  workSlug: string;
+};
+
+export async function getAllWorkTestimonials(): Promise<WorkTestimonial[]> {
+  const all = await getAllWork();
+  return all
+    .filter(w => !!w.data.testimonial)
+    .map(w => ({
+      ...w.data.testimonial!,
+      workTitle: w.data.title,
+      workSlug: w.slug,
+    }));
+}
