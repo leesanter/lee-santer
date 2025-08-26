@@ -36,6 +36,19 @@ const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
       </section>
     ))}
 
+    {entry.data.testimonial && (
+      <aside class="testimonial">
+        <blockquote>
+          <p>“{entry.data.testimonial.quote}”</p>
+        </blockquote>
+        <footer>
+          <strong>{entry.data.testimonial.personName}</strong>
+          {entry.data.testimonial.role && `, ${entry.data.testimonial.role}`}
+          {entry.data.testimonial.company && `, ${entry.data.testimonial.company}`}
+        </footer>
+      </aside>
+    )}
+
   </article>
 
   <nav aria-label="Post navigation">
