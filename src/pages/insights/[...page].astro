@@ -13,8 +13,16 @@ export async function getStaticPaths({ paginate }) {
 const { page } = Astro.props;
 ---
 
-<Base>
+<Base title="Insights" seoTitleTemplate="%s | Insights" description="Latest articles and notes.">
+	<!-- ✅ Inject prev/next + RSS into <head> via Base's head slot -->
+	<Fragment slot="head">
+		{page.url.prev && <link rel="prev" href={page.url.prev} />}
+		{page.url.next && <link rel="next" href={page.url.next} />}
+		<link rel="alternate" type="application/rss+xml" href="/insights/rss.xml" />
+	</Fragment>
+
 	<h1>Insights</h1>
+
 	<ul class="post-list">
 		{
 			page.data.map((p) => (
