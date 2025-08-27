@@ -16,10 +16,12 @@
     "marked": "^16.2.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.4",
     "@astrojs/mdx": "^4.3.4",
     "@astrojs/rss": "^4.0.12",
     "sass": "^1.89.2",
-    "sharp": "^0.34.3"
+    "sharp": "^0.34.3",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=20"
