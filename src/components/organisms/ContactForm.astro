@@ -21,14 +21,14 @@
    - With JS enabled, we AJAX-submit and show inline status (no redirect).
 ====================================================================== */
 
-import Button from "../atoms/Button.astro";
+import Button from '../atoms/Button.astro';
 
 /** Props */
 const {
-	formName = "contact",
-	successText = "Thanks! Your message has been sent.",
-	errorText = "Sorry — something went wrong. Please try again.",
-	class: className = "",
+	formName = 'contact',
+	successText = 'Thanks! Your message has been sent.',
+	errorText = 'Sorry — something went wrong. Please try again.',
+	class: className = '',
 	redirect, // e.g. "/thank-you"
 	recaptcha = false,
 } = Astro.props;
@@ -85,26 +85,27 @@ const action = redirect || undefined; // only set action when you want non-JS re
 	<p class="form-help" data-status role="status" aria-live="polite"></p>
 </form>
 
-<script type="module" define:vars={{ formId, successText, errorText }}>
+<script is:inline type="module" define:vars={{ formId, successText, errorText }}>
+	// @ts-nocheck
 	const form = document.getElementById(formId);
-	const statusEl = form.querySelector("[data-status]");
+	const statusEl = form.querySelector('[data-status]');
 	const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
 
 	const setBusy = (busy) => {
-		form.setAttribute("aria-busy", busy ? "true" : "false");
+		form.setAttribute('aria-busy', busy ? 'true' : 'false');
 		if (!submitBtn) return;
 		if (busy) {
-			submitBtn.setAttribute("disabled", "true");
-			submitBtn.classList.add("is-loading"); // uses your .btn.is-loading spinner
+			submitBtn.setAttribute('disabled', 'true');
+			submitBtn.classList.add('is-loading'); // uses your .btn.is-loading spinner
 		} else {
-			submitBtn.removeAttribute("disabled");
-			submitBtn.classList.remove("is-loading");
+			submitBtn.removeAttribute('disabled');
+			submitBtn.classList.remove('is-loading');
 		}
 	};
 
 	const encodeFormData = (fd) => new URLSearchParams(Array.from(fd.entries())).toString();
 
-	form.addEventListener("submit", async (e) => {
+	form.addEventListener('submit', async (e) => {
 		// If JS fails for any reason, let the browser submit normally.
 		try {
 			e.preventDefault();
@@ -112,32 +113,32 @@ const action = redirect || undefined; // only set action when you want non-JS re
 			// Native HTML5 validation (no novalidate)
 			if (!form.checkValidity()) {
 				// small visual hint for invalid fields
-				form.querySelectorAll(":invalid").forEach((el) => {
-					el.classList.add("is-error");
-					el.setAttribute("aria-invalid", "true");
+				form.querySelectorAll(':invalid').forEach((el) => {
+					el.classList.add('is-error');
+					el.setAttribute('aria-invalid', 'true');
 				});
 				form.reportValidity();
 				return;
 			}
-			form.querySelectorAll(".is-error").forEach((el) => {
-				el.classList.remove("is-error");
-				el.removeAttribute("aria-invalid");
+			form.querySelectorAll('.is-error').forEach((el) => {
+				el.classList.remove('is-error');
+				el.removeAttribute('aria-invalid');
 			});
 
 			setBusy(true);
-			statusEl.textContent = "Sending…";
+			statusEl.textContent = 'Sending…';
 
 			const formData = new FormData(form);
-			if (!formData.get("form-name")) {
-				formData.set("form-name", form.getAttribute("name") || "contact");
+			if (!formData.get('form-name')) {
+				formData.set('form-name', form.getAttribute('name') || 'contact');
 			}
 
 			// Respect any explicit action=...; otherwise, post to "/"
-			const endpoint = form.getAttribute("action") || "/";
+			const endpoint = form.getAttribute('action') || '/';
 
 			const res = await fetch(endpoint, {
-				method: "POST",
-				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 				body: encodeFormData(formData),
 			});
 

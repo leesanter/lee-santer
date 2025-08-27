@@ -8,24 +8,24 @@
    - <main tabindex="-1"> for accessible focus targets
 ====================================================================== */
 
-import "../styles/main.scss";
-import SEO from "../components/utils/SEO.astro";
-import HeadAssets from "../components/utils/HeadAssets.astro";
-import FontAssets from "../components/utils/FontAssets.astro";
+import '../styles/main.scss';
+import SEO from '../components/utils/SEO.astro';
+import HeadAssets from '../components/utils/HeadAssets.astro';
+import FontAssets from '../components/utils/FontAssets.astro';
 
 const ENV = import.meta.env;
-const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || "")
-	.split(",")
+const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || '')
+	.split(',')
 	.map((s) => s.trim())
 	.filter(Boolean);
-const HTML_LANG = ENV.PUBLIC_HTML_LANG ?? "en-GB";
+const HTML_LANG = ENV.PUBLIC_HTML_LANG ?? 'en-GB';
 
 const {
 	title,
 	description,
 	canonical,
 	noindex = false,
-	pageClass = "",
+	pageClass = '',
 	structuredData,
 	ogImage,
 	type, // "website" | "article"
@@ -42,12 +42,12 @@ const {
 		<meta name="color-scheme" content="light" />
 
 		<SEO
-			{title}
-			{description}
-			{canonical}
-			{noindex}
-			{structuredData}
-			{ogImage}
+			title={title}
+			description={description}
+			canonical={canonical}
+			noindex={noindex}
+			structuredData={structuredData}
+			image={ogImage /* legacy var name, now forwarded as image */}
 			type={type}
 			publishedTime={publishedTime}
 			modifiedTime={modifiedTime}
@@ -59,7 +59,7 @@ const {
 	</head>
 	<body>
 		<div class="page-wrapper">
-			<main id="main" class:list={["main-wrapper", pageClass]} tabindex="-1">
+			<main id="main" class:list={['main-wrapper', pageClass]} tabindex="-1">
 				<slot />
 			</main>
 		</div>

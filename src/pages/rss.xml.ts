@@ -3,8 +3,9 @@
 // ----------------------------------------------------------------------
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
+import type { APIContext } from 'astro';
 
-export async function GET(context) {
+export async function GET(context: APIContext) {
   const site = (import.meta.env.PUBLIC_SITE_URL as string) ?? context.site?.toString();
   const posts = await getCollection('insights', (p) => !p.data.draft);
   posts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
