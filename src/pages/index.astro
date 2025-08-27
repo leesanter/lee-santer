@@ -9,9 +9,6 @@ import {
 
 export const prerender = true;
 
-const title = 'Lee Santer';
-const description = 'Web design, branding & front-end development.';
-
 // Featured Work (limit 4; ordered by featureWeight then completedDate)
 const featuredWork = await getWorkForHome(4);
 
@@ -33,7 +30,11 @@ const latestInsights = (await getAllPosts()).slice(0, 3);
 const testimonials = await getAllWorkTestimonials();
 ---
 
-<Base {title} {description}>
+<Base
+	title="Lee Santer"
+	seoTitleTemplate="%s | Freelance Web & Brand Designer in Kent"
+	description="Web design, branding & front-end development."
+>
 	<!-- Hero: keep or replace with your header/scroll test -->
 	<section class="section">
 		<div class="container container--large">

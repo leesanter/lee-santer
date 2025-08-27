@@ -15,44 +15,51 @@ const { next, prev } = nextPrev(all, slug!);
 const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
 ---
 
-<Base>
+<Base
+  title={entry.data.title}
+  seoTitleTemplate="%s | Case Study"
+  description={entry.data.summary}
+  seoImage={entry.data.ogImage ?? entry.data.featuredImage}
+  type="creativework"
+  publishedTime={entry.data.completedDate}
+>
   <article>
-    <img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt} />
-    <h1>{entry.data.title}</h1>
-    {entry.data.siteUrl && <p><a href={entry.data.siteUrl} rel="noopener noreferrer" target="_blank">View site</a></p>}
+	<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt} />
+	<h1>{entry.data.title}</h1>
+	{entry.data.siteUrl && <p><a href={entry.data.siteUrl} rel="noopener noreferrer" target="_blank">View site</a></p>}
 
-    <!-- Service chips (auto deep-links) -->
-    <p>
-      {serviceLinks.map(s => s.href ? <a href={s.href}>{s.label}</a> : <span>{s.label}</span>)}
-    </p>
+	<!-- Service chips (auto deep-links) -->
+	<p>
+	  {serviceLinks.map(s => s.href ? <a href={s.href}>{s.label}</a> : <span>{s.label}</span>)}
+	</p>
 
-    <!-- Sections -->
-    {entry.data.sections.map(s => (
-      <section id={s.title.toLowerCase().replace(/\s+/g,'-')}>
-        <h2>{s.title}</h2>
-        <!-- Expect HTML in s.body -->
-        <div set:html={s.body} />
-        {s.image && <img src={s.image.src} alt={s.imageAlt || ''} />}
-      </section>
-    ))}
+	<!-- Sections -->
+	{entry.data.sections.map(s => (
+	  <section id={s.title.toLowerCase().replace(/\s+/g,'-')}>
+		<h2>{s.title}</h2>
+		<!-- Expect HTML in s.body -->
+		<div set:html={s.body} />
+		{s.image && <img src={s.image.src} alt={s.imageAlt || ''} />}
+	  </section>
+	))}
 
-    {entry.data.testimonial && (
-      <aside class="testimonial">
-        <blockquote>
-          <p>“{entry.data.testimonial.quote}”</p>
-        </blockquote>
-        <footer>
-          <strong>{entry.data.testimonial.personName}</strong>
-          {entry.data.testimonial.role && `, ${entry.data.testimonial.role}`}
-          {entry.data.testimonial.company && `, ${entry.data.testimonial.company}`}
-        </footer>
-      </aside>
-    )}
+	{entry.data.testimonial && (
+	  <aside class="testimonial">
+		<blockquote>
+		  <p>“{entry.data.testimonial.quote}”</p>
+		</blockquote>
+		<footer>
+		  <strong>{entry.data.testimonial.personName}</strong>
+		  {entry.data.testimonial.role && `, ${entry.data.testimonial.role}`}
+		  {entry.data.testimonial.company && `, ${entry.data.testimonial.company}`}
+		</footer>
+	  </aside>
+	)}
 
   </article>
 
   <nav aria-label="Post navigation">
-    {prev && <a href={`/work/${prev.slug}`}>← {prev.data.title}</a>}
-    {next && <a href={`/work/${next.slug}`}>{next.data.title} →</a>}
+	{prev && <a href={`/work/${prev.slug}`}>← {prev.data.title}</a>}
+	{next && <a href={`/work/${next.slug}`}>{next.data.title} →</a>}
   </nav>
 </Base>

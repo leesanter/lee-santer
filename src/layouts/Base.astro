@@ -6,35 +6,43 @@
    - Semantic landmarks + skip link
 ====================================================================== */
 
-import "../styles/main.scss";
-import SEO from "../components/utils/SEO.astro";
-import HeadAssets from "../components/utils/HeadAssets.astro";
-import FontAssets from "../components/utils/FontAssets.astro";
+import '../styles/main.scss';
+import SEO from '../components/utils/SEO.astro';
+import HeadAssets from '../components/utils/HeadAssets.astro';
+import FontAssets from '../components/utils/FontAssets.astro';
 
-import SiteHeader from "../components/organisms/SiteHeader.astro";
-import SiteFooter from "../components/organisms/SiteFooter.astro";
-import ScrollListener from "../components/utils/ScrollListener.astro";
-import CookieConsent from "../components/utils/CookieConsent.astro";
+import SiteHeader from '../components/organisms/SiteHeader.astro';
+import SiteFooter from '../components/organisms/SiteFooter.astro';
+import ScrollListener from '../components/utils/ScrollListener.astro';
+import CookieConsent from '../components/utils/CookieConsent.astro';
 
 const ENV = import.meta.env;
-const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || "")
-	.split(",")
+const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || '')
+	.split(',')
 	.map((s) => s.trim())
 	.filter(Boolean);
-const HTML_LANG = ENV.PUBLIC_HTML_LANG ?? "en-GB";
+const HTML_LANG = ENV.PUBLIC_HTML_LANG ?? 'en-GB';
 
 const {
 	title,
 	description,
 	canonical,
 	noindex = false,
-	pageClass = "",
-	structuredData,
-	ogImage,
-	type,
+	pageClass = '',
+	structuredData, // kept for back-compat
+	ogImage, // legacy alias
+	type, // 'website' | 'article' | 'creativework'
 	publishedTime,
 	modifiedTime,
+
+	// NEW: preferred names
+	seoImage, // string | ImageMetadata
+	seoTitleTemplate, // e.g. "%s | Freelance Web & Brand Designer in Kent"
+	seoAppendSiteName = 'auto', // boolean | 'auto'
 } = Astro.props;
+
+// Prefer new seoImage; fall back to ogImage for back-compat
+const image = seoImage ?? ogImage;
 ---
 
 <!doctype html>
@@ -45,15 +53,17 @@ const {
 		<meta name="color-scheme" content="light" />
 
 		<SEO
-			{title}
-			{description}
-			{canonical}
-			{noindex}
-			{structuredData}
-			{ogImage}
+			title={title}
+			description={description}
+			canonical={canonical}
+			noindex={noindex}
+			image={image}
 			type={type}
 			publishedTime={publishedTime}
 			modifiedTime={modifiedTime}
+			structuredData={structuredData}
+			titleTemplate={seoTitleTemplate}
+			appendSiteName={seoAppendSiteName}
 		/>
 
 		<FontAssets files={fontPreloads.length ? fontPreloads : undefined} />
@@ -66,7 +76,7 @@ const {
 		<div class="page-wrapper">
 			<SiteHeader />
 
-			<main id="main" class:list={["main-wrapper", pageClass]} tabindex="-1">
+			<main id="main" class:list={['main-wrapper', pageClass]} tabindex="-1">
 				<slot />
 			</main>
 
