@@ -13,38 +13,53 @@
  *  - priority?: boolean       (hero/LCP: eager, sync decode, fetchpriority=high)
  *  - ...any other <img> attributes (style, loading, decoding, etc.)
  */
-import { Image } from "astro:assets";
+import { Image, Picture } from 'astro:assets';
+import type { ImageMetadata, ImageOutputFormat } from 'astro';
 
-export interface Props {
-	src: any; // local import OR remote URL string
+interface Props {
+	src: ImageMetadata;
 	alt: string;
 	widths?: number[];
 	sizes?: string;
-	format?: Array<"avif" | "webp" | "png" | "jpeg">;
-	loading?: "lazy" | "eager";
-	decoding?: "async" | "auto" | "sync";
-	class?: string;
+	format?: ImageOutputFormat | ImageOutputFormat[]; // accept both
+	loading?: 'lazy' | 'eager';
+	decoding?: 'async' | 'sync' | 'auto';
+	className?: string;
 }
-
 const {
 	src,
 	alt,
 	widths = [480, 768, 1024, 1440],
-	sizes = "100vw",
-	format = ["avif", "webp", "jpeg"],
-	loading = "lazy",
-	decoding = "async",
-	class: className = "",
-} = Astro.props;
-
-const isRemote = typeof src === "string";
-const isSvg = (typeof src === "string" && src.endsWith(".svg")) || (src?.src && src.src.endsWith?.(".svg"));
+	sizes = '100vw',
+	format,
+	loading = 'lazy',
+	decoding = 'async',
+	className,
+} = Astro.props as Props;
 ---
 
 {
-	isRemote || isSvg ? (
-		<img src={typeof src === "string" ? src : src.src} alt={alt} loading={loading} decoding={decoding} class={className} />
+	Array.isArray(format) ? (
+		<Picture
+			src={src}
+			alt={alt}
+			widths={widths}
+			sizes={sizes}
+			formats={format}
+			loading={loading}
+			decoding={decoding}
+			class={className}
+		/>
 	) : (
-		<Image src={src} alt={alt} widths={widths} sizes={sizes} format={format} loading={loading} decoding={decoding} class={className} />
+		<Image
+			src={src}
+			alt={alt}
+			widths={widths}
+			sizes={sizes}
+			format={format}
+			loading={loading}
+			decoding={decoding}
+			class={className}
+		/>
 	)
 }

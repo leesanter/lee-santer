@@ -1,20 +1,29 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, type CollectionEntry } from 'astro:content';
 import { POSTS_PER_PAGE } from '../../lib/constants';
 import InsightCard from '../../components/molecules/InsightCard.astro';
 
-export async function getStaticPaths({ paginate }) {
+// Prefer a typed signature so paginate is known
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
 	const posts = await getCollection('insights', (p) => !p.data.draft);
 	posts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 	return paginate(posts, { pageSize: POSTS_PER_PAGE }); // /insights, /insights/2, ...
-}
+};
 
-const { page } = Astro.props;
+// Type the page prop shape Astro passes to paginated routes
+type PageProp = {
+	data: CollectionEntry<'insights'>[];
+	url: { prev?: string; next?: string };
+};
+
+const { page } = Astro.props as { page: PageProp };
 ---
 
 <Base title="Insights" seoTitleTemplate="%s | Insights" description="Latest articles and notes.">
-	<!-- ✅ Inject prev/next + RSS into <head> via Base's head slot -->
+	<!-- head slot: prev/next + RSS -->
 	<Fragment slot="head">
 		{page.url.prev && <link rel="prev" href={page.url.prev} />}
 		{page.url.next && <link rel="next" href={page.url.next} />}

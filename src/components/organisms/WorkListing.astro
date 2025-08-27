@@ -1,80 +1,169 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import WorkCard from '../../components/molecules/WorkCard.astro';
-import { mapDisplayServicesToLinks } from '../../lib/caseStudies';
+import { getAllWork, mapServiceKeysToLinks } from '../../lib/content';
+import { CATEGORIES, toSlug } from '../../lib/categories';
 
-const CATS = ['strategy', 'design', 'development', 'growth'] as const;
-type Cat = (typeof CATS)[number];
-type AllOrCat = Cat | 'all';
+type Category = (typeof CATEGORIES)[number];
+type CatSlug = 'strategy' | 'design' | 'development' | 'growth';
+type AllOrCatSlug = 'all' | CatSlug;
 
 interface Props {
-	entries: CollectionEntry<'case-studies'>[]; // already filtered/sorted by the page
-	active?: AllOrCat; // 'all' | 'strategy' | 'design' | 'development' | 'growth'
-	lede?: string; // optional line above filters
-}
-const { entries, active = 'all', lede = 'Filter by focus area.' } = Astro.props;
+	/** Controlled mode: pre-fetched entries (already filtered/sorted by the page) */
+	entries?: CollectionEntry<'work'>[];
 
-const pathFor = (cat: AllOrCat) => (cat === 'all' ? '/work#projects' : `/work/${cat}#projects`);
-const label = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
+	/** Autonomous mode options (ignored if entries passed) */
+	category?: Category | 'all';
+	includeSlugs?: string[];
+	excludeSlugs?: string[];
+	limit?: number;
+	shuffle?: boolean;
+
+	/** UI options */
+	showFilter?: boolean;
+	active?: AllOrCatSlug; // highlights the chip; useful on /work and /work/[category]
+	lede?: string;
+	id?: string; // anchor id; defaults to "projects"
+}
+
+/** Defaults */
+const {
+	entries: injected = undefined,
+	category = 'all',
+	includeSlugs = [],
+	excludeSlugs = [],
+	limit,
+	shuffle = false,
+	showFilter = false,
+	active,
+	lede = '',
+	id = 'projects',
+} = Astro.props as Props;
+
+/** Build data list (prefer injected entries; else fetch + filter) */
+let list: CollectionEntry<'work'>[] = [];
+
+if (injected?.length) {
+	list = injected;
+} else {
+	const all = await getAllWork(); // sorted newest → oldest in your helper
+	// explicit include wins
+	if (includeSlugs.length) {
+		list = all.filter((e) => includeSlugs.includes(e.slug));
+	} else {
+		list = [...all];
+		if (category !== 'all') {
+			list = list.filter((w) => w.data.serviceCategory === category);
+		}
+		if (excludeSlugs.length) {
+			list = list.filter((e) => !excludeSlugs.includes(e.slug));
+		}
+	}
+	if (shuffle) {
+		list = list.sort(() => Math.random() - 0.5);
+	}
+	if (typeof limit === 'number') {
+		list = list.slice(0, Math.max(0, limit));
+	}
+}
+
+/** Card view models (WorkCard expects denormalised props) */
+const cards = await Promise.all(
+	list.map(async (entry) => ({
+		href: `/work/${entry.slug}`,
+		title: entry.data.title,
+		summary: entry.data.summary,
+		img: entry.data.featuredImage,
+		alt: entry.data.featuredAlt,
+		chips: await mapServiceKeysToLinks(entry.data.services),
+	}))
+);
+
+/** Filter chips */
+const activeSlug: AllOrCatSlug =
+	active ?? (category === 'all' ? 'all' : (toSlug(category as Category) as CatSlug));
+
+const pathFor = (slug: AllOrCatSlug) =>
+	slug === 'all' ? '/work#projects' : `/work/${slug}#projects`;
+
+const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 ---
 
-<section class="section" id="projects">
+<section class="section" id={id}>
 	<div class="container container--large">
 		<div class="stack">
-			<div class="stack tiny">
-				{lede && <p>{lede}</p>}
+			{
+				(lede || showFilter) && (
+					<div class="stack tiny">
+						{lede && <p>{lede}</p>}
 
-				<nav aria-label="Filter projects by category">
-					<ul class="filter-chips" role="list">
-						{
-							(['all', ...CATS] as const).map((cat) => (
-								<li>
-									<a
-										href={pathFor(cat as AllOrCat)}
-										aria-current={cat === active ? 'page' : undefined}
-										class={`btn btn--sm btn--outline ${cat === active ? 'btn--active' : ''}`}
-									>
-										{label(cat as string)}
-									</a>
-								</li>
-							))
-						}
+						{showFilter && (
+							<nav aria-label="Filter projects by category">
+								<ul class="filter-chips" role="list">
+									{(
+										[
+											'all',
+											...CATEGORIES.map((c) => toSlug(c) as CatSlug),
+										] as AllOrCatSlug[]
+									).map((slug) => (
+										<li>
+											<a
+												href={pathFor(slug)}
+												aria-current={
+													slug === activeSlug ? 'page' : undefined
+												}
+												class={`btn btn--sm btn--outline ${slug === activeSlug ? 'btn--active' : ''}`}
+											>
+												{proper(slug)}
+											</a>
+										</li>
+									))}
+								</ul>
+							</nav>
+						)}
+					</div>
+				)
+			}
+
+			{
+				cards.length === 0 ? (
+					<p class="muted">No projects yet.</p>
+				) : (
+					<ul class="work-grid" role="list">
+						{cards.map((c) => (
+							<li>
+								<WorkCard {...c} />
+							</li>
+						))}
 					</ul>
-				</nav>
-			</div>
-
-			<ul class="work-grid" role="list">
-				{
-					entries.map((entry) => (
-						<li>
-							<WorkCard
-								entry={entry}
-								services={mapDisplayServicesToLinks(entry.data.displayServices)}
-							/>
-						</li>
-					))
-				}
-			</ul>
+				)
+			}
 		</div>
 	</div>
 </section>
 
 <style lang="scss">
+	/* Anchor offset for sticky header */
 	#projects {
 		scroll-margin-top: calc(var(--header-height, 56px) + var(--size--medium));
 	}
 
 	.work-grid {
-		flex-direction: column;
-		grid-template-rows: auto auto;
-		grid-auto-columns: 1fr;
-		justify-content: flex-start;
-		width: 100%;
-		display: flex;
+		display: grid;
 		gap: var(--size--large);
-
 		list-style: none;
-
 		padding: 0;
+	}
+
+	/* simple responsive grid; tweak to your taste */
+	@media (min-width: 720px) {
+		.work-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (min-width: 1100px) {
+		.work-grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
 	}
 </style>

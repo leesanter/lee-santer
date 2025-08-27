@@ -41,7 +41,7 @@ const work = defineCollection({
     siteUrl: z.string().url().optional(),
     completedDate: z.coerce.date(),
     featuredHome: z.boolean().default(false),
-    featureWeight: z.number().optional(),
+    featureWeight: z.number().int().min(0).max(100).default(999), // lower = higher priority
     sections: z.array(z.object({
       title: z.string(),
       body: z.string(),

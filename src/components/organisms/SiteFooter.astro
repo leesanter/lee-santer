@@ -1,54 +1,60 @@
 ---
-/*
-==============================================================================
+/* ==============================================================================
   SiteFooter.astro — starter footer (CTA + links + legal)
-  - Token-driven colours/spacing; dark by default
-  - CTA block, three link columns (editable), legal row
-  - Cookie prefs hook (window.showCookiePreferences from CookieConsent)
-  - Back-to-top link
-  - Props (all optional; good defaults for a starter):
-      - cta?: { heading?: string; buttonText?: string; buttonHref?: string }
-      - groups?: Array<{ title: string; items: Array<{ label: string; href: string }> }>
-      - email?: string
 ============================================================================== */
 const ENV = import.meta.env;
 const SITE_NAME = ENV.PUBLIC_SITE_NAME ?? 'Site';
 const YEAR = new Date().getFullYear();
 
-const {
-	cta = {
-		heading: 'It all starts with a conversation.',
-		buttonText: 'Book a consultation.',
-		buttonHref: '/contact',
+type LinkItem = { label: string; href: string };
+type LinkGroup = { title: string; items: LinkItem[] };
+type CTA = { heading?: string; buttonText?: string; buttonHref?: string };
+
+interface Props {
+	cta?: CTA;
+	groups?: LinkGroup[];
+	email?: string;
+}
+
+// Pull props once, then build typed defaults
+const props = Astro.props as Props;
+
+const email = props.email ?? 'info@leesanter.co.uk';
+
+const cta: CTA = props.cta ?? {
+	heading: 'It all starts with a conversation.',
+	buttonText: 'Book a consultation.',
+	buttonHref: '/contact',
+};
+
+const defaultGroups: LinkGroup[] = [
+	{
+		title: 'New Projects',
+		items: [
+			{ label: 'Contact', href: '/contact' },
+			{ label: 'Book a consultation', href: '/contact' },
+			{ label: email, href: `mailto:${email}` },
+		],
 	},
-	groups = [
-		{
-			title: 'New Projects',
-			items: [
-				{ label: 'Contact', href: '/contact' },
-				{ label: 'Book a consultation', href: '/contact' },
-				{ label: 'info@leesanter.co.uk', href: 'mailto:info@leesanter.co.uk' },
-			],
-		},
-		{
-			title: 'Navigation',
-			items: [
-				{ label: 'Home', href: '/' },
-				{ label: 'Expertise', href: '/services' },
-				{ label: 'Case Studies', href: '/portfolio' },
-			],
-		},
-		{
-			title: 'Information',
-			items: [
-				{ label: 'FAQs', href: '/faqs' },
-				{ label: 'About', href: '/about' },
-				{ label: 'Insights', href: '/blog' },
-			],
-		},
-	],
-	email = 'info@leesanter.co.uk',
-} = Astro.props;
+	{
+		title: 'Navigation',
+		items: [
+			{ label: 'Home', href: '/' },
+			{ label: 'Expertise', href: '/services' },
+			{ label: 'Work', href: '/work' }, // was /portfolio
+		],
+	},
+	{
+		title: 'Information',
+		items: [
+			{ label: 'FAQs', href: '/faqs' },
+			{ label: 'About', href: '/about' },
+			{ label: 'Insights', href: '/insights' }, // was /blog
+		],
+	},
+];
+
+const groups: LinkGroup[] = props.groups ?? defaultGroups;
 ---
 
 <footer class="site-footer section--fill" data-footer data-scheme="dark">

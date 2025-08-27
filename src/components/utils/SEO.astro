@@ -217,4 +217,4 @@ if (props.structuredData) {
 {ogImage && <meta name="twitter:image" content={ogImage} />}
 
 <!-- JSON-LD -->
-{ld.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(ld)} />}
+{ld.length > 0 && <script is:inline type="application/ld+json" set:html={JSON.stringify(ld)} />}

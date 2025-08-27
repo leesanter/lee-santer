@@ -1,5 +1,17 @@
 ---
-const { href, title, summary, img, alt, chips = [] } = Astro.props;
+import type { ImageMetadata } from 'astro';
+
+type Chip = { label: string; href: string | null };
+interface Props {
+	href: string;
+	title: string;
+	summary: string;
+	img: ImageMetadata;
+	alt: string;
+	chips?: Chip[];
+}
+
+const { href, title, summary, img, alt, chips = [] } = Astro.props as Props;
 ---
 
 <article class="work-card">

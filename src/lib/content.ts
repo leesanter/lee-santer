@@ -43,21 +43,33 @@ export async function mapServiceKeysToLinks(keys: string[]) {
   });
 }
 
-export async function getAllWork(): Promise<Work[]> {
-  const entries = await getCollection('work', w => !w.data.draft);
-  return entries.sort(byDateDesc);
-}
+const byFeatureThenDate = (a: Work, b: Work) => {
+  const wa = a.data.featureWeight ?? 999;
+  const wb = b.data.featureWeight ?? 999;
+  if (wa !== wb) return wa - wb;     // lower weight first
+  return byDateDesc(a, b);           // tie-break by recency
+};
 
+export async function getAllWork(): Promise<Work[]> {
+  const all = await getCollection('work', (w) => !w.data.draft);
+  return all.sort(byDateDesc);
+}
 export async function getWorkForHome(limit = 4): Promise<Work[]> {
   const all = await getAllWork();
-  const featured = all.filter(w => w.data.featuredHome);
-  featured.sort((a, b) => {
-    const pa = a.data.featureWeight ?? 999;
-    const pb = b.data.featureWeight ?? 999;
-    return pa !== pb ? pa - pb : byDateDesc(a, b);
-  });
-  return featured.slice(0, limit);
+  const featured = all.filter((w) => w.data.featuredHome).sort(byFeatureThenDate);
+
+  const picked: Work[] = featured.slice(0, limit);
+
+  if (picked.length < limit) {
+    for (const w of all) {
+      if (picked.find((p) => p.slug === w.slug)) continue;
+      picked.push(w);
+      if (picked.length >= limit) break;
+    }
+  }
+  return picked.slice(0, limit);
 }
+
 
 export function nextPrev<T extends { slug: string }>(items: T[], currentSlug: string) {
   const list = [...items];

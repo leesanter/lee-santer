@@ -1,61 +1,67 @@
 ---
 /* ======================================================================
    SiteHeader.astro — sticky header with dropdowns + mobile menu
-
-   - Desktop: hover dropdowns; Mobile: disclosure buttons (parent link stays clickable)
-   - Sticky, hides on scroll down / shows on scroll up (hooked to ScrollListener body classes)
-   - Starts transparent; adds .has-bg once page is scrolled a bit
-   - CTA button (optional) sits to the right of the nav
-   - Uses your tokens and utilities (.container, .btn, spacing, colours)
 ====================================================================== */
 import LogoRaw from '../../assets/brand/wordmark.svg?raw';
 
 const ENV = import.meta.env;
 const SITE_NAME = ENV.PUBLIC_SITE_NAME ?? 'Site';
 
-const { pathname } = Astro.url;
-const currentPath = pathname.replace(/\/$/, '');
+/** Types */
+type NavChild = { label: string; href: string; isActive?: boolean };
+type NavItem = {
+	label: string;
+	href: string;
+	children?: NavChild[];
+	isActive?: boolean;
+	isActiveParent?: boolean;
+};
+type CTA = { label: string; href: string };
 
-/** Props (all optional)
- * - logoHref?: string (default "/")
- * - logoAlt?: string (default SITE_NAME)
- * - logoSvg?: string (path to an SVG in /public or an imported asset)
- * - nav?: Array<{ label: string, href: string, children?: {label:string, href:string}[] }>
- * - cta?: { label: string, href: string }  (omit to hide)
- * - transparent?: boolean (default true)
- */
-const {
-	logoHref = '/',
-	logoAlt = SITE_NAME,
-	nav = [
-		{
-			label: 'Services',
-			href: '/services',
-			children: [
-				{ label: 'Web Design', href: '/services/website-design' },
-				{ label: 'eCommerce', href: '/services/ecommerce-website-development-design' },
-				{ label: 'Web Apps', href: '/services/web-app-development' },
-			],
-		},
-		{ label: 'About', href: '/about' },
-		{ label: 'Portfolio', href: '/portfolio' },
-		{ label: 'Contact', href: '/contact' },
-	],
-	cta,
-	transparent = true,
-} = Astro.props;
-
-// Compute active states
-function normalize(href: string) {
-	return href.replace(/\/$/, '');
+interface Props {
+	logoHref?: string;
+	logoAlt?: string;
+	nav?: NavItem[];
+	cta?: CTA; // omit to hide CTA; we’ll render a sensible default if not provided
+	transparent?: boolean;
 }
-const navWithState = nav.map((item) => {
+
+/** Props + defaults */
+const props = Astro.props as Props;
+
+const logoHref = props.logoHref ?? '/';
+const logoAlt = props.logoAlt ?? SITE_NAME;
+const transparent = props.transparent ?? true;
+
+const defaultNav: NavItem[] = [
+	{
+		label: 'Services',
+		href: '/services',
+		children: [
+			{ label: 'Web Design', href: '/services/website-design' },
+			{ label: 'eCommerce', href: '/services/ecommerce-website-development-design' },
+			{ label: 'Web Apps', href: '/services/web-app-development' },
+		],
+	},
+	{ label: 'About', href: '/about' },
+	{ label: 'Work', href: '/work' }, // was “Portfolio”
+	{ label: 'Contact', href: '/contact' },
+];
+
+const nav: NavItem[] = props.nav ?? defaultNav;
+const ctaBtn: CTA | null = props.cta ?? { label: 'Get a quote', href: '/contact' };
+
+/** Active route state */
+const currentPath = Astro.url.pathname.replace(/\/$/, '');
+const normalize = (href: string) => href.replace(/\/$/, '');
+
+const navWithState: NavItem[] = nav.map((item) => {
 	const isActive = normalize(item.href) === currentPath;
-	const children = item.children?.map((c) => ({
+	const children: NavChild[] = (item.children ?? []).map((c) => ({
 		...c,
 		isActive: normalize(c.href) === currentPath,
 	}));
-	const isActiveParent = Boolean(children?.some((c) => c.isActive));
+	const isActiveParent = children.some((c) => c.isActive);
 	return { ...item, isActive, isActiveParent, children };
 });
 ---
@@ -63,8 +69,8 @@ const navWithState = nav.map((item) => {
 <header data-header class={`site-header${transparent ? ' is-transparent' : ''}`} role="banner">
 	<div class="site-header__inner container container--large">
 		<!-- Branding -->
-		<a href={logoHref} class="site-header__brand" aria-label="Lee Santer — Home">
-			<span class="sr-only">Lee Santer</span>
+		<a href={logoHref} class="site-header__brand" aria-label={`${logoAlt} — Home`}>
+			<span class="sr-only">{logoAlt}</span>
 			<span class="logo" aria-hidden="true" set:html={LogoRaw} />
 		</a>
 
@@ -96,7 +102,6 @@ const navWithState = nav.map((item) => {
 							]
 								.filter(Boolean)
 								.join(' ');
-							const id = `menu-item-${i}`;
 							const subId = `submenu-${i}`;
 							return (
 								<li class={itemClass}>
@@ -164,9 +169,15 @@ const navWithState = nav.map((item) => {
 						})
 					}
 
-					<li class="menu__item menu__cta">
-						<a href="/contact" class="btn btn--sm">Get a quote</a>
-					</li>
+					{
+						ctaBtn && (
+							<li class="menu__item menu__cta">
+								<a href={ctaBtn.href} class="btn btn--sm">
+									{ctaBtn.label}
+								</a>
+							</li>
+						)
+					}
 				</ul>
 			</div>
 		</nav>

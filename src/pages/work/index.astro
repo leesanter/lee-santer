@@ -1,33 +1,12 @@
 ---
 import Base from '../../layouts/Base.astro';
-import WorkFilter from '../../components/molecules/WorkFilter.astro';
-import WorkCard from '../../components/molecules/WorkCard.astro';
-import { getAllWork, mapServiceKeysToLinks } from '../../lib/content';
+import WorkListing from '../../components/organisms/WorkListing.astro';
+import { getAllWork } from '../../lib/content';
 
-const all = await getAllWork();
-const cards = await Promise.all(
-	all.map(async (w) => ({
-		href: `/work/${w.slug}`,
-		title: w.data.title,
-		summary: w.data.summary,
-		img: w.data.featuredImage,
-		alt: w.data.featuredAlt,
-		chips: await mapServiceKeysToLinks(w.data.services),
-	}))
-);
+const entries = await getAllWork(); // already sorted newest→oldest
 ---
 
-<Base title="Work" description="Selected projects.">
+<Base title="Work" seoTitleTemplate="%s | Work" description="Selected projects.">
 	<h1>Work</h1>
-	<WorkFilter active={null} />
-
-	<ul class="work-grid">
-		{
-			cards.map((c) => (
-				<li>
-					<WorkCard {...c} />
-				</li>
-			))
-		}
-	</ul>
+	<WorkListing entries={entries} showFilter active="all" lede="Filter by focus area." />
 </Base>
