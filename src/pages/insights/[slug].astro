@@ -12,6 +12,23 @@ const { slug } = Astro.params;
 const all = await getAllPosts();
 const entry = all.find((e) => e.slug === slug)!;
 const { next, prev } = nextPrev(all, slug!);
+
+// Breadcrumb JSON-LD
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
+const canonical = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : undefined;
+const breadcrumbLd = {
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: [
+		{
+			'@type': 'ListItem',
+			position: 1,
+			name: 'Insights',
+			item: siteUrl ? new URL('/insights', siteUrl).href : '/insights',
+		},
+		{ '@type': 'ListItem', position: 2, name: entry.data.title, item: canonical },
+	],
+};
 ---
 
 <Base
@@ -21,6 +38,7 @@ const { next, prev } = nextPrev(all, slug!);
 	seoImage={entry.data.ogImage ?? entry.data.featuredImage}
 	type="article"
 	publishedTime={entry.data.date}
+	structuredData={breadcrumbLd}
 >
 	<article>
 		{
