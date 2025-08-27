@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { readingTimeFromMarkdown } from '../../lib/readingTime';
 
@@ -9,31 +10,54 @@ interface Props {
 
 const { entry } = Astro.props;
 const href = `/insights/${entry.slug}`;
-const { title, summary, hero, heroAlt = '', date } = entry.data;
+
+const {
+	title,
+	summary,
+	// accept both new + legacy names to be safe
+	featuredImage,
+	featuredAlt = '',
+	// @ts-ignore – legacy support, remove once all posts migrated
+	hero,
+	// @ts-ignore – legacy support
+	heroAlt,
+	date,
+} = entry.data as Record<string, any>;
+
+const cover: ImageMetadata | undefined = featuredImage ?? hero;
+const alt = (featuredAlt || heroAlt || title) as string;
+
 const formatted = new Intl.DateTimeFormat('en-GB', {
 	day: '2-digit',
 	month: 'short',
 	year: 'numeric',
 }).format(new Date(date));
 
-// ⚠️ entry.body is the raw markdown string from content collections
 const { minutes } = readingTimeFromMarkdown(entry.body ?? '');
+const mins = Math.max(1, Math.round(minutes));
 ---
 
 <article class="insight-card">
 	<a class="insight-card__link" href={href}>
-		<figure class="insight-card__media">
-			<Image
-				src={hero}
-				alt={heroAlt}
-				widths={[480, 768, 1024, 1440]}
-				sizes="(min-width: 1100px) 33vw, (min-width: 700px) 50vw, 100vw"
-				loading="lazy"
-				decoding="async"
-			/>
-		</figure>
+		{
+			cover ? (
+				<figure class="insight-card__media">
+					<Image
+						src={cover}
+						alt={alt}
+						widths={[480, 768, 1024, 1440]}
+						sizes="(min-width: 1100px) 33vw, (min-width: 700px) 50vw, 100vw"
+						loading="lazy"
+						decoding="async"
+					/>
+				</figure>
+			) : (
+				<figure class="insight-card__media insight-card__media--empty" aria-hidden="true" />
+			)
+		}
+
 		<div class="insight-card__content">
-			<p class="insight-card__meta">{formatted} · {minutes} min read</p>
+			<p class="insight-card__meta">{formatted} · {mins} min read</p>
 			<h3 class="insight-card__title">{title}</h3>
 			<p class="insight-card__summary">{summary}</p>
 		</div>
@@ -54,6 +78,11 @@ const { minutes } = readingTimeFromMarkdown(entry.body ?? '');
 		width: 100%;
 		height: auto;
 		display: block;
+		border-radius: var(--radius--l, 14px);
+	}
+	.insight-card__media--empty {
+		aspect-ratio: 16 / 9;
+		background: var(--card-bg-muted, #f3f4f6);
 		border-radius: var(--radius--l, 14px);
 	}
 	.insight-card__meta {
