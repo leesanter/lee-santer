@@ -1,38 +1,48 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getAllServices } from '../../lib/content';
-const services = await getAllServices();
-const groups =
-	Object.groupBy?.(services, (s) => s.data.category) ??
-	services.reduce(
-		(acc, s) => {
-			(acc[s.data.category] ||= []).push(s);
-			return acc;
-		},
-		{} as Record<string, typeof services>
-	);
+import { getCategorySlides } from '../../lib/content';
+
+export const prerender = true;
+
+const slides = await getCategorySlides();
 ---
 
-<Base>
-	<h1>Services</h1>
-	{
-		(['Strategy', 'Design', 'Development', 'Growth'] as const).map((cat) => (
-			<section>
-				<h2>
-					<a href={`/services/${cat.toLowerCase()}`}>{cat}</a>
-				</h2>
-				<ul>
-					{(groups[cat] ?? []).map((s) => (
-						<li>
-							<a
-								href={`/services/${cat.toLowerCase()}#${s.data.anchor ?? s.slug.split('/').pop()}`}
-							>
-								{s.data.title}
-							</a>
+<Base title="Services" description="What I do and how I work.">
+	<section class="section">
+		<div class="container container--large">
+			<h1 class="h2">Services</h1>
+
+			<ul class="cards" role="list">
+				{
+					slides.map((s) => (
+						<li class="card">
+							<h2 class="h4">{s.title}</h2>
+							{s.summary && <p>{s.summary}</p>}
+							<p>
+								<a class="btn btn--outline" href={s.href}>
+									Explore {s.title}
+								</a>
+							</p>
 						</li>
-					))}
-				</ul>
-			</section>
-		))
-	}
+					))
+				}
+			</ul>
+
+			{/* Add: “How I work”, logos strip, 1 testimonial, global FAQs, CTA */}
+		</div>
+	</section>
 </Base>
+
+<style>
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+		gap: var(--size--large);
+		padding: 0;
+		list-style: none;
+	}
+	.card {
+		display: grid;
+		gap: 0.5rem;
+	}
+</style>

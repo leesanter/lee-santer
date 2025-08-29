@@ -1,0 +1,52 @@
+---
+interface Props {
+	quote: string;
+	name: string;
+	role?: string;
+	company?: string;
+	workTitle?: string;
+	workSlug?: string;
+	showWorkLink?: boolean; // default true off case pages
+}
+
+const {
+	quote,
+	name,
+	role,
+	company,
+	workTitle,
+	workSlug,
+	showWorkLink = true,
+} = Astro.props as Props;
+---
+
+<figure class="testimonial">
+	<blockquote class="quote">“{quote}”</blockquote>
+	<figcaption class="who">
+		{name}{role ? `, ${role}` : ''}{company ? `, ${company}` : ''}
+		{
+			showWorkLink && workSlug && workTitle && (
+				<>
+					{' · '}
+					<a href={`/work/${workSlug}`}>{workTitle}</a>
+				</>
+			)
+		}
+	</figcaption>
+</figure>
+
+<style>
+	.testimonial {
+		max-width: 72ch;
+		margin-inline: auto;
+		text-align: center;
+	}
+	.quote {
+		font-size: clamp(1.125rem, 2.8vw, 1.75rem);
+		line-height: 1.5;
+		margin: 0 0 0.75rem 0;
+	}
+	.who {
+		color: var(--text-muted-colour);
+	}
+</style>

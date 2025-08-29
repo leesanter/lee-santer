@@ -1,42 +1,119 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getAllServices } from '../../lib/content';
+import {
+	getAllServiceCategoryOverviews,
+	getCategoryBySlug,
+	getSubServicesForCategory,
+	getFeaturedWorkForCategory,
+	type CategorySlug,
+	type CategoryKey,
+} from '../../lib/content';
+
+export const prerender = true;
 
 export async function getStaticPaths() {
-	return ['strategy', 'design', 'development', 'growth'].map((c) => ({
-		params: { category: c },
+	const cats = await getAllServiceCategoryOverviews();
+	return cats.map((c) => ({
+		params: { category: (c.data.category as string).toLowerCase() },
 	}));
 }
 
-const category = Astro.params.category!;
-const proper = (category.charAt(0).toUpperCase() + category.slice(1)) as
-	| 'Strategy'
-	| 'Design'
-	| 'Development'
-	| 'Growth';
-const services = (await getAllServices()).filter((s) => s.data.category === proper);
+const { category } = Astro.params as { category: CategorySlug };
+const entry = await getCategoryBySlug(category);
+if (!entry) throw new Error(`Unknown service category: ${category}`);
+
+const key = entry.data.category as CategoryKey;
+const subs = await getSubServicesForCategory(key);
+const featured = await getFeaturedWorkForCategory(key, entry.data.featuredWorkSlug);
+
+// Render MD/MDX body
+const { Content } = await entry.render();
+
+const pageTitle = entry.data.seoTitle ?? `${entry.data.title} services`;
+const pageDesc = entry.data.seoDescription ?? entry.data.summary ?? '';
 ---
 
-<Base>
-	<h1>{proper}</h1>
-	{
-		services.map((svc) => {
-			const key = svc.slug.split('/').pop()!;
-			const anchor = svc.data.anchor ?? key;
-			return (
-				<section id={anchor}>
-					<h2>{svc.data.title}</h2>
-					{svc.data.intro && <p>{svc.data.intro}</p>}
-					{svc.data.body && <div set:html={svc.data.body} />}
-					{svc.data.outcomes?.length && (
+<Base title={pageTitle} description={pageDesc}>
+	<section class="section">
+		<div class="container container--large">
+			<h1>{entry.data.title}</h1>
+			{entry.data.summary && <p>{entry.data.summary}</p>}
+
+			{
+				entry.body && (
+					<>
+						<h2>Overview</h2>
+						<Content />
+					</>
+				)
+			}
+
+			{
+				subs.length > 0 && (
+					<>
+						<h2>Sub-services</h2>
 						<ul>
-							{svc.data.outcomes.map((o) => (
-								<li>{o}</li>
-							))}
+							{subs.map((s) => {
+								const anchor = s.data.anchor ?? s.slug.split('/').pop()!;
+								return (
+									<li id={anchor}>
+										<h3>{s.data.title}</h3>
+										{s.data.intro && <p>{s.data.intro}</p>}
+										{s.data.outcomes.length > 0 && (
+											<>
+												<h4>Outcomes</h4>
+												<ul>
+													{s.data.outcomes.map((o) => (
+														<li>{o}</li>
+													))}
+												</ul>
+											</>
+										)}
+										{s.data.deliverables.length > 0 && (
+											<>
+												<h4>Deliverables</h4>
+												<ul>
+													{s.data.deliverables.map((d) => (
+														<li>{d}</li>
+													))}
+												</ul>
+											</>
+										)}
+									</li>
+								);
+							})}
 						</ul>
-					)}
-				</section>
-			);
-		})
-	}
+					</>
+				)
+			}
+
+			{
+				featured && (
+					<>
+						<h2>Case study</h2>
+						<p>
+							<a href={`/work/${featured.slug}`}>{featured.data.title}</a>
+						</p>
+						<p>{featured.data.summary}</p>
+					</>
+				)
+			}
+
+			{
+				entry.data.faqs.length > 0 && (
+					<>
+						<h2>FAQs</h2>
+						<dl>
+							{entry.data.faqs.map((f) => (
+								<>
+									<dt>{f.q}</dt>
+									<dd>{f.a}</dd>
+								</>
+							))}
+						</dl>
+					</>
+				)
+			}
+		</div>
+	</section>
 </Base>

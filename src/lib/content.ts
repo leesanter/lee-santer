@@ -2,10 +2,7 @@ import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
 
 /* ============================================================================
    Site Settings
-   ---------------------------------------------------------------------------
-   - Versioned defaults for brand/SEO; env still wins for site URL & robots.
 ============================================================================ */
-
 export type SiteSettings = {
   siteName: string;
   defaultDescription: string;
@@ -21,12 +18,20 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
 }
 
 /* ============================================================================
-   Shared types & helpers
+   Shared types & utilities
 ============================================================================ */
-
 export type ServiceEntry = CollectionEntry<'services'>;
 export type WorkEntry    = CollectionEntry<'work'>;
 export type PostEntry    = CollectionEntry<'insights'>;
+
+export type CategoryKey  = 'Strategy' | 'Design' | 'Development' | 'Growth';
+export type CategorySlug = 'strategy' | 'design' | 'development' | 'growth';
+
+export const keyToSlug = (k: CategoryKey): CategorySlug =>
+  (k.toLowerCase() as CategorySlug);
+
+export const slugToKey = (s: string): CategoryKey =>
+  (s[0].toUpperCase() + s.slice(1)) as CategoryKey;
 
 /** Items that carry either completedDate (work) or date (posts). */
 type WithDates = { data: { completedDate?: Date; date?: Date } };
@@ -49,47 +54,75 @@ export function nextPrev<T extends { slug: string }>(items: T[], currentSlug: st
 }
 
 /* ============================================================================
-   Services
-   ---------------------------------------------------------------------------
-   - Sorted by front-matter `order`
-   - mapServiceKeysToLinks: converts your work.services keys → label + deep link
+   Services (unified collection)
 ============================================================================ */
 
+/** Sub-services only (exclude kind === 'category'); sorted by `order`. */
 export async function getAllServices(): Promise<ServiceEntry[]> {
-  const all = await getCollection('services', (s) => !s.data.draft);
-  return all.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+  const all = await getCollection('services', (s) => !s.data.draft && (s.data as any).kind !== 'category');
+  return all.sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
 }
 
 /**
- * Map service keys (filenames in /content/services/{category}/{key}.md)
- * to {label, href} where href deep-links to: /services/{category}#{anchor}
- *
- * Unknown keys are kept with a null href and a console.warn in dev.
+ * Map sub-service keys (filenames) → { label, href } deep-linking to
+ * /services/{category}#{anchor}
  */
 export async function mapServiceKeysToLinks(keys: string[]) {
-  const services = await getAllServices();
-  // index by filename (last slug segment) → entry
-  const idx = new Map(services.map((s) => [s.slug.split('/').pop()!, s]));
+  const services = await getAllServices(); // sub-services only
+  const byKey = new Map(services.map((s) => [s.slug.split('/').pop()!, s]));
   return keys.map((key) => {
-    const svc = idx.get(key);
+    const svc = byKey.get(key);
     if (!svc) {
-      if (import.meta.env.DEV) {
-        console.warn(`[work] Unknown serviceKey "${key}" — link skipped`);
-      }
+      if (import.meta.env.DEV) console.warn(`[work] Unknown serviceKey "${key}" — link skipped`);
       return { key, label: key, href: null as string | null };
     }
-    const category = String(svc.data.category).toLowerCase();
-    const anchor = svc.data.anchor ?? key;
+    const category = keyToSlug(svc.data.category as CategoryKey);
+    const anchor = svc.data.anchor ?? key; // default to filename if missing
     return { key, label: svc.data.title, href: `/services/${category}#${anchor}` };
   });
 }
 
+/** Category overview docs (kind === 'category'), sorted by `order`. */
+export async function getAllServiceCategoryOverviews(): Promise<ServiceEntry[]> {
+  const cats = await getCollection('services', (e) => !e.data.draft && (e.data as any).kind === 'category');
+  return cats.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+}
+
+/** Fetch a category overview by slug (e.g. 'design' → Design). */
+export async function getCategoryBySlug(slug: CategorySlug) {
+  const key = slugToKey(slug);
+  const cats = await getAllServiceCategoryOverviews();
+  return cats.find((c) => (c.data.category as CategoryKey) === key) ?? null;
+}
+
+/** Sub-services for a given category (for accordions on /services/{category}). */
+export async function getSubServicesForCategory(key: CategoryKey) {
+  const all = await getAllServices();
+  return all.filter((s) => (s.data.category as CategoryKey) === key);
+}
+
+/** View model for Home /services slider tiles, based on category overviews. */
+export type CategorySlideVM = {
+  key: CategoryKey;
+  title: string;
+  summary?: string;
+  image?: unknown; // ImageMetadata | undefined
+  alt?: string;
+  href: string;    // /services/{slug}
+};
+
+export async function getCategorySlides(): Promise<CategorySlideVM[]> {
+  const cats = await getAllServiceCategoryOverviews();
+  return cats.map((c) => ({
+    key: c.data.category as CategoryKey,
+    title: c.data.title,
+    summary: c.data.summary,
+    href: `/services/${keyToSlug(c.data.category as CategoryKey)}`,
+  }));
+}
+
 /* ============================================================================
    Work (Case Studies)
-   ---------------------------------------------------------------------------
-   - Sorted newest → oldest
-   - Home selection: featured first (by featureWeight, lower = higher priority),
-     then backfill with newest
 ============================================================================ */
 
 export async function getAllWork(): Promise<WorkEntry[]> {
@@ -105,11 +138,7 @@ const byFeatureThenDate = (a: WorkEntry, b: WorkEntry) => {
   return byDateDesc(a, b);
 };
 
-/**
- * Home selection:
- *  1) take all featured (`featuredHome: true`) sorted by weight->date, up to limit
- *  2) backfill with newest non-featured to reach limit
- */
+/** Home selection: featured → backfill newest. */
 export async function getWorkForHome(limit = 4): Promise<WorkEntry[]> {
   const all = await getAllWork();
   const featured = all.filter((w) => w.data.featuredHome).sort(byFeatureThenDate);
@@ -125,17 +154,25 @@ export async function getWorkForHome(limit = 4): Promise<WorkEntry[]> {
   return picked.slice(0, limit);
 }
 
-/** Simple category filter if you need it ad-hoc (uses front-matter `serviceCategory`). */
-export async function getWorkByCategory(category: WorkEntry['data']['serviceCategory']) {
+/** Category filter (uses front-matter `serviceCategories`). */
+export async function getWorkByCategory(category: CategoryKey) {
   const all = await getAllWork();
-  return all.filter((w) => w.data.serviceCategory === category);
+  return all.filter((w) => (w.data as any).serviceCategories?.includes(category));
+}
+
+/** Featured work for a category: explicit slug wins; else newest in cat. */
+export async function getFeaturedWorkForCategory(
+  key: CategoryKey,
+  explicitSlug?: string,
+): Promise<WorkEntry | null> {
+  const all = await getAllWork();
+  if (explicitSlug) return all.find((w) => w.slug === explicitSlug) ?? null;
+  const inCat = all.filter((w) => (w.data as any).serviceCategories?.includes(key));
+  return inCat[0] ?? null;
 }
 
 /* ============================================================================
    Insights (Blog)
-   ---------------------------------------------------------------------------
-   - Sorted newest → oldest
-   - Latest list for home widgets
 ============================================================================ */
 
 export async function getAllPosts(): Promise<PostEntry[]> {
@@ -149,77 +186,35 @@ export async function getLatestInsights(limit = 3): Promise<PostEntry[]> {
 }
 
 /* ============================================================================
-   Testimonials
-   ---------------------------------------------------------------------------
-   - Supports BOTH shapes:
-     A) legacy single:   work.data.testimonial = { quote, personName, role?, company? }
-     B) new array:       work.data.testimonials = [{ quote/body, name/personName, role?, company? }, ...]
-   - VM includes case study slug/title for linking
+   Testimonials (array-only)
 ============================================================================ */
 
 export type TestimonialVM = {
   quote: string;
-  name: string;
+  name: string;     // derived from personName
   role?: string;
   company?: string;
   workTitle: string;
   workSlug: string;
 };
 
-/** Extract all testimonials for one work entry (supports legacy + new). */
+/** Extract testimonials for one work entry (array-only). */
 export function getTestimonialsForWork(entry: WorkEntry): TestimonialVM[] {
-  const vms: TestimonialVM[] = [];
-
-  // New shape: array
-  const arr = (entry.data as any).testimonials as
-    | { quote?: string; body?: string; name?: string; personName?: string; role?: string; company?: string }[]
-    | undefined;
-
-  if (Array.isArray(arr)) {
-    for (const t of arr) {
-      const quote = (t.quote ?? t.body ?? '').trim();
-      const name = (t.name ?? t.personName ?? '').trim();
-      if (!quote || !name) continue;
-      vms.push({
-        quote,
-        name,
-        role: t.role?.trim() || undefined,
-        company: t.company?.trim() || undefined,
-        workTitle: entry.data.title,
-        workSlug: entry.slug,
-      });
-    }
-  }
-
-  // Legacy single object
-  const legacy = (entry.data as any).testimonial as
-    | { quote?: string; body?: string; personName?: string; name?: string; role?: string; company?: string }
-    | undefined;
-
-  if (legacy) {
-    const quote = (legacy.quote ?? legacy.body ?? '').trim();
-    const name = (legacy.personName ?? legacy.name ?? '').trim();
-    if (quote && name) {
-      vms.push({
-        quote,
-        name,
-        role: legacy.role?.trim() || undefined,
-        company: legacy.company?.trim() || undefined,
-        workTitle: entry.data.title,
-        workSlug: entry.slug,
-      });
-    }
-  }
-
-  return vms;
+  const arr = entry.data.testimonials ?? [];
+  return arr
+    .map((t) => ({
+      quote: t.quote.trim(),
+      name: t.personName.trim(),
+      role: t.role?.trim() || undefined,
+      company: t.company?.trim() || undefined,
+      workTitle: entry.data.title,
+      workSlug: entry.slug,
+    }))
+    .filter((t) => t.quote && t.name);
 }
 
 /** Aggregate all testimonials across work entries. */
 export async function getAllWorkTestimonials(): Promise<TestimonialVM[]> {
   const work = await getAllWork();
-  const all: TestimonialVM[] = [];
-  for (const w of work) {
-    all.push(...getTestimonialsForWork(w));
-  }
-  return all;
+  return work.flatMap(getTestimonialsForWork);
 }

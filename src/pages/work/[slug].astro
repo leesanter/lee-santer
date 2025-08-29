@@ -1,11 +1,23 @@
 ---
+// src/pages/work/[slug].astro
 import Base from '../../layouts/Base.astro';
-import { getAllWork, nextPrev, mapServiceKeysToLinks } from '../../lib/content';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import {
+	getAllWork,
+	nextPrev,
+	mapServiceKeysToLinks,
+	byDateDesc,
+	type WorkEntry,
+} from '../../lib/content';
 import { getCollection } from 'astro:content';
+import { md } from '../../lib/md';
+import ClientSection from 'src/components/organisms/ClientSection.astro';
 
 export async function getStaticPaths() {
-  const entries = await getCollection('work', (w) => !w.data.draft);
-  return entries.map((e) => ({ params: { slug: e.slug } }));
+	const entries = await getCollection('work', (w) => !w.data.draft);
+	entries.sort(byDateDesc);
+	return entries.map((e) => ({ params: { slug: e.slug } }));
 }
 
 const { slug } = Astro.params;
@@ -14,65 +26,232 @@ const entry = all.find((e) => e.slug === slug)!;
 const { next, prev } = nextPrev(all, slug!);
 const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
 
-// Breadcrumb JSON-LD
+/* ---------- Breadcrumb JSON-LD ---------- */
 const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
 const canonical = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : undefined;
 const breadcrumbLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Work", "item": siteUrl ? new URL('/work', siteUrl).href : '/work' },
-    { "@type": "ListItem", "position": 2, "name": entry.data.title, "item": canonical }
-  ]
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: [
+		{
+			'@type': 'ListItem',
+			position: 1,
+			name: 'Work',
+			item: siteUrl ? new URL('/work', siteUrl).href : '/work',
+		},
+		{ '@type': 'ListItem', position: 2, name: entry.data.title, item: canonical },
+	],
 };
+
+/* ---------- Overview + content stream ---------- */
+type Block =
+	| { kind: 'image'; src: ImageMetadata; alt: string }
+	| { kind: 'section'; title: string; html: string };
+
+const sections = entry.data.sections ?? [];
+const gallery = (entry.data.gallery ?? []) as { src: ImageMetadata; alt?: string }[];
+
+// Overview lives beside meta; fallback to summary if not provided.
+const overviewTitle = entry.data.overviewTitle ?? 'Project Overview';
+const overviewHTML = entry.data.overview ? md(entry.data.overview) : md(entry.data.summary);
+
+// If you kept an early section called “Project Overview”, hide it when top-level overview exists.
+const renderSections = entry.data.overview
+	? sections.filter((s) => s.title.trim() !== overviewTitle.trim())
+	: sections;
+
+// Build blocks based on placement mode
+const placement = entry.data.galleryPlacement ?? 'interleave';
+
+function toSectionBlocks(list: typeof renderSections): Block[] {
+	return list.map((s) => ({ kind: 'section', title: s.title, html: md(s.body) }));
+}
+
+let blocks: Block[] = [];
+if (placement === 'before') {
+	blocks = [
+		...gallery.map((g) => ({ kind: 'image', src: g.src, alt: g.alt || '' }) as const),
+		...toSectionBlocks(renderSections),
+	];
+} else if (placement === 'after') {
+	blocks = [
+		...toSectionBlocks(renderSections),
+		...gallery.map((g) => ({ kind: 'image', src: g.src, alt: g.alt || '' }) as const),
+	];
+} else {
+	// 'interleave' default: image0 → section0 → image1 → section1 → …
+	let gi = 0;
+	if (gallery[gi]) {
+		blocks.push({ kind: 'image', src: gallery[gi].src, alt: gallery[gi].alt || '' });
+		gi++;
+	}
+	for (const s of renderSections) {
+		blocks.push({ kind: 'section', title: s.title, html: md(s.body) });
+		if (gallery[gi]) {
+			blocks.push({ kind: 'image', src: gallery[gi].src, alt: gallery[gi].alt || '' });
+			gi++;
+		}
+	}
+}
+
+// Nice date
+const completed = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' }).format(
+	new Date(entry.data.completedDate)
+);
 ---
 
 <Base
-  title={entry.data.title}
-  seoTitleTemplate="%s | Case Study"
-  description={entry.data.summary}
-  seoImage={entry.data.ogImage ?? entry.data.featuredImage}
-  type="creativework"
-  publishedTime={entry.data.completedDate}
-  structuredData={breadcrumbLd}
+	title={entry.data.title}
+	titleTemplate="%s | Case Study"
+	description={entry.data.summary}
+	image={entry.data.ogImage ?? entry.data.featuredImage}
+	type="creativework"
+	publishedTime={entry.data.completedDate}
+	structuredData={breadcrumbLd}
 >
-  <article>
-	<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt} />
-	<h1>{entry.data.title}</h1>
-	{entry.data.siteUrl && <p><a href={entry.data.siteUrl} rel="noopener noreferrer" target="_blank">View site</a></p>}
+	<article>
+		<!-- HERO -->
+		<figure class="hero">
+			<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt} />
+			<figcaption class="sr-only">{entry.data.title}</figcaption>
+		</figure>
 
-	<!-- Service chips (auto deep-links) -->
-	<p>
-	  {serviceLinks.map(s => s.href ? <a href={s.href}>{s.label}</a> : <span>{s.label}</span>)}
-	</p>
+		<!-- META + OVERVIEW -->
+		<section class="section">
+			<div class="container container--large two-col">
+				<aside class="meta">
+					<h2 class="h6">What I did</h2>
+					<ul class="chips" role="list">
+						{
+							serviceLinks.map((s) => (
+								<li>
+									{s.href ? (
+										<a href={s.href}>{s.label}</a>
+									) : (
+										<span>{s.label}</span>
+									)}
+								</li>
+							))
+						}
+					</ul>
 
-	<!-- Sections -->
-	{entry.data.sections.map(s => (
-	  <section id={s.title.toLowerCase().replace(/\s+/g,'-')}>
-		<h2>{s.title}</h2>
-		<!-- Expect HTML in s.body -->
-		<div set:html={s.body} />
-		{s.image && <img src={s.image.src} alt={s.imageAlt || ''} />}
-	  </section>
-	))}
+					<dl class="kv">
+						<div><dt>Completed</dt><dd>{completed}</dd></div>
+						{
+							entry.data.siteUrl && (
+								<div>
+									<dt>Visit</dt>
+									<dd>
+										<a href={entry.data.siteUrl} rel="noopener" target="_blank">
+											Project site
+										</a>
+									</dd>
+								</div>
+							)
+						}
+					</dl>
+				</aside>
 
-	{entry.data.testimonial && (
-	  <aside class="testimonial">
-		<blockquote>
-		  <p>“{entry.data.testimonial.quote}”</p>
-		</blockquote>
-		<footer>
-		  <strong>{entry.data.testimonial.personName}</strong>
-		  {entry.data.testimonial.role && `, ${entry.data.testimonial.role}`}
-		  {entry.data.testimonial.company && `, ${entry.data.testimonial.company}`}
-		</footer>
-	  </aside>
-	)}
+				<article class="overview">
+					<h1 class="h2">{entry.data.title}</h1>
+					<h2 class="h3">{overviewTitle}</h2>
+					<div class="prose" set:html={overviewHTML} />
+				</article>
+			</div>
+		</section>
 
-  </article>
+		<!-- STREAM -->
+		<section class="section">
+			<div class="container container--large stack">
+				{
+					blocks.map((b) =>
+						b.kind === 'image' ? (
+							<figure class="case-image">
+								<Image
+									src={b.src}
+									alt={b.alt}
+									widths={[768, 1280, 1600]}
+									sizes="100vw"
+									loading="lazy"
+									decoding="async"
+								/>
+							</figure>
+						) : (
+							<article class="case-section stack tiny">
+								<h3 class="h4">{b.title}</h3>
+								<div class="prose" set:html={b.html} />
+							</article>
+						)
+					)
+				}
+			</div>
+		</section>
 
-  <nav aria-label="Post navigation">
-	{prev && <a href={`/work/${prev.slug}`}>← {prev.data.title}</a>}
-	{next && <a href={`/work/${next.slug}`}>{next.data.title} →</a>}
-  </nav>
+		<!-- TESTIMONIAL (this case only; no random) -->
+		<ClientSection workEntry={entry} showWorkLink={false} />
+	</article>
+
+	<!-- NEXT / PREV -->
+	<nav aria-label="Case navigation" class="section">
+		<div class="container container--large nextprev">
+			{
+				prev && (
+					<a class="btn btn--outline" href={`/work/${prev.slug}`}>
+						← {prev.data.title}
+					</a>
+				)
+			}
+			{
+				next && (
+					<a class="btn btn--outline" href={`/work/${next.slug}`}>
+						{next.data.title} →
+					</a>
+				)
+			}
+		</div>
+	</nav>
 </Base>
+
+<style>
+	.hero img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+	.two-col {
+		display: grid;
+		grid-template-columns: 1fr 2fr;
+		gap: var(--size--xlarge);
+		align-items: start;
+	}
+	.chips {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.kv {
+		display: grid;
+		gap: 0.25rem;
+	}
+	.case-image img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+	.case-section {
+		max-width: 72ch;
+	}
+	.nextprev {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--size--small);
+	}
+	@media (max-width: 900px) {
+		.two-col {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
