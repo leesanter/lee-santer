@@ -8,7 +8,7 @@ export async function getStaticPaths() {
 }
 
 const { category } = Astro.params as { category: CatSlug };
-const proper = fromSlug(category); // "Design" | "Strategy" | "Development" | "Growth"
+const proper = fromSlug(category);
 ---
 
 <Base title={`Work — ${proper}`} description={`Projects in ${proper}.`}>

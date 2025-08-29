@@ -12,18 +12,18 @@ interface Props {
 	/** Controlled mode: pre-fetched entries (already filtered/sorted) */
 	entries?: CollectionEntry<'work'>[];
 
-	/** Autonomous mode options (ignored if entries passed) */
+	/** Autonomous mode (ignored if entries are passed) */
 	category?: Category | 'all';
 	includeSlugs?: string[];
 	excludeSlugs?: string[];
 	limit?: number;
 	shuffle?: boolean;
 
-	/** UI options */
+	/** UI */
 	showFilter?: boolean;
-	active?: AllOrCatSlug; // highlights the chip
+	active?: AllOrCatSlug; // chip highlight
 	lede?: string;
-	id?: string; // anchor id; defaults to "projects"
+	id?: string; // defaults to "projects"
 }
 
 const {
@@ -46,30 +46,30 @@ if (injected?.length) {
 	list = injected;
 } else {
 	const all = await getAllWork(); // newest → oldest
-
 	if (includeSlugs.length) {
 		list = all.filter((e) => includeSlugs.includes(e.slug));
 	} else {
 		list = [...all];
-
 		if (category !== 'all') {
-			// MULTI-CATEGORY SUPPORT
+			// MULTI-CATEGORY support
 			list = list.filter((w) => (w.data as any).serviceCategories?.includes(category));
 		}
-
 		if (excludeSlugs.length) {
 			list = list.filter((e) => !excludeSlugs.includes(e.slug));
 		}
 	}
-
 	if (shuffle) list = list.sort(() => Math.random() - 0.5);
 	if (typeof limit === 'number') list = list.slice(0, Math.max(0, limit));
 }
 
-/* ---------- Precompute WorkCard props ---------- */
+/* ---------- Precompute props for WorkCard ---------- */
 const cards = await Promise.all(
 	list.map(async (entry) => ({
-		entry,
+		href: `/work/${entry.slug}`,
+		title: entry.data.title,
+		summary: entry.data.summary,
+		img: entry.data.featuredImage, // ESM image
+		alt: entry.data.featuredAlt,
 		services: await mapServiceKeysToLinks(entry.data.services),
 	}))
 );
@@ -124,9 +124,9 @@ const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 					<p class="muted">No projects yet.</p>
 				) : (
 					<ul class="work-grid" role="list">
-						{cards.map(({ entry, services }) => (
+						{cards.map((c) => (
 							<li>
-								<WorkCard entry={entry} services={services} />
+								<WorkCard {...c} />
 							</li>
 						))}
 					</ul>
