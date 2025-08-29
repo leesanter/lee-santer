@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import WorkCard from '../../components/molecules/WorkCard.astro';
+import WorkCard from '../molecules/WorkCard.astro';
 import { getAllWork, mapServiceKeysToLinks } from '../../lib/content';
 import { CATEGORIES, toSlug } from '../../lib/categories';
 
@@ -9,7 +9,7 @@ type CatSlug = 'strategy' | 'design' | 'development' | 'growth';
 type AllOrCatSlug = 'all' | CatSlug;
 
 interface Props {
-	/** Controlled mode: pre-fetched entries (already filtered/sorted by the page) */
+	/** Controlled mode: pre-fetched entries (already filtered/sorted) */
 	entries?: CollectionEntry<'work'>[];
 
 	/** Autonomous mode options (ignored if entries passed) */
@@ -21,14 +21,13 @@ interface Props {
 
 	/** UI options */
 	showFilter?: boolean;
-	active?: AllOrCatSlug; // highlights the chip; useful on /work and /work/[category]
+	active?: AllOrCatSlug; // highlights the chip
 	lede?: string;
 	id?: string; // anchor id; defaults to "projects"
 }
 
-/** Defaults */
 const {
-	entries: injected = undefined,
+	entries: injected,
 	category = 'all',
 	includeSlugs = [],
 	excludeSlugs = [],
@@ -40,52 +39,47 @@ const {
 	id = 'projects',
 } = Astro.props as Props;
 
-/** Build data list (prefer injected entries; else fetch + filter) */
+/* ---------- Build list (prefer injected) ---------- */
 let list: CollectionEntry<'work'>[] = [];
 
 if (injected?.length) {
 	list = injected;
 } else {
-	const all = await getAllWork(); // sorted newest → oldest in your helper
-	// explicit include wins
+	const all = await getAllWork(); // newest → oldest
+
 	if (includeSlugs.length) {
 		list = all.filter((e) => includeSlugs.includes(e.slug));
 	} else {
 		list = [...all];
+
 		if (category !== 'all') {
-			list = list.filter((w) => w.data.serviceCategory === category);
+			// MULTI-CATEGORY SUPPORT
+			list = list.filter((w) => (w.data as any).serviceCategories?.includes(category));
 		}
+
 		if (excludeSlugs.length) {
 			list = list.filter((e) => !excludeSlugs.includes(e.slug));
 		}
 	}
-	if (shuffle) {
-		list = list.sort(() => Math.random() - 0.5);
-	}
-	if (typeof limit === 'number') {
-		list = list.slice(0, Math.max(0, limit));
-	}
+
+	if (shuffle) list = list.sort(() => Math.random() - 0.5);
+	if (typeof limit === 'number') list = list.slice(0, Math.max(0, limit));
 }
 
-/** Card view models (WorkCard expects denormalised props) */
+/* ---------- Precompute WorkCard props ---------- */
 const cards = await Promise.all(
 	list.map(async (entry) => ({
-		href: `/work/${entry.slug}`,
-		title: entry.data.title,
-		summary: entry.data.summary,
-		img: entry.data.featuredImage,
-		alt: entry.data.featuredAlt,
-		chips: await mapServiceKeysToLinks(entry.data.services),
+		entry,
+		services: await mapServiceKeysToLinks(entry.data.services),
 	}))
 );
 
-/** Filter chips */
+/* ---------- Filter chips ---------- */
 const activeSlug: AllOrCatSlug =
 	active ?? (category === 'all' ? 'all' : (toSlug(category as Category) as CatSlug));
 
 const pathFor = (slug: AllOrCatSlug) =>
 	slug === 'all' ? '/work#projects' : `/work/${slug}#projects`;
-
 const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 ---
 
@@ -130,9 +124,9 @@ const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 					<p class="muted">No projects yet.</p>
 				) : (
 					<ul class="work-grid" role="list">
-						{cards.map((c) => (
+						{cards.map(({ entry, services }) => (
 							<li>
-								<WorkCard {...c} />
+								<WorkCard entry={entry} services={services} />
 							</li>
 						))}
 					</ul>
@@ -143,19 +137,15 @@ const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 </section>
 
 <style lang="scss">
-	/* Anchor offset for sticky header */
 	#projects {
 		scroll-margin-top: calc(var(--header-height, 56px) + var(--size--medium));
 	}
-
 	.work-grid {
 		display: grid;
 		gap: var(--size--large);
 		list-style: none;
 		padding: 0;
 	}
-
-	/* simple responsive grid; tweak to your taste */
 	@media (min-width: 720px) {
 		.work-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
