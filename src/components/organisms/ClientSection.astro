@@ -1,0 +1,144 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { ImageMetadata } from 'astro';
+import {
+  getAllWorkTestimonials,
+  getTestimonialsForWork,
+  type TestimonialVM,
+} from '../../lib/content';
+import TestimonialQuote from '../atoms/TestimonialQuote.astro';
+import LogosRow from '../atoms/LogosRow.astro';
+
+/* Local logo type */
+type Logo = { name: string; src: string | ImageMetadata; alt?: string; href?: string };
+
+interface Props {
+  heading?: string;
+
+  // Pinned mode (case page)
+  workEntry?: CollectionEntry<'work'>;
+
+  // Pooled mode (home/about/etc.)
+  includeWorkSlugs?: string[];
+  excludeWorkSlugs?: string[];
+  entries?: TestimonialVM[];
+  random?: boolean;           // default true
+
+  // Presentation
+  showWorkLink?: boolean;     // default: !workEntry
+  id?: string;
+
+  // Logos
+  logos?: Logo[];
+  showLogos?: boolean;        // default true
+}
+
+const {
+  heading = 'Driven brands, no matter the industry.',
+  workEntry,
+  includeWorkSlugs = [],
+  excludeWorkSlugs = [],
+  entries,
+  random = true,
+  showWorkLink = !workEntry,
+  id = 'clients',
+  logos,
+  showLogos = true,
+} = Astro.props as Props;
+
+const onWorkPage = Boolean(workEntry);
+
+// Build testimonial pool (pinned → manual entries → include filter → all)
+let pool: TestimonialVM[] = [];
+if (workEntry) {
+  pool = getTestimonialsForWork(workEntry);
+} else if (entries?.length) {
+  pool = entries;
+} else if (includeWorkSlugs.length) {
+  const all = await getAllWorkTestimonials();
+  pool = all.filter((t) => includeWorkSlugs.includes(t.workSlug));
+} else {
+  pool = await getAllWorkTestimonials();
+}
+if (excludeWorkSlugs.length) {
+  pool = pool.filter((t) => !excludeWorkSlugs.includes(t.workSlug));
+}
+
+const first = pool[0];
+const canRandomize = !onWorkPage && (random ?? true) && pool.length > 1;
+
+// JSON payload for the client-side randomizer (kept inside the spot)
+const payload = JSON.stringify(pool);
+---
+
+<section class="section" id={id}>
+  <div class="container container--large">
+    <div class="stack large center">
+      {heading && <h2 class="h2">{heading}</h2>}
+
+      {first ? (
+        <div class="testimonial-spot" data-spot>
+          <!-- JSON lives inside the spot so we can scope without IDs/currentScript -->
+          <script is:inline type="application/json" data-testimonials set:html={payload} />
+          <TestimonialQuote
+            quote={first.quote}
+            name={first.name}
+            role={first.role}
+            company={first.company}
+            workTitle={first.workTitle}
+            workSlug={first.workSlug}
+            showWorkLink={showWorkLink}
+          />
+        </div>
+      ) : (
+        <p class="muted">No testimonials yet.</p>
+      )}
+
+      {showLogos && <LogosRow logos={logos} />}
+    </div>
+  </div>
+
+  {canRandomize && (
+    <script is:inline>
+      // Randomize each testimonial spot independently (Astro v5-safe)
+      (() => {
+        try {
+          document.querySelectorAll('.testimonial-spot[data-spot]').forEach((spot) => {
+            const dataEl = spot.querySelector('script[type="application/json"][data-testimonials]');
+            if (!dataEl) return;
+
+            const list = JSON.parse(dataEl.textContent || '[]');
+            if (!Array.isArray(list) || list.length < 2) return;
+
+            const t = list[Math.floor(Math.random() * list.length)];
+            if (!t) return;
+
+            const quote = spot.querySelector('.quote');
+            const who   = spot.querySelector('.who');
+            const link  = spot.querySelector('a[href^="/work/"]');
+
+            if (quote) quote.textContent = '“' + (t.quote || '') + '”';
+
+            if (who) {
+              let cap = t.name || '';
+              if (t.role)    cap += ', ' + t.role;
+              if (t.company) cap += ', ' + t.company;
+              if (link)      cap += ' · ';
+              who.textContent = cap;
+            }
+
+            if (link) {
+              link.setAttribute('href', '/work/' + t.workSlug);
+              link.textContent = t.workTitle;
+            }
+          });
+        } catch {}
+      })();
+    </script>
+  )}
+</section>
+
+<style>
+  .center { text-align: center; }
+  .testimonial-spot { margin-block: var(--size--medium); }
+</style>

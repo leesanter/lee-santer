@@ -1,7 +1,6 @@
-// src/lib/md.ts
 import { marked } from 'marked';
 
-/** Render trusted Markdown to HTML. */
-export function mdToHtml(md: string) {
-  return marked.parse(md) as string;
+/** Convert a markdown string to HTML (string). */
+export function md(input: string): string {
+  return marked.parse(input ?? '');
 }
