@@ -1,5 +1,11 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { keyToSlug, slugToKey, type CategoryKey, type CategorySlug } from './categories';
+import { keyToSlug, type CategoryKey, type CategorySlug, slugToKey } from './categories';
+
+// Build toggle: fail CI on unknown service keys referenced by work entries.
+// Read from either import.meta.env (Vite/Astro) or process.env (Node/CI).
+const STRICT_SERVICES =
+  String((import.meta as any)?.env?.STRICT_SERVICES ?? process.env.STRICT_SERVICES ?? 'false')
+    .toLowerCase() === 'true';
 
 export type ServiceEntry = CollectionEntry<'services'>;
 
@@ -17,6 +23,13 @@ export async function mapServiceKeysToLinks(keys: string[]) {
     const svc = byKey.get(key);
     if (!svc) {
       if (import.meta.env.DEV) console.warn(`[work] Unknown serviceKey "${key}" — link skipped`);
+      return { key, label: key, href: null as string | null };
+      const msg = `[work] Unknown serviceKey "${key}" — expected a file in /src/content/services/**/${key}.md`;
+      if (STRICT_SERVICES) {
+        throw new Error(msg);
+      } else if (import.meta.env.DEV) {
+        console.warn(msg);
+      }
       return { key, label: key, href: null as string | null };
     }
     const category = keyToSlug(svc.data.category as CategoryKey);
