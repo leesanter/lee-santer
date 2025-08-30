@@ -25,6 +25,37 @@ const key = entry.data.category as CategoryKey;
 const subs = await getSubServicesForCategory(key);
 const featured = await getFeaturedWorkForCategory(key, entry.data.featuredWorkSlug);
 
+// ---------- Canonical + Breadcrumb JSON-LD ----------
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
+const canonical = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : undefined;
+
+const breadcrumbLd = {
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: [
+		{
+			'@type': 'ListItem',
+			position: 1,
+			name: 'Services',
+			item: siteUrl ? new URL('/services', siteUrl).href : '/services',
+		},
+		{ '@type': 'ListItem', position: 2, name: entry.data.title, item: canonical },
+	],
+};
+
+// ---------- Optional FAQPage JSON-LD ----------
+const faqLd = (entry.data as any).faqs?.length
+	? {
+			'@context': 'https://schema.org',
+			'@type': 'FAQPage',
+			mainEntity: (entry.data as any).faqs.map((f: { q: string; a: string }) => ({
+				'@type': 'Question',
+				name: f.q,
+				acceptedAnswer: { '@type': 'Answer', text: f.a },
+			})),
+		}
+	: null;
+
 // MD/MDX body for the category doc
 const { Content } = await entry.render();
 
@@ -32,7 +63,12 @@ const pageTitle = entry.data.seoTitle ?? `${entry.data.title} services`;
 const pageDesc = entry.data.seoDescription ?? entry.data.summary ?? '';
 ---
 
-<Base title={pageTitle} description={pageDesc}>
+<Base
+	title={pageTitle}
+	description={pageDesc}
+	type="webpage"
+	structuredData={faqLd ? [breadcrumbLd, faqLd] : breadcrumbLd}
+>
 	<section class="section">
 		<div class="container container--large">
 			<h1>{entry.data.title}</h1>

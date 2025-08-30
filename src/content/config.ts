@@ -57,13 +57,13 @@ const services = defineCollection({
       featuredAlt: z.string().default(''),
       featuredWorkSlug: z.string().optional(), // optional explicit case study to feature
       faqs: z
-        .array(
-          z.object({
-            q: z.string(),
-            a: z.string(),
-          }),
-        )
-        .default([]),
+      .array(
+        z.object({
+          q: z.string(),
+          a: z.string(),        // HTML-safe; we’ll render as text in JSON-LD
+        })
+      )
+      .optional(),
 
       /** Optional SEO overrides (page can pass these into <SEO/>) */
       seoTitle: z.string().optional(),
