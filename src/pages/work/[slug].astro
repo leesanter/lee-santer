@@ -4,7 +4,7 @@ import Base from '../../layouts/Base.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { getAllWork, nextPrev, mapServiceKeysToLinks, byDateDesc } from '../../lib/content';
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { md } from '../../lib/md';
 import ClientSection from 'src/components/organisms/ClientSection.astro';
 import { formatDate } from 'src/lib/format';
@@ -16,14 +16,12 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 
-// Directly fetch the single entry
-const entry = await getEntry('work', slug!);
+// Single read: fetch all, then derive entry + next/prev from the same list
+const all = await getAllWork();
+const entry = all.find((e) => e.slug === slug)!;
 if (!entry) throw new Error(`Work entry not found for slug: ${slug}`);
 
-// Still load all once for next/prev
-const all = await getAllWork();
 const { next, prev } = nextPrev(all, slug!);
-
 const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
 
 /* ---------- Breadcrumb JSON-LD ---------- */
