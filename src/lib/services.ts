@@ -2,21 +2,22 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { keyToSlug, type CategoryKey, type CategorySlug, slugToKey } from './categories';
 
-// Build toggle: fail CI on unknown service keys referenced by work entries.
-// Read from either import.meta.env (Vite/Astro) or process.env (Node/CI).
 const STRICT_SERVICES =
   String((import.meta as any)?.env?.STRICT_SERVICES ?? process.env.STRICT_SERVICES ?? 'false')
     .toLowerCase() === 'true';
 
 export type ServiceEntry = CollectionEntry<'services'>;
 
+// ---- tiny memo ------------------------------------------------------------
+let _servicesCache: ServiceEntry[] | null = null;
+let _catOverviewsCache: ServiceEntry[] | null = null;
+
 /** Sub-services only (exclude kind === 'category'); sorted by `order`. */
 export async function getAllServices(): Promise<ServiceEntry[]> {
-  const all = await getCollection(
-    'services',
-    (s) => !s.data.draft && (s.data as any).kind !== 'category'
-  );
-  return all.sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+  if (_servicesCache) return _servicesCache;
+  const all = await getCollection('services', (s) => !s.data.draft && (s.data as any).kind !== 'category');
+  _servicesCache = all.sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+  return _servicesCache;
 }
 
 /** Map sub-service keys (filenames) → { label, href } pointing at /services/{category}#{anchor} */
@@ -28,13 +29,10 @@ export async function mapServiceKeysToLinks(keys: string[]) {
     const svc = byKey.get(key);
     if (!svc) {
       const msg = `[work] Unknown serviceKey "${key}" — expected a file in /src/content/services/**/${key}.md`;
-      if (STRICT_SERVICES) {
-        throw new Error(msg);
-      }
+      if (STRICT_SERVICES) throw new Error(msg);
       if (import.meta.env.DEV) console.warn(msg);
       return { key, label: key, href: null as string | null };
     }
-
     const category = keyToSlug(svc.data.category as CategoryKey);
     const anchor = svc.data.anchor ?? key;
     return { key, label: svc.data.title, href: `/services/${category}#${anchor}` };
@@ -43,11 +41,20 @@ export async function mapServiceKeysToLinks(keys: string[]) {
 
 /** Category overview docs (kind === 'category'), sorted by `order`. */
 export async function getAllServiceCategoryOverviews(): Promise<ServiceEntry[]> {
-  const cats = await getCollection(
-    'services',
-    (e) => !e.data.draft && (e.data as any).kind === 'category'
-  );
-  return cats.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+  if (_catOverviewsCache) return _catOverviewsCache;
+  const cats = await getCollection('services', (e) => !e.data.draft && (e.data as any).kind === 'category');
+  _catOverviewsCache = cats.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+
+  // Optional hygiene: warn if no summary (helps keep tiles/pages from being thin)
+  if (import.meta.env.DEV) {
+    for (const c of _catOverviewsCache) {
+      if (!c.data.summary?.trim()) {
+        console.warn(`[services] Category “${c.data.title}” is missing a summary.`);
+      }
+    }
+  }
+
+  return _catOverviewsCache;
 }
 
 /** Fetch a category overview by slug (e.g. 'design' → Design). */
