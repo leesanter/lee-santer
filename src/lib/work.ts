@@ -1,0 +1,96 @@
+import { getCollection, type CollectionEntry } from 'astro:content';
+import type { CategoryKey } from './categories';
+
+export type WorkEntry = CollectionEntry<'work'>;
+
+/** Items that carry either completedDate (work) or date (posts). */
+type WithDates = { data: { completedDate?: Date; date?: Date } };
+
+/** Sort newest → oldest (works for Work and Posts). */
+export const byDateDesc = <T extends WithDates>(a: T, b: T) => {
+  const ta = a.data.completedDate?.getTime?.() ?? a.data.date!.getTime();
+  const tb = b.data.completedDate?.getTime?.() ?? b.data.date!.getTime();
+  return tb - ta;
+};
+
+/** Next/prev in a circular list by slug (assumes caller passes a stable order). */
+export function nextPrev<T extends { slug: string }>(items: T[], currentSlug: string) {
+  const list = [...items];
+  const idx = list.findIndex((x) => x.slug === currentSlug);
+  if (idx < 0) return { next: null as T | null, prev: null as T | null };
+  const next = list[(idx + 1) % list.length] ?? null;
+  const prev = list[(idx - 1 + list.length) % list.length] ?? null;
+  return { next, prev };
+}
+
+export async function getAllWork(): Promise<WorkEntry[]> {
+  const all = await getCollection('work', (w) => !w.data.draft);
+  return all.sort(byDateDesc);
+}
+
+/** Feature ordering: lower weight first; ties → newer first. */
+const byFeatureThenDate = (a: WorkEntry, b: WorkEntry) => {
+  const wa = a.data.featureWeight ?? 999;
+  const wb = b.data.featureWeight ?? 999;
+  if (wa !== wb) return wa - wb;
+  return byDateDesc(a, b);
+};
+
+/** Home selection: featured → backfill newest. */
+export async function getWorkForHome(limit = 4): Promise<WorkEntry[]> {
+  const all = await getAllWork();
+  const featured = all.filter((w) => w.data.featuredHome).sort(byFeatureThenDate);
+
+  const picked: WorkEntry[] = featured.slice(0, limit);
+  if (picked.length < limit) {
+    for (const w of all) {
+      if (picked.some((p) => p.slug === w.slug)) continue;
+      picked.push(w);
+      if (picked.length >= limit) break;
+    }
+  }
+  return picked.slice(0, limit);
+}
+
+/** Multi-category filter (front matter `serviceCategories: CategoryKey[]`). */
+export async function getWorkByCategory(key: CategoryKey) {
+  const all = await getAllWork();
+  return all.filter((w) => (w.data as any).serviceCategories?.includes(key));
+}
+
+/** Featured work for a category: explicit slug wins; else newest in cat. */
+export async function getFeaturedWorkForCategory(key: CategoryKey, explicitSlug?: string) {
+  const all = await getAllWork();
+  if (explicitSlug) return all.find((w) => w.slug === explicitSlug) ?? null;
+  const inCat = all.filter((w) => (w.data as any).serviceCategories?.includes(key));
+  return inCat[0] ?? null;
+}
+
+/* ---------- Testimonials (array-only) ---------- */
+export type TestimonialVM = {
+  quote: string;
+  name: string; // derived from personName
+  role?: string;
+  company?: string;
+  workTitle: string;
+  workSlug: string;
+};
+
+export function getTestimonialsForWork(entry: WorkEntry): TestimonialVM[] {
+  const arr = entry.data.testimonials ?? [];
+  return arr
+    .map((t) => ({
+      quote: t.quote.trim(),
+      name: t.personName.trim(),
+      role: t.role?.trim() || undefined,
+      company: t.company?.trim() || undefined,
+      workTitle: entry.data.title,
+      workSlug: entry.slug,
+    }))
+    .filter((t) => t.quote && t.name);
+}
+
+export async function getAllWorkTestimonials(): Promise<TestimonialVM[]> {
+  const work = await getAllWork();
+  return work.flatMap(getTestimonialsForWork);
+}
