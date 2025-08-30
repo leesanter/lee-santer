@@ -123,3 +123,17 @@ export async function getAllWorkTestimonials(): Promise<TestimonialVM[]> {
   const work = await getAllWork();
   return work.flatMap(getTestimonialsForWork);
 }
+
+export function hasTestimonials(entry: WorkEntry): boolean {
+  return (entry.data.testimonials?.length ?? 0) > 0;
+}
+
+export function getRandomTestimonial(
+  pool: TestimonialVM[],
+  rng: () => number = Math.random
+): TestimonialVM | null {
+  if (!Array.isArray(pool) || pool.length === 0) return null;
+  if (pool.length === 1) return pool[0];
+  const i = Math.floor(rng() * pool.length);
+  return pool[i] ?? null;
+}
