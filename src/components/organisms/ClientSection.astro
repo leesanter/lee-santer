@@ -1,16 +1,14 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import type { ImageMetadata } from 'astro';
 import {
   getAllWorkTestimonials,
   getTestimonialsForWork,
+  hasTestimonials,
+  getRandomTestimonial,
   type TestimonialVM,
 } from '../../lib/content';
 import TestimonialQuote from '../atoms/TestimonialQuote.astro';
 import LogosRow from '../atoms/LogosRow.astro';
-
-/* Local logo type */
-type Logo = { name: string; src: string | ImageMetadata; alt?: string; href?: string };
 
 interface Props {
   heading?: string;
@@ -22,15 +20,15 @@ interface Props {
   includeWorkSlugs?: string[];
   excludeWorkSlugs?: string[];
   entries?: TestimonialVM[];
-  random?: boolean;           // default true
+  random?: boolean;         // default true
 
   // Presentation
-  showWorkLink?: boolean;     // default: !workEntry
+  showWorkLink?: boolean;   // default: !workEntry
   id?: string;
 
   // Logos
-  logos?: Logo[];
-  showLogos?: boolean;        // default true
+  logos?: Parameters<typeof LogosRow>[0]['logos'];
+  showLogos?: boolean;      // default true
 }
 
 const {
@@ -48,10 +46,10 @@ const {
 
 const onWorkPage = Boolean(workEntry);
 
-// Build testimonial pool (pinned → manual entries → include filter → all)
+// Build testimonial pool
 let pool: TestimonialVM[] = [];
 if (workEntry) {
-  pool = getTestimonialsForWork(workEntry);
+  pool = hasTestimonials(workEntry) ? getTestimonialsForWork(workEntry) : [];
 } else if (entries?.length) {
   pool = entries;
 } else if (includeWorkSlugs.length) {
@@ -64,10 +62,13 @@ if (excludeWorkSlugs.length) {
   pool = pool.filter((t) => !excludeWorkSlugs.includes(t.workSlug));
 }
 
-const first = pool[0];
-const canRandomize = !onWorkPage && (random ?? true) && pool.length > 1;
+// SSR pick
+const ssrPick =
+  onWorkPage
+    ? (pool[0] ?? null)
+    : (random ? getRandomTestimonial(pool) : (pool[0] ?? null));
 
-// JSON payload for the client-side randomizer (kept inside the spot)
+const canRandomize = !onWorkPage && random && pool.length > 1;
 const payload = JSON.stringify(pool);
 ---
 
@@ -76,22 +77,20 @@ const payload = JSON.stringify(pool);
     <div class="stack large center">
       {heading && <h2 class="h2">{heading}</h2>}
 
-      {first ? (
+      {ssrPick ? (
         <div class="testimonial-spot" data-spot>
-          <!-- JSON lives inside the spot so we can scope without IDs/currentScript -->
-          <script is:inline type="application/json" data-testimonials set:html={payload} />
           <TestimonialQuote
-            quote={first.quote}
-            name={first.name}
-            role={first.role}
-            company={first.company}
-            workTitle={first.workTitle}
-            workSlug={first.workSlug}
+            quote={ssrPick.quote}
+            name={ssrPick.name}
+            role={ssrPick.role}
+            company={ssrPick.company}
+            workTitle={ssrPick.workTitle}
+            workSlug={ssrPick.workSlug}
             showWorkLink={showWorkLink}
           />
         </div>
       ) : (
-        <p class="muted">No testimonials yet.</p>
+        !onWorkPage && <p class="muted">No testimonials yet.</p>
       )}
 
       {showLogos && <LogosRow logos={logos} />}
@@ -99,42 +98,43 @@ const payload = JSON.stringify(pool);
   </div>
 
   {canRandomize && (
-    <script is:inline>
-      // Randomize each testimonial spot independently (Astro v5-safe)
-      (() => {
-        try {
-          document.querySelectorAll('.testimonial-spot[data-spot]').forEach((spot) => {
-            const dataEl = spot.querySelector('script[type="application/json"][data-testimonials]');
+    <Fragment>
+      <script is:inline type="application/json" data-testimonials set:html={payload} />
+      <script is:inline>
+        (function () {
+          try {
+            var dataEl = document.currentScript && document.currentScript.previousElementSibling;
             if (!dataEl) return;
-
-            const list = JSON.parse(dataEl.textContent || '[]');
+            var list = JSON.parse(dataEl.textContent || '[]');
             if (!Array.isArray(list) || list.length < 2) return;
 
-            const t = list[Math.floor(Math.random() * list.length)];
-            if (!t) return;
+            var pick = Math.floor(Math.random() * list.length);
+            var t = list[pick];
 
-            const quote = spot.querySelector('.quote');
-            const who   = spot.querySelector('.who');
-            const link  = spot.querySelector('a[href^="/work/"]');
+            var root = dataEl.closest('section') || document;
+            var spot = root.querySelector('[data-spot]');
+            if (!spot || !t) return;
+
+            var quote = spot.querySelector('.quote');
+            var who = spot.querySelector('.who');
+            var link = spot.querySelector('a[href^="/work/"]');
 
             if (quote) quote.textContent = '“' + (t.quote || '') + '”';
-
             if (who) {
-              let cap = t.name || '';
-              if (t.role)    cap += ', ' + t.role;
+              var cap = (t.name || '');
+              if (t.role) cap += ', ' + t.role;
               if (t.company) cap += ', ' + t.company;
-              if (link)      cap += ' · ';
+              if (link) cap += ' · ';
               who.textContent = cap;
             }
-
             if (link) {
               link.setAttribute('href', '/work/' + t.workSlug);
               link.textContent = t.workTitle;
             }
-          });
-        } catch {}
-      })();
-    </script>
+          } catch (e) { /* no-op */ }
+        })();
+      </script>
+    </Fragment>
   )}
 </section>
 
