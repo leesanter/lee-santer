@@ -19,7 +19,8 @@ const site = defineCollection({
 /* =============================================================================
    Shared enums
 ============================================================================= */
-const CATEGORIES = z.enum(['Strategy', 'Design', 'Development', 'Growth']);
+import { CATEGORY_KEYS } from '../lib/categories'; // ← NEW
+const CATEGORIES = z.enum(CATEGORY_KEYS);  
 
 /* =============================================================================
    Services (unified)
@@ -88,7 +89,7 @@ const work = defineCollection({
       featuredAlt: z.string(),
 
       // Filtering + mapping
-      serviceCategories: z.array(CATEGORIES).min(1),             // for /work filter only
+      serviceCategories: z.array(CATEGORIES).default([]),
       services: z.array(z.string()).default([]), // sub-service keys (filenames)
 
       // Meta

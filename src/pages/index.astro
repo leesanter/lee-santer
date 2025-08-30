@@ -4,12 +4,10 @@ import WorkListing from 'src/components/organisms/WorkListing.astro';
 import InsightsListing from 'src/components/organisms/InsightsListing.astro';
 import ClientSection from 'src/components/organisms/ClientSection.astro';
 
-import { getWorkForHome, getAllPosts, getCategorySlides } from '../lib/content';
+import { getWorkForHome, getCategorySlides } from '../lib/content';
 
 export const prerender = true;
 
-// Latest Insights (grab a few; index page still handles pagination)
-const latestInsights = (await getAllPosts()).slice(0, 3);
 const homeEntries = await getWorkForHome(4);
 const slides = await getCategorySlides();
 ---
