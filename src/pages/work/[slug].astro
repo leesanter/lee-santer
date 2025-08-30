@@ -47,44 +47,43 @@ const gallery = (entry.data.gallery ?? []) as { src: ImageMetadata; alt?: string
 
 // Overview lives beside meta; fallback to summary if not provided.
 const overviewTitle = entry.data.overviewTitle ?? 'Project Overview';
-const overviewHTML = entry.data.overview ? md(entry.data.overview) : md(entry.data.summary);
+const overviewHTML = await md(entry.data.overview ?? entry.data.summary);
 
 // If you kept an early section called “Project Overview”, hide it when top-level overview exists.
 const renderSections = entry.data.overview
 	? sections.filter((s) => s.title.trim() !== overviewTitle.trim())
 	: sections;
 
-// Build blocks based on placement mode
+// Placement: 'interleave' | 'before' | 'after'
 const placement = entry.data.galleryPlacement ?? 'interleave';
 
-function toSectionBlocks(list: typeof renderSections): Block[] {
-	return list.map((s) => ({ kind: 'section', title: s.title, html: md(s.body) }));
-}
+// Precompute blocks
+const sectionBlocks: Block[] = await Promise.all(
+	renderSections.map(async (s) => ({
+		kind: 'section' as const,
+		title: s.title,
+		html: await md(s.body),
+	}))
+);
+
+const imageBlocks: Block[] = gallery.map((g) => ({
+	kind: 'image' as const,
+	src: g.src,
+	alt: g.alt || '',
+}));
 
 let blocks: Block[] = [];
 if (placement === 'before') {
-	blocks = [
-		...gallery.map((g) => ({ kind: 'image', src: g.src, alt: g.alt || '' }) as const),
-		...toSectionBlocks(renderSections),
-	];
+	blocks = [...imageBlocks, ...sectionBlocks];
 } else if (placement === 'after') {
-	blocks = [
-		...toSectionBlocks(renderSections),
-		...gallery.map((g) => ({ kind: 'image', src: g.src, alt: g.alt || '' }) as const),
-	];
+	blocks = [...sectionBlocks, ...imageBlocks];
 } else {
-	// 'interleave' default: image0 → section0 → image1 → section1 → …
+	// interleave (image0 → section0 → image1 → section1 → …)
 	let gi = 0;
-	if (gallery[gi]) {
-		blocks.push({ kind: 'image', src: gallery[gi].src, alt: gallery[gi].alt || '' });
-		gi++;
-	}
-	for (const s of renderSections) {
-		blocks.push({ kind: 'section', title: s.title, html: md(s.body) });
-		if (gallery[gi]) {
-			blocks.push({ kind: 'image', src: gallery[gi].src, alt: gallery[gi].alt || '' });
-			gi++;
-		}
+	if (imageBlocks[gi]) blocks.push(imageBlocks[gi++]);
+	for (const sb of sectionBlocks) {
+		blocks.push(sb);
+		if (imageBlocks[gi]) blocks.push(imageBlocks[gi++]);
 	}
 }
 
