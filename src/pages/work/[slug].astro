@@ -87,10 +87,8 @@ if (placement === 'before') {
 	}
 }
 
-// Nice date
-const completed = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' }).format(
-	new Date(entry.data.completedDate)
-);
+import { formatDate } from 'src/lib/format';
+const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
 ---
 
 <Base
