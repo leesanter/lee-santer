@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { Image } from 'astro:assets';
 import { getAllPosts, nextPrev } from '../../lib/content';
 import { getCollection } from 'astro:content';
 
@@ -13,9 +14,10 @@ const all = await getAllPosts();
 const entry = all.find((e) => e.slug === slug)!;
 const { next, prev } = nextPrev(all, slug!);
 
-// Breadcrumb JSON-LD
+// Canonical + Breadcrumb JSON-LD
 const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
 const canonical = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : undefined;
+
 const breadcrumbLd = {
 	'@context': 'https://schema.org',
 	'@type': 'BreadcrumbList',
@@ -29,6 +31,18 @@ const breadcrumbLd = {
 		{ '@type': 'ListItem', position: 2, name: entry.data.title, item: canonical },
 	],
 };
+
+// Article JSON-LD
+const articleLd = {
+	'@context': 'https://schema.org',
+	'@type': 'BlogPosting',
+	headline: entry.data.title,
+	datePublished:
+		(entry.data.date as Date).toISOString?.() ?? new Date(entry.data.date).toISOString(),
+	author: { '@type': 'Person', name: entry.data.author ?? 'Lee Santer' },
+	mainEntityOfPage: canonical,
+	image: (entry.data.ogImage ?? entry.data.featuredImage)?.src,
+};
 ---
 
 <Base
@@ -38,12 +52,19 @@ const breadcrumbLd = {
 	seoImage={entry.data.ogImage ?? entry.data.featuredImage}
 	type="article"
 	publishedTime={entry.data.date}
-	structuredData={breadcrumbLd}
+	structuredData={[breadcrumbLd, articleLd]}
 >
 	<article>
 		{
 			entry.data.featuredImage && (
-				<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt || ''} />
+				<Image
+					src={entry.data.featuredImage}
+					alt={entry.data.featuredAlt || ''}
+					widths={[1200, 1600, 2000]}
+					sizes="100vw"
+					loading="eager"
+					decoding="async"
+				/>
 			)
 		}
 		<h1>{entry.data.title}</h1>
