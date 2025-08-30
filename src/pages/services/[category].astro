@@ -44,6 +44,14 @@ const breadcrumbLd = {
 };
 
 // ---------- Optional FAQPage JSON-LD ----------
+// Add a tiny type for clarity
+type Faq = { q: string; a: string };
+
+// Normalise optional front-matter to a concrete array
+const faqs: Faq[] = Array.isArray((entry.data as any).faqs)
+	? ((entry.data as any).faqs as Faq[])
+	: [];
+
 const faqLd = (entry.data as any).faqs?.length
 	? {
 			'@context': 'https://schema.org',
@@ -139,11 +147,13 @@ const pageDesc = entry.data.seoDescription ?? entry.data.summary ?? '';
 					<>
 						<h2>FAQs</h2>
 						<dl>
-							{entry.data.faqs.map((f) => (
-								<>
-									<dt>{f.q}</dt>
-									<dd>{f.a}</dd>
-								</>
+							{faqs.map((f) => (
+								<div>
+									<dt>
+										<strong>{f.q}</strong>
+									</dt>
+									<dd set:html={f.a} />
+								</div>
 							))}
 						</dl>
 					</>
