@@ -2,9 +2,9 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { keyToSlug, type CategoryKey, type CategorySlug, slugToKey } from './categories';
 
-const STRICT_SERVICES =
-  String((import.meta as any)?.env?.STRICT_SERVICES ?? process.env.STRICT_SERVICES ?? 'false')
-    .toLowerCase() === 'true';
+const RAW_STRICT =
+  (import.meta as any)?.env?.STRICT_SERVICES ?? process.env.STRICT_SERVICES ?? 'false';
+const STRICT_SERVICES = /^(1|true|yes)$/i.test(String(RAW_STRICT));
 
 export type ServiceEntry = CollectionEntry<'services'>;
 
@@ -87,3 +87,5 @@ export async function getCategorySlides(): Promise<CategorySlideVM[]> {
     href: `/services/${keyToSlug(c.data.category as CategoryKey)}`,
   }));
 }
+
+export type ServiceLink = { key: string; label: string; href: string | null };
