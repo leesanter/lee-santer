@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
+import { formatDate } from 'src/lib/format';
 import { readingTimeFromMarkdown } from '../../lib/readingTime';
 
 interface Props {
@@ -27,11 +28,7 @@ const {
 const cover: ImageMetadata | undefined = featuredImage ?? hero;
 const alt = (featuredAlt || heroAlt || title) as string;
 
-const formatted = new Intl.DateTimeFormat('en-GB', {
-	day: '2-digit',
-	month: 'short',
-	year: 'numeric',
-}).format(new Date(date));
+const formatted = formatDate(date, 'dd MMM yyyy');
 
 const { minutes } = readingTimeFromMarkdown(entry.body ?? '');
 const mins = Math.max(1, Math.round(minutes));

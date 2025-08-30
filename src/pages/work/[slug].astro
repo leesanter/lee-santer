@@ -7,6 +7,7 @@ import { getAllWork, nextPrev, mapServiceKeysToLinks, byDateDesc } from '../../l
 import { getCollection } from 'astro:content';
 import { md } from '../../lib/md';
 import ClientSection from 'src/components/organisms/ClientSection.astro';
+import { formatDate } from 'src/lib/format';
 
 export async function getStaticPaths() {
 	const entries = await getCollection('work', (w) => !w.data.draft);
@@ -87,10 +88,7 @@ if (placement === 'before') {
 	}
 }
 
-// Nice date
-const completed = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' }).format(
-	new Date(entry.data.completedDate)
-);
+const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
 ---
 
 <Base
@@ -105,7 +103,14 @@ const completed = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'nume
 	<article>
 		<!-- HERO -->
 		<figure class="hero">
-			<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt} />
+			<Image
+				src={entry.data.featuredImage}
+				alt={entry.data.featuredAlt}
+				widths={[1200, 1600, 2000, 2400]}
+				sizes="100vw"
+				loading="eager"
+				decoding="async"
+			/>
 			<figcaption class="sr-only">{entry.data.title}</figcaption>
 		</figure>
 
