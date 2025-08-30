@@ -9,6 +9,7 @@ export default defineConfig({
 		mdx(),
 		sitemap({
 			filter: (page) => {
+				if (page === '/404' || /^\/404(\/|$)/.test(page)) return false; // skip 404
 				// Example: skip very deep pagination if added later
 				if (/\/insights\/page\/\d+/.test(page)) return false;
 				return true;
