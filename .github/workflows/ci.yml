@@ -37,6 +37,7 @@ jobs:
           cat > .env << 'EOF'
           PUBLIC_SITE_URL=https://example.com
           INDEXING=false
+          STRICT_SERVICES=true
           EOF
       - name: Build
         run: npm run build
