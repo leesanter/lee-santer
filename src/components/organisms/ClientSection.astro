@@ -28,7 +28,6 @@ interface Props {
 
   // Logos
   logos?: Parameters<typeof LogosRow>[0]['logos'];
-  logosAutoFrom?: string;   // default '/src/assets/clients'
   showLogos?: boolean;      // default true
 }
 
@@ -42,7 +41,6 @@ const {
   showWorkLink = !workEntry,
   id = 'clients',
   logos,
-  logosAutoFrom = '/src/assets/clients',
   showLogos = true,
 } = Astro.props as Props;
 
@@ -64,7 +62,7 @@ if (excludeWorkSlugs.length) {
   pool = pool.filter((t) => !excludeWorkSlugs.includes(t.workSlug));
 }
 
-// SSR pick: case page → first; pooled pages → random (if enabled) else first
+// SSR pick
 const ssrPick =
   onWorkPage
     ? (pool[0] ?? null)
@@ -92,11 +90,10 @@ const payload = JSON.stringify(pool);
           />
         </div>
       ) : (
-        // No quote? Keep section alive for logos; don’t render the empty state on case pages.
-        (!onWorkPage && <p class="muted">No testimonials yet.</p>)
+        !onWorkPage && <p class="muted">No testimonials yet.</p>
       )}
 
-      {showLogos && <LogosRow logos={logos} autoFrom={logosAutoFrom} />}
+      {showLogos && <LogosRow logos={logos} />}
     </div>
   </div>
 
