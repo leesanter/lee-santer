@@ -25,10 +25,11 @@ export type WorkEntry    = CollectionEntry<'work'>;
 export type PostEntry    = CollectionEntry<'insights'>;
 
 import {
-  CATEGORY_KEYS, CATEGORY_SLUGS,
-  type CategoryKey, type CategorySlug,
-  toSlug, fromSlug, keyToSlug, slugToKey, CATEGORIES
-} from './categories'; // ← NEW consolidated import
+   type CategoryKey,
+   type CategorySlug,
+   keyToSlug,
+   slugToKey,
+} from './categories';
 
 /** Items that carry either completedDate (work) or date (posts). */
 type WithDates = { data: { completedDate?: Date; date?: Date } };

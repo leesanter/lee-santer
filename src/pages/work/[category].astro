@@ -1,13 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
 import WorkListing from '../../components/organisms/WorkListing.astro';
-import { fromSlug, CATEGORY_SLUGS, type CatSlug } from '../../lib/categories';
+import { fromSlug, CATEGORY_SLUGS, type CategorySlug } from '../../lib/categories';
 
 export async function getStaticPaths() {
 	return CATEGORY_SLUGS.map((slug) => ({ params: { category: slug } }));
 }
 
-const { category } = Astro.params as { category: CatSlug };
+const { category } = Astro.params as { category: CategorySlug };
 const proper = fromSlug(category);
 ---
 

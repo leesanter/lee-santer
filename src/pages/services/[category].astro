@@ -1,12 +1,11 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { type CategorySlug, type CategoryKey } from '../../lib/categories';
 import {
 	getAllServiceCategoryOverviews,
 	getCategoryBySlug,
 	getSubServicesForCategory,
 	getFeaturedWorkForCategory,
-	type CategorySlug,
-	type CategoryKey,
 } from '../../lib/content';
 
 export const prerender = true;
@@ -26,7 +25,7 @@ const key = entry.data.category as CategoryKey;
 const subs = await getSubServicesForCategory(key);
 const featured = await getFeaturedWorkForCategory(key, entry.data.featuredWorkSlug);
 
-// Render MD/MDX body
+// MD/MDX body for the category doc
 const { Content } = await entry.render();
 
 const pageTitle = entry.data.seoTitle ?? `${entry.data.title} services`;
