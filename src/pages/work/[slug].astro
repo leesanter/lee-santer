@@ -10,8 +10,7 @@ import ClientSection from 'src/components/organisms/ClientSection.astro';
 import { formatDate } from 'src/lib/format';
 
 export async function getStaticPaths() {
-	const entries = await getCollection('work', (w) => !w.data.draft);
-	entries.sort(byDateDesc);
+	const entries = await getAllWork(); // already sorted newest→oldest
 	return entries.map((e) => ({ params: { slug: e.slug } }));
 }
 
