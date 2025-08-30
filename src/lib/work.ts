@@ -1,7 +1,12 @@
+// src/lib/work.ts
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { CategoryKey } from './categories';
 
 export type WorkEntry = CollectionEntry<'work'>;
+
+/* -----------------------------------------------------------------------------
+   Sorting & navigation
+----------------------------------------------------------------------------- */
 
 /** Items that carry either completedDate (work) or date (posts). */
 type WithDates = { data: { completedDate?: Date; date?: Date } };
@@ -22,6 +27,10 @@ export function nextPrev<T extends { slug: string }>(items: T[], currentSlug: st
   const prev = list[(idx - 1 + list.length) % list.length] ?? null;
   return { next, prev };
 }
+
+/* -----------------------------------------------------------------------------
+   Fetch helpers
+----------------------------------------------------------------------------- */
 
 export async function getAllWork(): Promise<WorkEntry[]> {
   const all = await getCollection('work', (w) => !w.data.draft);
@@ -52,21 +61,41 @@ export async function getWorkForHome(limit = 4): Promise<WorkEntry[]> {
   return picked.slice(0, limit);
 }
 
+/* -----------------------------------------------------------------------------
+   Category predicates (single source of truth)
+----------------------------------------------------------------------------- */
+
+/** True if a work entry belongs to a given category key (Design, Strategy, …). */
+export function inCategory(entry: WorkEntry, key: CategoryKey) {
+  const list = (entry.data as any).serviceCategories as CategoryKey[] | undefined;
+  return Array.isArray(list) ? list.includes(key) : false;
+}
+
+/** True if a work entry matches ANY of the given category keys. */
+export function inAnyCategory(entry: WorkEntry, keys: CategoryKey[]) {
+  const set = new Set(keys);
+  const list = (entry.data as any).serviceCategories as CategoryKey[] | undefined;
+  return Array.isArray(list) ? list.some((k) => set.has(k)) : false;
+}
+
 /** Multi-category filter (front matter `serviceCategories: CategoryKey[]`). */
 export async function getWorkByCategory(key: CategoryKey) {
   const all = await getAllWork();
-  return all.filter((w) => (w.data as any).serviceCategories?.includes(key));
+  return all.filter((w) => inCategory(w, key));
 }
 
 /** Featured work for a category: explicit slug wins; else newest in cat. */
 export async function getFeaturedWorkForCategory(key: CategoryKey, explicitSlug?: string) {
   const all = await getAllWork();
   if (explicitSlug) return all.find((w) => w.slug === explicitSlug) ?? null;
-  const inCat = all.filter((w) => (w.data as any).serviceCategories?.includes(key));
+  const inCat = all.filter((w) => inCategory(w, key));
   return inCat[0] ?? null;
 }
 
-/* ---------- Testimonials (array-only) ---------- */
+/* -----------------------------------------------------------------------------
+   Testimonials (array-only)
+----------------------------------------------------------------------------- */
+
 export type TestimonialVM = {
   quote: string;
   name: string; // derived from personName

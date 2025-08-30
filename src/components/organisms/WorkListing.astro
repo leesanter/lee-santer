@@ -1,7 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import WorkCard from '../molecules/WorkCard.astro';
-import { getAllWork, mapServiceKeysToLinks } from '../../lib/content';
+import { getAllWork, inCategory, mapServiceKeysToLinks } from '../../lib/content';
 import { CATEGORIES, toSlug } from '../../lib/categories';
 
 type Category = (typeof CATEGORIES)[number];
@@ -20,7 +20,7 @@ interface Props {
 	shuffle?: boolean;
 
 	/** UI */
-	showFilter?: boolean;
+	showFilter?: boolean; // if omitted, we’ll turn it on when `active` is provided
 	active?: AllOrCatSlug; // chip highlight
 	lede?: string;
 	id?: string; // defaults to "projects"
@@ -33,7 +33,7 @@ const {
 	excludeSlugs = [],
 	limit,
 	shuffle = false,
-	showFilter = false,
+	showFilter,
 	active,
 	lede = '',
 	id = 'projects',
@@ -51,8 +51,8 @@ if (injected?.length) {
 	} else {
 		list = [...all];
 		if (category !== 'all') {
-			// MULTI-CATEGORY support
-			list = list.filter((w) => (w.data as any).serviceCategories?.includes(category));
+			// Single source of truth for category membership
+			list = list.filter((w) => inCategory(w, category as Category));
 		}
 		if (excludeSlugs.length) {
 			list = list.filter((e) => !excludeSlugs.includes(e.slug));
@@ -80,18 +80,23 @@ const activeSlug: AllOrCatSlug =
 
 const pathFor = (slug: AllOrCatSlug) =>
 	slug === 'all' ? '/work#projects' : `/work/${slug}#projects`;
+
 const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
+
+// If the page passed `active`, assume they want the filter visible
+const showFilterComputed =
+	typeof showFilter === 'boolean' ? showFilter : typeof active !== 'undefined';
 ---
 
 <section class="section" id={id}>
 	<div class="container container--large">
 		<div class="stack">
 			{
-				(lede || showFilter) && (
+				(lede || showFilterComputed) && (
 					<div class="stack tiny">
 						{lede && <p>{lede}</p>}
 
-						{showFilter && (
+						{showFilterComputed && (
 							<nav aria-label="Filter projects by category">
 								<ul class="filter-chips" role="list">
 									{(
