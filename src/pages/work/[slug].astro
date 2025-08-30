@@ -3,10 +3,12 @@
 import Base from '../../layouts/Base.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+
 import { getAllWork, nextPrev, mapServiceKeysToLinks, byDateDesc } from '../../lib/content';
 import { getCollection } from 'astro:content';
 import { md } from '../../lib/md';
-import ClientSection from 'src/components/organisms/ClientSection.astro';
+import { formatDate } from '../../lib/format';
+import ClientSection from '../../components/organisms/ClientSection.astro';
 
 export async function getStaticPaths() {
 	const entries = await getCollection('work', (w) => !w.data.draft);
@@ -38,56 +40,57 @@ const breadcrumbLd = {
 };
 
 /* ---------- Overview + content stream ---------- */
-type Block =
-	| { kind: 'image'; src: ImageMetadata; alt: string }
-	| { kind: 'section'; title: string; html: string };
+type SectionBlock = { kind: 'section'; title: string; html: string };
+type ImageBlock = { kind: 'image'; src: ImageMetadata; alt: string };
+type Block = SectionBlock | ImageBlock;
 
 const sections = entry.data.sections ?? [];
 const gallery = (entry.data.gallery ?? []) as { src: ImageMetadata; alt?: string }[];
 
-// Overview lives beside meta; fallback to summary if not provided.
+// Overview beside meta; fall back to summary if not present
 const overviewTitle = entry.data.overviewTitle ?? 'Project Overview';
-const overviewHTML = await md(entry.data.overview ?? entry.data.summary);
+const overviewHTML = entry.data.overview ? md(entry.data.overview) : md(entry.data.summary);
 
-// If you kept an early section called “Project Overview”, hide it when top-level overview exists.
+// If you have a top-level overview, suppress an early section with the same title
 const renderSections = entry.data.overview
 	? sections.filter((s) => s.title.trim() !== overviewTitle.trim())
 	: sections;
 
-// Placement: 'interleave' | 'before' | 'after'
-const placement = entry.data.galleryPlacement ?? 'interleave';
+// Build blocks based on placement mode
+const placement: 'interleave' | 'before' | 'after' = entry.data.galleryPlacement ?? 'interleave';
 
-// Precompute blocks
-const sectionBlocks: Block[] = await Promise.all(
-	renderSections.map(async (s) => ({
-		kind: 'section' as const,
-		title: s.title,
-		html: await md(s.body),
-	}))
-);
-
-const imageBlocks: Block[] = gallery.map((g) => ({
-	kind: 'image' as const,
-	src: g.src,
-	alt: g.alt || '',
-}));
+function toSectionBlocks(list: typeof renderSections): SectionBlock[] {
+	return list.map((s) => ({ kind: 'section', title: s.title, html: md(s.body) }));
+}
 
 let blocks: Block[] = [];
 if (placement === 'before') {
-	blocks = [...imageBlocks, ...sectionBlocks];
+	blocks = [
+		...gallery.map((g) => ({ kind: 'image', src: g.src, alt: g.alt || '' }) as ImageBlock),
+		...toSectionBlocks(renderSections),
+	];
 } else if (placement === 'after') {
-	blocks = [...sectionBlocks, ...imageBlocks];
+	blocks = [
+		...toSectionBlocks(renderSections),
+		...gallery.map((g) => ({ kind: 'image', src: g.src, alt: g.alt || '' }) as ImageBlock),
+	];
 } else {
-	// interleave (image0 → section0 → image1 → section1 → …)
+	// interleave: image0 -> section0 -> image1 -> section1 -> ...
 	let gi = 0;
-	if (imageBlocks[gi]) blocks.push(imageBlocks[gi++]);
-	for (const sb of sectionBlocks) {
-		blocks.push(sb);
-		if (imageBlocks[gi]) blocks.push(imageBlocks[gi++]);
+	if (gallery[gi]) {
+		blocks.push({ kind: 'image', src: gallery[gi].src, alt: gallery[gi].alt || '' });
+		gi++;
+	}
+	for (const s of renderSections) {
+		blocks.push({ kind: 'section', title: s.title, html: md(s.body) });
+		if (gallery[gi]) {
+			blocks.push({ kind: 'image', src: gallery[gi].src, alt: gallery[gi].alt || '' });
+			gi++;
+		}
 	}
 }
 
-import { formatDate } from 'src/lib/format';
+// Pretty date for the meta sidebar
 const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
 ---
 
@@ -103,7 +106,14 @@ const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
 	<article>
 		<!-- HERO -->
 		<figure class="hero">
-			<img src={entry.data.featuredImage.src} alt={entry.data.featuredAlt} />
+			<Image
+				src={entry.data.featuredImage}
+				alt={entry.data.featuredAlt}
+				widths={[1200, 1600, 1920]}
+				sizes="100vw"
+				loading="eager"
+				decoding="async"
+			/>
 			<figcaption class="sr-only">{entry.data.title}</figcaption>
 		</figure>
 
@@ -178,7 +188,7 @@ const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
 			</div>
 		</section>
 
-		<!-- TESTIMONIAL (this case only; no random) -->
+		<!-- TESTIMONIAL (this case only) -->
 		<ClientSection workEntry={entry} showWorkLink={false} />
 	</article>
 
