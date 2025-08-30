@@ -24,14 +24,11 @@ export type ServiceEntry = CollectionEntry<'services'>;
 export type WorkEntry    = CollectionEntry<'work'>;
 export type PostEntry    = CollectionEntry<'insights'>;
 
-export type CategoryKey  = 'Strategy' | 'Design' | 'Development' | 'Growth';
-export type CategorySlug = 'strategy' | 'design' | 'development' | 'growth';
-
-export const keyToSlug = (k: CategoryKey): CategorySlug =>
-  (k.toLowerCase() as CategorySlug);
-
-export const slugToKey = (s: string): CategoryKey =>
-  (s[0].toUpperCase() + s.slice(1)) as CategoryKey;
+import {
+  CATEGORY_KEYS, CATEGORY_SLUGS,
+  type CategoryKey, type CategorySlug,
+  toSlug, fromSlug, keyToSlug, slugToKey, CATEGORIES
+} from './categories'; // ← NEW consolidated import
 
 /** Items that carry either completedDate (work) or date (posts). */
 type WithDates = { data: { completedDate?: Date; date?: Date } };
