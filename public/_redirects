@@ -1,2 +1,16 @@
-/expertise            /services           301
-/expertise/:category  /services/:category 301
+# Legacy → new sections
+/portfolio            /work                       301
+/blog                 /insights                   301
+/expertise            /services                   301
+/expertise/:cat       /services/:cat              301
+/service              /services                   301
+
+# If you had paginated blog paths like /blog/2 → our new /insights/2
+/blog/:page           /insights/:page             301
+
+# Normalise trailing slashes (optional; Netlify usually handles already)
+# /about/              /about                     301!
+
+# If any one-off slugs changed, add them here (examples):
+# /work/case-old       /work/forma                 301
+# /insights/old-post   /insights/astro-seo-guide   301
