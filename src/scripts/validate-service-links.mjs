@@ -1,4 +1,3 @@
-// scripts/validate-service-links.mjs
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'fast-glob';
