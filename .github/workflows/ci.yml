@@ -39,7 +39,10 @@ jobs:
           INDEXING=false
           STRICT_SERVICES=true
           EOF
-          
+
+      - name: Validate service cross-links
+        run: node scripts/validate-service-links.mjs
+
       - name: Build
         run: npm run build
 
