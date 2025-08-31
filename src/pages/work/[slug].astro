@@ -23,9 +23,10 @@ if (!entry) throw new Error(`Work entry not found for slug: ${slug}`);
 const { next, prev } = nextPrev(all, slug!);
 const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
 
-/* ---------- Breadcrumb JSON-LD ---------- */
+/* ---------- Canonical + JSON-LD ---------- */
 const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
 const canonical = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : undefined;
+
 const breadcrumbLd = {
 	'@context': 'https://schema.org',
 	'@type': 'BreadcrumbList',
@@ -38,6 +39,18 @@ const breadcrumbLd = {
 		},
 		{ '@type': 'ListItem', position: 2, name: entry.data.title, item: canonical },
 	],
+};
+
+const ogUrlFallback = `/og/work/${entry.slug}.png`;
+const caseLd = {
+	'@context': 'https://schema.org',
+	'@type': 'CreativeWork',
+	name: entry.data.title,
+	url: canonical,
+	datePublished:
+		(entry.data.completedDate as Date).toISOString?.() ??
+		new Date(entry.data.completedDate).toISOString(),
+	image: (entry.data.ogImage ?? entry.data.featuredImage)?.src ?? ogUrlFallback,
 };
 
 /* ---------- Overview + content stream ---------- */
@@ -91,16 +104,19 @@ if (placement === 'before') {
 }
 
 const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
+
+// OG image for meta tags: prefer explicit → featured → generated fallback
+const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFallback;
 ---
 
 <Base
 	title={entry.data.title}
 	titleTemplate="%s | Case Study"
 	description={entry.data.summary}
-	image={entry.data.ogImage ?? entry.data.featuredImage}
+	image={ogImageForMeta}
 	type="creativework"
 	publishedTime={entry.data.completedDate}
-	structuredData={breadcrumbLd}
+	structuredData={[breadcrumbLd, caseLd]}
 >
 	<article>
 		<!-- HERO -->

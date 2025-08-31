@@ -32,10 +32,12 @@ const breadcrumbLd = {
 	],
 };
 
-// Article JSON-LD (BlogPosting ⊂ Article is fine)
-const imageSrc = (entry.data.ogImage ?? entry.data.featuredImage)?.src;
-const imageAbs = imageSrc && siteUrl ? new URL(imageSrc, siteUrl).href : imageSrc;
+// OG fallback for meta + JSON-LD
+const ogUrlFallback = `/og/insights/${entry.slug}.png`;
+const ogSrcCandidate = (entry.data.ogImage ?? entry.data.featuredImage)?.src ?? ogUrlFallback;
+const imageAbs = siteUrl ? new URL(ogSrcCandidate, siteUrl).href : ogSrcCandidate;
 
+// Article JSON-LD (BlogPosting ⊂ Article is fine)
 const articleLd = {
 	'@context': 'https://schema.org',
 	'@type': 'BlogPosting',
@@ -46,13 +48,16 @@ const articleLd = {
 	mainEntityOfPage: canonical,
 	image: imageAbs,
 };
+
+// Meta image (object or string)
+const seoImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFallback;
 ---
 
 <Base
 	title={entry.data.title}
 	seoTitleTemplate="%s | Insights"
 	description={entry.data.summary}
-	seoImage={entry.data.ogImage ?? entry.data.featuredImage}
+	seoImage={seoImageForMeta}
 	type="article"
 	publishedTime={entry.data.date}
 	structuredData={[breadcrumbLd, articleLd]}
@@ -77,7 +82,19 @@ const articleLd = {
 	</article>
 
 	<nav aria-label="Post navigation">
-		{prev && <a href={`/insights/${prev.slug}`}>← {prev.data.title}</a>}
-		{next && <a href={`/insights/${next.slug}`}>{next.data.title} →</a>}
+		{
+			prev && (
+				<a href={`/insights/${prev.slug}`} rel="prev">
+					← {prev.data.title}
+				</a>
+			)
+		}
+		{
+			next && (
+				<a href={`/insights/${next.slug}`} rel="next">
+					{next.data.title} →
+				</a>
+			)
+		}
 	</nav>
 </Base>
