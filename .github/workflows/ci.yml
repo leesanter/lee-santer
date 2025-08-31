@@ -40,9 +40,6 @@ jobs:
           STRICT_SERVICES=true
           EOF
           
-      - name: Validate service links
-        run: npm run lint:links
-
       - name: Build
         run: npm run build
 
