@@ -410,6 +410,38 @@ input[type='search'] {
 }
 
 /* ----------------------------- */
+/* Theme Transitions             */
+/* ----------------------------- */
+
+html.no-theme-transitions *, html.no-theme-transitions {
+  transition: none !important;
+}
+
+/* Smooth scheme flips driven by html[data-scheme] */
+:where(html[data-scheme]) :where(
+  body, header, footer, section, article, aside, nav,
+  h1,h2,h3,h4,h5,h6, p, li, a, blockquote,
+  .btn, .chip, .tag, .card, .work-card, .site-header,
+  input, textarea, select, svg, .icon, .prose
+) {
+  transition:
+    color var(--theme-anim-fg),
+    background-color var(--theme-anim-bg),
+    border-color var(--theme-anim-fg),
+    fill var(--theme-anim-fg),
+    stroke var(--theme-anim-fg),
+    box-shadow var(--theme-anim-shadow);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :where(html[data-scheme]) * {
+    transition: none !important;
+  }
+}
+
+
+/* ----------------------------- */
 /* Accessibility                 */
 /* ----------------------------- */
 .skip-to-content {

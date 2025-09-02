@@ -197,7 +197,11 @@ const navWithState: NavItem[] = nav.map((item) => {
 		--nav-link-active-colour: var(--palette--primary); /* active state accent */
 		--nav-border-colour: var(--border-colour); /* borders in header */
 		--nav-icon-colour: var(--nav-link-colour); /* hamburger bars, chevrons */
-		--nav-hover-bg-colour: color-mix(in srgb, var(--nav-link-colour) 10%, var(--bg-colour));
+		--nav-hover-bg-colour: color-mix(
+			in srgb,
+			var(--nav-link-colour) 10%,
+			var(--nav-panel-bg-colour)
+		);
 	}
 
 	/* Force light/dark header independent of page */
