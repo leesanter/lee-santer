@@ -122,6 +122,11 @@
 	--duration: 200ms;
 	--duration-slow: 320ms;
 
+	--theme-anim-ease: cubic-bezier(.2, 0, 0, 1);
+	--theme-anim-fg: 220ms var(--theme-anim-ease);   // text, borders, icons
+	--theme-anim-bg: 320ms var(--theme-anim-ease);   // backgrounds (slightly longer)
+	--theme-anim-shadow: 240ms var(--theme-anim-ease);
+
 	/* ----------------------------- */
 	/* Breakpoints (reference only)  */
 	/* ----------------------------- */
