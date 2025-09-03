@@ -1,15 +1,17 @@
-# Astro Starter — Minimal, Accessible, Client-Ready
+# Lee Santer — Astro Portfolio (Starter-derived)
 
-A clean Astro starter focused on real-world delivery:
+A clean Astro build focused on real-world delivery, now with a **lightweight motion system** and **section-driven theming**:
 
 - Semantic HTML, accessible patterns, and sensible defaults
 - **Token-driven design system** (palette + semantic theme tokens)
 - Reusable layout utilities and components (Header, Footer, SEO, Cookie Consent)
-- Content Collections (Markdown/MDX) with a ready-to-go Blog
-- Manual pagination (no framework helpers), RSS feed, Robots & Sitemap
-- Built-in **Style Guide** page for quick visual QA
+- Content Collections (Markdown/MDX) for Work, Services, Insights
+- Manual pagination where relevant, RSS/Robots/Sitemap
+- Built-in **Style Guide** for visual QA
 - Self-hosted variable fonts with preloads
 - CI on PRs + sensible security headers (CSP in Report-Only by default)
+- **Attribute-based motion** (`data-anim`, `data-parallax`) with Reveal wipe & parallax
+- **Section-driven theming** via `data-scheme="light|dark"` + stable header overlay logic
 
 > Style guide: `/style-guide`
 
@@ -28,7 +30,13 @@ A clean Astro starter focused on real-world delivery:
    - [UI primitives](#ui-primitives)  
    - [Utilities](#utilities)  
 6. [Theming & header behavior](#theming--header-behavior)  
-7. [Components](#components)  
+7. [Motion system](#motion-system)  
+   - [Attribute API](#attribute-api)  
+   - [Reveal (wipe)](#reveal-wipe)  
+   - [Parallax & sizing helpers](#parallax--sizing-helpers)  
+   - [Groups, delays & thresholds](#groups-delays--thresholds)  
+8. [Content helpers (Work/Services/Insights)](#content-helpers-workservicesinsights)  
+9. [Components](#components)  
    - [SiteHeader](#siteheaderastro)  
    - [SiteFooter](#sitefooterastro)  
    - [SEO](#seoastro)  
@@ -37,9 +45,10 @@ A clean Astro starter focused on real-world delivery:
    - [ScrollListener](#scrolllistenerastro)  
    - [ContactForm](#contactformastro)  
    - [PostCard](#postcardastro)  
-8. [Images & assets](#images--assets)  
-9. [Content: Blog collection](#content-blog-collection)  
-10. [Duplicate a collection (Blog → Services/Portfolio)](#duplicate-a-collection-blog--servicesportfolio)  
+   - [WorkCard](#workcardastro)  
+   - [WorkListing](#worklistingastro)  
+   - [ClientSection & Testimonials](#clientsection--testimonials)  
+10. [Images & assets](#images--assets)  
 11. [SEO, Sitemap, Robots & RSS](#seo-sitemap-robots--rss)  
 12. [Fonts](#fonts)  
 13. [Accessibility & performance](#accessibility--performance)  
@@ -48,18 +57,17 @@ A clean Astro starter focused on real-world delivery:
 16. [Deploy](#deploy)  
 17. [Security headers & CSP](#security-headers--csp)
 18. [Maintenance & backporting](#maintenance--backporting)
-19. [Troubleshooting](#troubleshooting)
-20. [Licence](#licence)
+19. [BEM naming](#bem-naming)
+20. [Troubleshooting](#troubleshooting)
+21. [Licence](#licence)
 
 ---
 
 ## Quick start
 
-This repo uses **npm** by default (`package-lock.json`). If you prefer pnpm or yarn, swap the commands and commit the matching lockfile.
-
 ```bash
 # 1) Install deps
-npm install     # or: pnpm install / yarn
+npm install
 
 # 2) Run dev server
 npm run dev
@@ -93,9 +101,9 @@ npm run preview
 - `format`: formats the whole repo with Prettier.
 - `typecheck`: optional; useful if you lean on TS types.
 
-**Optional (only if configured):**
-- `"lint": "eslint ."` — requires an ESLint config.
-- `"test": "vitest"` — if you add tests.
+**Additional (if present in project):**
+- `"generate:og": "node ./scripts/generate-og.mjs"` – Satori + Resvg → `/public/og`
+- `"validate:service-links": "node ./scripts/validate-service-links.mjs"` – strict services map check
 
 ---
 
@@ -105,76 +113,77 @@ npm run preview
 src/
   components/
     atoms/
-      Button.astro
+      LogoRow.asrto
+      TestimonialQuote.astro
     molecules/
-      PostCard.astro
+      InsightCard.astro
+      WorkCard.astro
     organisms/
+      ClientSection.astro
+      ContactForm.astro
+      InsightsListing.astro
       SiteHeader.astro
       SiteFooter.astro
+      WorkListing.astro
     utils/
-      SEO.astro
       CookieConsent.astro
-      ScrollListener.astro
-      HeadAssets.astro
       FontAssets.astro
+      HeadAssets.astro
+      MotionController.astro   ← central scheme + motion (replaces ThemeController)
+      ScrollListener.astro
+      SEO.astro
   content/
-    blog/
-      welcome-to-the-starter.md
-    config.ts
+    work/…                     # case studies (MD/MDX)
+    insights/…                 # posts (MD/MDX)
+    services/…                 # service pages (MD/MDX)
+    config.ts                  # content collections config
   layouts/
     Base.astro
-    Minimal.astro
-    Article.astro
   lib/
+    categories.ts              # canonical keys/slugs + toSlug/fromSlug
     constants.ts
+    content.ts                 # re-exports site/services/work/insights
+    format.ts                  # formatDate()
+    insights.ts
+    md.ts                      # markdown → HTML
+    readTime.ts
+    seo.ts
+    services.ts                # service/category helpers (memoized, strict map)
+    site.ts
+    work.ts                    # sorting, nextPrev, featured selection, testimonials
   pages/
     index.astro
-    blog/
-      index.astro
-      page/[page].astro
-      [...slug].astro
-    rss.xml.ts
-    robots.txt.ts
-    404.astro
-    500.astro
     style-guide.astro
+    work/
+      index.astro              # /work listing
+      [slug].astro             # /work/:slug detail
+      [category].astro         # /work/:category filtered view
+    services/
+      [category].astro         # /services/:category detail
+      index.astro              # /services listing
+    insights/
+      [...page].astro          # /insights listing
+      [slug].astro             # /insights/:slug detail
+    404.astro
   styles/
-    main.scss
-    _tokens.scss
+    main.scss                  # imports partials (incl. _motion.scss)
+    _tokens.scss               # palette + motion tokens (--dur-*, --ease-*, --anim-*)
+    _motion.scss               # attribute-based effects, reveal, parallax sizing helpers
     _theme.scss
     _base.scss
     _typography.scss
     _layout.scss
     _ui.scss
     _utilities.scss
-    fonts.css
+scripts/
+  generate-og.mjs
+  validate-service-links.mjs
 public/
-  fonts/InterVariable.woff2
-  fonts/InterVariable-Italic.woff2
-  favicon.svg
-  icon-192.png
-  icon-512.png
-  apple-touch-icon.png
-  og-default.jpg
-  site.webmanifest
-.github/workflows/ci.yml
-.editorconfig
-.nvmrc
+  _headers
+  og/…
 ```
 
-`styles/main.scss` imports partials in this order:
-
-```
-@use "tokens";
-@use "theme";
-@use "base";
-@use "typography";
-@use "layout";
-@use "ui";
-@use "utilities";
-```
-
-Page-scoped styles (like `/style-guide`) live in that page’s `<style lang="scss">` block.
+> Note: `ThemeController` and `lib/theme.ts` are no longer used; all scheme flips and motion are handled by `MotionController.astro` + `_motion.scss`.
 
 ---
 
@@ -226,26 +235,8 @@ PUBLIC_CONSENT_VERSION="1"                 # bump when consent text/purposes cha
 
 - **Semantic theme tokens** (`_theme.scss`): map palette → roles and support light/dark schemes:
   ```css
-  :root {
-    --bg-colour: var(--palette--white);
-    --heading-colour: var(--palette--neutral-900);
-    --text-colour: var(--palette--neutral-600);
-    --text-muted: #6f7377;
-    --link-colour: var(--palette--primary);
-    --link-hover-colour: var(--palette--neutral-900);
-    --border-colour: rgba(26,26,26,.15);
-    --focus-ring-colour: var(--palette--primary);
-  }
-  [data-scheme="dark"] {
-    --bg-colour: var(--palette--neutral-900);
-    --heading-colour: var(--palette--white);
-    --text-colour: #e6e6e6;
-    --text-muted: #ffffff99;
-    --link-colour: var(--palette--primary);
-    --link-hover-colour: var(--palette--white);
-    --border-colour: rgba(255,255,255,.2);
-    --focus-ring-colour: var(--palette--primary);
-  }
+  :root { /* light defaults */ }
+  [data-scheme="dark"] { /* dark overrides */ }
   ```
   Use `[data-scheme="light"|"dark"]` on `html`/`body` or any section to scope colours.
 
@@ -269,103 +260,201 @@ Text size/weight/alignment helpers, colour helpers, max-width clamps, display/fl
 
 ## Theming & header behavior
 
-- Header inherits the page scheme by default but can be **forced** per page:
+- **Section-driven:** add `data-scheme="light|dark"` to sections (legacy `data-bg-color` still read).  
+- **Decision line:** the scheme flips when the section crosses a line measured from the top of the viewport. Default is **25%** of viewport height; override per page:  
   ```html
-  <header class="site-header" data-scheme="light">…</header>
-  <header class="site-header" data-scheme="dark">…</header>
+  <html data-motion-line="0.3"> <!-- 30% -->
   ```
-- Transparent over-hero overlay: add `.is-transparent on-dark` to keep links/icons white until the header goes solid.
-- “Pin only when solid”: the header hides on scroll down and reappears on scroll up *with* a background; transitions for background/transform are aligned.
+- **Header overlay:** Keep the header readable over dark heroes by combining `.is-transparent on-dark` at the top of the page. When solid (scroll up/idle), the header pins to a light scheme automatically.
+
+---
+
+## Motion system
+
+Attribute-based effects managed by `MotionController.astro` and `_motion.scss`. Respects `prefers-reduced-motion` and triggers even if elements load in view.
+
+### Attribute API
+
+| Attribute | Values | Notes |
+|---|---|---|
+| `data-anim` | `reveal`, `fade`, `fade-up`, `slide-left`, `slide-right`, `pop`, `blur-in` | Effect to apply |
+| `data-anim-delay` | integer steps (0,1,2,…) | Each step = `--anim-step` |
+| `data-anim-duration` | milliseconds | Overrides `--anim-duration` |
+| `data-anim-distance` | CSS length | Overrides slide/fade distance |
+| `data-anim-once` | `"false"` | Replay when re-entering viewport |
+| `data-anim-threshold` | 0–1 | Per-element decision line |
+| `data-reveal-from` | `right` (default), `left` | Reveal direction |
+| `data-parallax` | number (e.g. `10`) | Amount in % the inner image travels |
+| `data-anim-group` | any | Enables auto-stagger for child `[data-anim]` |
+| `data-anim-stagger` | milliseconds | Group stagger (default 90ms) |
+| `data-anim-order` | CSS selector | Which children to stagger (default `:scope > [data-anim]`) |
+
+### Reveal (wipe)
+
+No wrapper needed; uses a `::before` overlay.
+
+```html
+<figure data-anim="reveal">…</figure>
+<!-- Flip direction if needed -->
+<figure data-anim="reveal" data-reveal-from="left">…</figure>
+```
+
+### Parallax & sizing helpers
+
+Wrapper declares parallax + sizing; inner image uses `.parallax-target`.
+
+```html
+<figure data-anim="reveal" data-parallax="10" data-size="hero">
+  <img class="parallax-target" src="…" alt="…" />
+</figure>
+```
+
+Sizing helpers (in `_motion.scss`):
+
+```css
+/* Pick ONE per instance */
+[data-parallax] {
+  min-block-size: var(--frame-min-h, auto);
+  aspect-ratio: var(--frame-ratio, auto);
+}
+[data-parallax][data-size="hero"]   { min-block-size: 100svh; }
+[data-parallax][data-size="banner"] { aspect-ratio: 16 / 9; }
+[data-parallax][data-size="square"] { aspect-ratio: 1 / 1; }
+```
+
+> Non-parallax reveals keep natural height automatically.
+
+### Groups, delays & thresholds
+
+```html
+<div data-anim-group data-anim-stagger="120">
+  <h2 data-anim="fade-up">Title</h2>
+  <p data-anim="fade-up" data-anim-delay="1">Lead</p>
+  <a class="btn" data-anim="fade-up" data-anim-delay="2">CTA</a>
+</div>
+```
+
+Tune the global decision line per page via `<html data-motion-line="0.3">` or per element with `data-anim-threshold`.
+
+---
+
+## Content helpers (Work/Services/Insights)
+
+Single source of truth under `src/lib`:
+
+- `getAllWork()` — newest → oldest (drafts excluded)
+- `getWorkForHome(limit)` — featured weighting + backfill newest
+- `inCategory(entry, key)` / `inAnyCategory(entry, keys)` — membership tests
+- `getWorkByCategory(key)` — filtered list
+- `getFeaturedWorkForCategory(key, explicitSlug?)` — explicit slug wins; else newest in cat
+- `nextPrev(items, currentSlug)` — circular navigation
+- `mapServiceKeysToLinks(keys)` — strict mapping of service keys → `{{label, href?}}`
+
+**CI enforcement**: with `STRICT_SERVICES=true`, unknown `services` keys fail the build.
 
 ---
 
 ## Components
 
 ### `SiteHeader.astro`
-
-Sticky header with hover dropdowns (desktop) and accessible disclosure submenus (mobile). Independent scheme control via `data-scheme` and overlay helpers. Scroll behavior powered by `ScrollListener` body classes.
+(Sticky header with hover dropdowns (desktop) and accessible disclosure submenus (mobile). Independent scheme control via `data-scheme` and overlay helpers. Scroll behavior powered by `ScrollListener` body classes.)
 
 ### `SiteFooter.astro`
-
-Dark footer with CTA, three link columns, and legal row. Uses scoped footer tokens for contrast and borders.
+(Dark footer with CTA, three link columns, and legal row. Uses scoped footer tokens.)
 
 ### `SEO.astro`
-
-Canonical URL generation, Open Graph/Twitter, fallback OG image, optional JSON-LD via `structuredData` prop.
+(Canonicals, Open Graph/Twitter, optional JSON-LD.)
 
 ### `HeadAssets.astro` & `FontAssets.astro`
-
-Manifest, favicons, theme colour, and local font preloads. `PUBLIC_MANIFEST` lets you override the manifest path.
+(Manifest/favicons/theme colour + font preloads.)
 
 ### `CookieConsent.astro`
-
-Lightweight banner that **respects GPC** and loads **GTM only after “Accept all”**. Consent Mode v2 signals are queued before GTM. Public API: `window.showCookiePreferences()` to reopen the banner (used by the footer link).
+(Respects GPC, injects GTM only after opt-in.)
 
 ### `ScrollListener.astro`
-
-Adds body classes for scroll direction/idle to coordinate header show/hide.
+(Body classes for scroll direction/idle to coordinate header show/hide.)
 
 ### `ContactForm.astro`
-
-Unstyled form primitives (Netlify-compatible) with success/error states.
+(Unstyled form primitives, Netlify-compatible.)
 
 ### `PostCard.astro`
+(Simple blog card example for Content Collections.)
 
-Simple blog card example for Content Collections.
+### `WorkCard.astro`
+
+**Props**
+
+```ts
+type ServiceLink = {{ label: string; href: string | null }};
+
+interface Props {{
+  href: string;
+  title: string;
+  img: import('astro:assets').ImageMetadata;
+  alt: string;
+  services?: ServiceLink[]; // optional; renders as chips
+  compact?: boolean;        // optional; smaller layout variant
+  class?: string;           // optional; extra classes
+}}
+```
+
+**Usage (listing)**
+
+```astro
+<WorkCard
+  href={`/work/${entry.slug}`}
+  title={entry.data.title}
+  img={entry.data.featuredImage}
+  alt={entry.data.featuredAlt ?? entry.data.title}
+  services={await mapServiceKeysToLinks(entry.data.services)}
+/>
+```
+
+**Usage (next project, compact)**
+
+```astro
+<WorkCard
+  compact
+  class="nextprev__card"
+  href={`/work/${next.slug}`}
+  title={next.data.title}
+  img={next.data.featuredImage}
+  alt={next.data.featuredAlt ?? next.data.title}
+  services={(await mapServiceKeysToLinks(next.data.services)).map(({label, href}) => ({label, href: href ?? null}))}
+/>
+```
+
+### `WorkListing.astro`
+
+- **Controlled**: pass `entries` (already filtered/sorted).  
+- **Autonomous**: pass `category='all' | Category` + `includeSlugs`/`excludeSlugs`/`limit`/`shuffle`.
+- Filter chips: `showFilter`, `active` slug (e.g. `'all'`, `'design'`, `'growth'`).
+- Precomputes `WorkCard` props, including `services` via `mapServiceKeysToLinks`.
+
+### ClientSection & Testimonials
+
+- `getTestimonialsForWork(entry)` ⇒ `{{quote, name, role?, company?, workTitle, workSlug}}[]`.
+- `TestimonialQuote.astro` props: `quote`, `name`, `role?`, `company?`, `workTitle?`, `workSlug?`, `showWorkLink?` (default `true`).
 
 ---
 
 ## Images & assets
 
-- Place static files in `/public`. Reference with absolute paths (`/images/hero.jpg`).  
-- In Markdown body, prefer relative images housed next to content entries:
-  ```md
-  ![Caption](./images/example.jpg)
-  ```
-- OG default: `/og-default.jpg` (1200×630).  
-- PWA/App icons: `/icon-192.png`, `/icon-512.png` (maskable).  
-- Manifest: `/site.webmanifest` referencing your icons.
-
----
-
-## Content: Blog collection
-
-`src/content/config.ts` uses the schema callback. To allow plain string paths for images, change `image()` fields to a union and coerce in pages.
-
-Add a post:
-
-```mdx
----
-title: "Hello World"
-description: "First post"
-publishDate: 2025-01-01
-draft: false
----
-
-Welcome to **Astro**!
-```
-
-**Pagination** is manual in `/blog/page/[page].astro`, with `POSTS_PER_PAGE` in `src/lib/constants.ts`.
-
----
-
-## Duplicate a collection (Blog → Services/Portfolio)
-
-Copy the `blog` folder, adjust the schema in `content/config.ts`, and duplicate the list/detail pages. Update routes/links as needed.
+- Place static files in `/public` (absolute paths like `/images/hero.jpg`).  
+- In Markdown/MDX, prefer relative images next to entries.
+- OG defaults under `/public/og` if generated.
 
 ---
 
 ## SEO, Sitemap, Robots & RSS
 
-- Sitemap via `@astrojs/sitemap` with `site` set from `PUBLIC_SITE_URL` in `astro.config.mjs`.
-- Robots at `/robots.txt` respects `INDEXING` and emits absolute sitemap URLs.
-- RSS via `@astrojs/rss` at `/rss.xml` (remove file to disable).
+(As in your README — `@astrojs/sitemap`, `/robots.txt`, optional RSS.)
 
 ---
 
 ## Fonts
 
-Self-hosted variable **Inter** (regular + italic) with preloads. Update `fonts.css` and `/public/fonts` as you change families/weights.
+Self-hosted variable Inter by default; swap families as needed via `FontAssets` and `/public/fonts`.
 
 ---
 
@@ -373,131 +462,56 @@ Self-hosted variable **Inter** (regular + italic) with preloads. Update `fonts.c
 
 - Skip link to `#main`  
 - Keyboard-operable nav + dropdowns; focus rings visible and tokenised  
-- `prefers-reduced-motion` respected  
+- Respects `prefers-reduced-motion`  
 - Images: `loading="lazy"`, `decoding="async"`, meaningful `alt`  
-- Lean components and no heavy global imports
+- Lean components, no heavy global libs
 
 ---
 
 ## Clone-for-client checklist
 
-**15-minute sweep** when starting a fresh client build.
-
-1) **Project identity**  
-   Replace `/public/logo.svg`. Update `/public/site.webmanifest` `name`/`short_name`. Set `PUBLIC_THEME_COLOR`.
-
-2) **Domain & URLs**  
-   `PUBLIC_SITE_URL` set; keep `astro.config.mjs -> site` reading from env. Use `INDEXING=false` on staging.
-
-3) **Head & SEO**  
-   Update default title/description envs. Swap `/og-default.jpg`. Check `SEO.astro` title format.
-
-4) **Nav & footer**  
-   Update header nav & footer groups; “Cookie preferences” → `window.showCookiePreferences?.()`.
-
-5) **Analytics & consent**  
-   Set `PUBLIC_GTM_ID`. Review banner copy; bump `PUBLIC_CONSENT_VERSION` after changes.
-
-6) **Content collections**  
-   Adjust `content/config.ts`; add first entries; confirm routes render.
-
-7) **Security headers**  
-   `public/_headers` present (HSTS, Referrer, Permissions, CSP-Report-Only). Add third-party origins as needed; enforce CSP later.
-
-8) **Smoke test**  
-   `npm run build && npx serve dist` then click around: `/`, `/blog`, `/blog/page/2`, a post, `/robots.txt`, `/sitemap-index.xml`, `/rss.xml`.
+(Keep your existing section.)
 
 ---
 
 ## Go-live checklist
 
-- Prod env: `PUBLIC_SITE_URL` set, `INDEXING=true`, analytics keys present  
-- Canonicals & OG correct per key page  
-- Accessibility: keyboard flows & focus rings OK  
-- Performance: Lighthouse on Home, list, detail; image sizes sane  
-- Header/nav: no flicker; mobile parent links clickable  
-- Cookie consent: GPC respected; GTM loads only after consent  
-- Forms: submissions arrive; success/error states OK  
-- Icons & manifest render everywhere  
-- `/robots.txt` shows `Allow: /` and absolute sitemap URL in production  
-- Monitoring/rollback optional but recommended
+(Keep your existing section.)
 
 ---
 
 ## Deploy
 
-### Netlify
-1. Create site from this repo.  
-2. Build command: `npm run build`  
-3. Publish directory: `dist`  
-4. Environment variables:
-   - Production: `PUBLIC_SITE_URL` = live domain, `INDEXING=true`
-   - Deploy Previews/Branch deploys: `INDEXING=false`
-   - Any others you use (GTM, theme colour, etc.)
-
-### Other static hosts
-Serve `dist/`. For SSR targets, install the relevant Astro adapter.
+(Keep your existing section — Netlify + other static hosts.)
 
 ---
 
 ## Security headers & CSP
 
-`public/_headers` ships sensible defaults (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy). Start with **CSP in Report-Only** while testing third-party origins; then enforce:
-
-```
-/*
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; frame-src https://www.youtube.com https://player.vimeo.com
-*/
-```
-Adjust as you add services (Hotjar, Sentry, etc.).
+(Keep your existing section + example `_headers`.)
 
 ---
 
 ## Maintenance & backporting
 
-This starter is intentionally simple. When you find a **generic** improvement while building a client site, you can copy the minimal fix back here and tag a release. Keep it lightweight.
+(Keep your existing section.)
 
-### When to backport (tripwires)
-- You hit the **same bug twice** across projects, or
-- It’s obviously generic (tokens/scheme hooks, header/nav a11y, grid overflow, cookie banner theming, CSP/SEO standards), or
-- A platform change (e.g. Consent Mode/CSP/meta) affects all sites.
+---
 
-### How to backport (2–3 minutes)
-1. Make the **minimal** change in this starter (keep client-specific tweaks in the client repo).
-2. Commit with a clear type:
-   - `fix(header): align solid/transparent transitions; respect data-scheme`
-   - `fix(styleguide): prevent grid overflow on small screens`
-   - `feat(theme): add --nav-* hooks for header variants`
-   - `docs: README—explain “pin only when solid” + cookie reopen`
-3. Update `CHANGELOG.md` with one–two bullets.
-4. Tag using SemVer:
-   - **patch** (`1.1.1`) for bugfixes,
-   - **minor** (`1.2.0`) for new non-breaking features,
-   - **major** (`2.0.0`) if you change/break public tokens, class names, or component APIs.
-5. Push the tag:
-   ```bash
-   git tag -a v1.1.0 -m "feat(theme): semantic tokens; fix(styleguide): overflow; docs: README"
-   git push origin v1.1.0
+## BEM naming
 
+- **Entry (case detail)**: `entry`, `entry__header`, `entry__hero`, `entry__title`, `entry__wrapper`, `entry__intro`, `entry__meta`, `entry__services`, `entry__services-list`, `entry__date`, `entry__site`, `entry__overview`, `entry__body`, `entry__section`, `entry__image`, `entry__image--main`, `entry__nav`.
+- **Work cards/listing**: `work-card`, `work-card--compact`, `work-grid`.
+- **Next/prev**: `nextprev`, `nextprev__card`, `nextprev__media`, `nextprev__body`, `nextprev__eyebrow`, `nextprev__title`.
 
 ---
 
 ## Troubleshooting
 
-- **Horizontal scroll on mobile**  
-  Ensure `.content-layout` collapses to `1fr` at ≤767px, and that grid children have `min-width: 0`. The style guide includes those guards.
-
-- **Content image import errors**  
-  Don’t point `image()` fields to absolute `/public` paths. Use relative images under `src/content/...` or omit and rely on fallbacks.
-
-- **Staging gets indexed**  
-  Set `INDEXING=false` in staging env; verify `/robots.txt` shows `Disallow: /`.
-
-- **Canonical/OG URLs wrong**  
-  Set `PUBLIC_SITE_URL` and keep `astro.config.mjs` `site` reading from it.
-
-- **GTM loads before consent**  
-  CookieConsent only injects GTM after “Accept all”. Ensure `PUBLIC_GTM_ID` is set and bump `PUBLIC_CONSENT_VERSION` if you change wording/purposes.
+- **Scheme flips feel late/early**: Adjust decision line `<html data-motion-line="0.3">` or per-element `data-anim-threshold`.
+- **Parallax element collapses**: Add sizing helper: `data-size="hero"` or `style="--frame-ratio: 3 / 2"` / `--frame-min-h: 60svh`.
+- **Reveal doesn’t play on load**: Ensure `_motion.scss` is imported and no parent overrides the transform/transition.
+- (Keep the rest of your existing list.)
 
 ---
 
