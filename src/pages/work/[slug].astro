@@ -5,7 +5,11 @@ import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { getAllWork, nextPrev, mapServiceKeysToLinks } from '../../lib/content';
 import { md } from '../../lib/md';
+import RevealImage from '../../components/molecules/RevealImage.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import TestimonialQuote from 'src/components/atoms/TestimonialQuote.astro';
 import ClientSection from 'src/components/organisms/ClientSection.astro';
+import { getTestimonialsForWork } from '../../lib/content'; // re-export from lib/work
 import { formatDate } from 'src/lib/format';
 
 export async function getStaticPaths() {
@@ -22,6 +26,15 @@ if (!entry) throw new Error(`Work entry not found for slug: ${slug}`);
 
 const { next, prev } = nextPrev(all, slug!);
 const serviceLinks = await mapServiceKeysToLinks(entry.data.services);
+
+const nextServices = next
+	? (await mapServiceKeysToLinks(next.data.services)).map(({ label, href }) => ({
+			label,
+			href: href ?? null,
+		}))
+	: [];
+
+const testimonials = getTestimonialsForWork(entry); // returns [{quote,name,role,company,workTitle,workSlug}, …]
 
 /* ---------- Canonical + JSON-LD ---------- */
 const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
@@ -103,6 +116,15 @@ if (placement === 'before') {
 	}
 }
 
+// Determine which image should get the "main" class.
+// Prefer filename-based (_main) detection; fall back to the first image in the stream.
+const isNamedMain = (blk: Block) =>
+	blk.kind === 'image' && /(^|[_-])main(?:[.@_-]|$)/i.test(blk.src.src);
+
+const namedMainIndex = blocks.findIndex(isNamedMain);
+const firstImageIndex = blocks.findIndex((blk) => blk.kind === 'image');
+const mainImageIndex = namedMainIndex !== -1 ? namedMainIndex : firstImageIndex;
+
 const completed = formatDate(entry.data.completedDate, 'MMM yyyy');
 
 // OG image for meta tags: prefer explicit → featured → generated fallback
@@ -117,158 +139,208 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 	type="creativework"
 	publishedTime={entry.data.completedDate}
 	structuredData={[breadcrumbLd, caseLd]}
-	schemeHint="dark"
+	headerOverlay="dark"
 >
-	<article>
-		<!-- HERO -->
-		<figure class="hero">
-			<Image
-				src={entry.data.featuredImage}
-				alt={entry.data.featuredAlt}
-				widths={[1200, 1600, 2000, 2400]}
-				sizes="100vw"
-				loading="eager"
-				decoding="async"
-			/>
-			<figcaption class="sr-only">{entry.data.title}</figcaption>
-		</figure>
+	<article class="entry entry--work">
+		<header class="entry__header">
+			<figure class="entry__hero">
+				<RevealImage
+					image={entry.data.featuredImage}
+					alt={entry.data.featuredAlt}
+					widths={[1200, 1600, 2000, 2400]}
+					sizes="100vw"
+					loading="eager"
+					decoding="async"
+					parallax
+				/>
+			</figure>
+			<h1 class="entry__title">{entry.data.title}</h1>
+		</header>
 
-		<!-- META + OVERVIEW -->
-		<section class="section">
-			<div class="container container--large two-col">
-				<aside class="meta">
-					<h2 class="h6">What I did</h2>
-					<ul class="chips" role="list">
-						{
-							serviceLinks.map((s) => (
-								<li>
-									{s.href ? (
-										<a href={s.href}>{s.label}</a>
-									) : (
-										<span>{s.label}</span>
-									)}
-								</li>
-							))
-						}
-					</ul>
+		<section class="section" data-bg-color="light">
+			<div class="container container--medium">
+				<div class="entry__wrapper">
+					<div class="entry__intro">
+						<aside class="entry__meta">
+							<div class="entry__services">
+								<h2 id="services-heading" class="h5">What I did</h2>
+								<ul
+									class="entry__services-list"
+									role="list"
+									aria-labelledby="services-heading"
+								>
+									{
+										serviceLinks.map((s) => (
+											<li>
+												{s.href ? (
+													<a href={s.href}>{s.label}</a>
+												) : (
+													<span>{s.label}</span>
+												)}
+											</li>
+										))
+									}
+								</ul>
+							</div>
 
-					<dl class="kv">
-						<div><dt>Completed</dt><dd>{completed}</dd></div>
-						{
-							entry.data.siteUrl && (
-								<div>
-									<dt>Visit</dt>
-									<dd>
+							<div class="entry__date">
+								<h2 class="h5">Completed</h2>
+								<p>
+									<time
+										datetime={new Date(entry.data.completedDate).toISOString()}
+										>{completed}</time
+									>
+								</p>
+							</div>
+							<div class="entry__site">
+								{
+									entry.data.siteUrl && (
 										<a href={entry.data.siteUrl} rel="noopener" target="_blank">
-											Project site
+											Visit Site
 										</a>
-									</dd>
-								</div>
+									)
+								}
+							</div>
+						</aside>
+						<section class="entry__overview">
+							<div class="stack xsmall">
+								<h2 class="h3">{overviewTitle}</h2>
+								<div class="prose" set:html={overviewHTML} />
+							</div>
+						</section>
+					</div>
+
+					<div class="entry__body">
+						{
+							blocks.map((b, i) =>
+								b.kind === 'image' ? (
+									<RevealImage
+										class={`entry__image${i === mainImageIndex ? ' entry__image--main' : ''}`}
+										image={b.src}
+										alt={b.alt}
+										widths={[768, 1280, 1600]}
+										sizes="100vw"
+									/>
+								) : (
+									<section class="entry__section">
+										<div class="stack xsmall">
+											<h3 class="h4">{b.title}</h3>
+											<div class="prose" set:html={b.html} />
+										</div>
+									</section>
+								)
 							)
 						}
-					</dl>
-				</aside>
-
-				<article class="overview">
-					<h1 class="h2">{entry.data.title}</h1>
-					<h2 class="h3">{overviewTitle}</h2>
-					<div class="prose" set:html={overviewHTML} />
-				</article>
+					</div>
+				</div>
 			</div>
 		</section>
-
-		<!-- STREAM -->
-		<section class="section">
-			<div class="container container--large stack">
-				{
-					blocks.map((b) =>
-						b.kind === 'image' ? (
-							<figure class="case-image">
-								<Image
-									src={b.src}
-									alt={b.alt}
-									widths={[768, 1280, 1600]}
-									sizes="100vw"
-									loading="lazy"
-									decoding="async"
-								/>
-							</figure>
-						) : (
-							<article class="case-section stack tiny">
-								<h3 class="h4">{b.title}</h3>
-								<div class="prose" set:html={b.html} />
-							</article>
-						)
-					)
-				}
-			</div>
-		</section>
-
-		<!-- TESTIMONIAL (this case only; no random) -->
-		<ClientSection workEntry={entry} showWorkLink={false} />
 	</article>
 
-	<!-- NEXT / PREV -->
-	<nav aria-label="Case navigation" class="section">
-		<div class="container container--large nextprev">
-			{
-				prev && (
-					<a class="btn btn--outline" href={`/work/${prev.slug}`}>
-						← {prev.data.title}
-					</a>
-				)
-			}
-			{
-				next && (
-					<a class="btn btn--outline" href={`/work/${next.slug}`}>
-						{next.data.title} →
-					</a>
-				)
-			}
-		</div>
-	</nav>
-</Base>
+	<ClientSection workEntry={entry} showWorkLink={false} />
 
-<style>
-	.hero img {
-		width: 100%;
-		height: auto;
-		display: block;
-	}
-	.two-col {
-		display: grid;
-		grid-template-columns: 1fr 2fr;
-		gap: var(--size--xlarge);
-		align-items: start;
-	}
-	.chips {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-	.kv {
-		display: grid;
-		gap: 0.25rem;
-	}
-	.case-image img {
-		width: 100%;
-		height: auto;
-		display: block;
-	}
-	.case-section {
-		max-width: 72ch;
-	}
-	.nextprev {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--size--small);
-	}
-	@media (max-width: 900px) {
-		.two-col {
-			grid-template-columns: 1fr;
+	<footer class="section">
+		<div class="container container--large">
+			<div class="entry__nav">
+				<h2 class="h4">Next project</h2>
+				<nav aria-label="Case navigation" class="nextprev nextprev--cards">
+					{
+						next && (
+							<WorkCard
+								compact
+								class="nextprev__card"
+								href={`/work/${next.slug}`}
+								title={next.data.title}
+								img={next.data.featuredImage}
+								alt={next.data.featuredAlt ?? next.data.title}
+								services={nextServices}
+							/>
+						)
+					}
+				</nav>
+			</div>
+		</div>
+	</footer>
+
+	<style lang="scss">
+		.entry--work {
+			.entry__header {
+				position: relative;
+				max-height: 100vh;
+				overflow: hidden;
+				.entry__title {
+					position: absolute;
+					left: var(--size--large);
+					right: auto;
+					bottom: var(--size--large);
+					color: white;
+					font-size: var(--font--hero);
+				}
+			}
+
+			.entry__wrapper,
+			.entry__body {
+				display: grid;
+				grid-column: 1;
+				gap: var(--size--xlarge);
+			}
+
+			.entry__intro {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: flex-start;
+
+				.entry__meta {
+					display: flex;
+					flex-direction: column;
+					gap: var(--size--medium);
+
+					.entry__services,
+					.entry__date,
+					.entry__site {
+						display: flex;
+						flex-direction: column;
+						gap: var(--size--tiny);
+					}
+
+					.entry__services {
+						.entry__services-list {
+							list-style: none;
+							padding: 0;
+							margin: 0;
+						}
+					}
+				}
+
+				.entry__overview {
+					flex-basis: 65%;
+				}
+			}
+
+			.entry__overview,
+			.entry__section {
+				font-size: var(--font--large);
+			}
 		}
-	}
-</style>
+
+		.entry__image--main {
+			padding: var(--size--large);
+			background-color: var(--palette--neutral-900);
+			aspect-ratio: auto;
+		}
+
+		.entry__nav {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: flex-start;
+
+			div {
+			}
+			.nextprev--cards {
+				flex-basis: 65%;
+			}
+		}
+	</style>
+</Base>

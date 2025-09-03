@@ -21,7 +21,7 @@ const {
 ---
 
 <figure class="testimonial">
-	<blockquote class="quote">“{quote}”</blockquote>
+	<span class="quote">“{quote}”</span>
 	<figcaption class="who">
 		{name}{role ? `, ${role}` : ''}{company ? `, ${company}` : ''}
 		{
@@ -40,13 +40,18 @@ const {
 		max-width: 72ch;
 		margin-inline: auto;
 		text-align: center;
+
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: var(--size--medium);
 	}
 	.quote {
-		font-size: clamp(1.125rem, 2.8vw, 1.75rem);
+		font-size: var(--font--larger);
 		line-height: 1.5;
-		margin: 0 0 0.75rem 0;
 	}
 	.who {
 		color: var(--text-muted-colour);
+		font-size: var(--font--large);
 	}
 </style>

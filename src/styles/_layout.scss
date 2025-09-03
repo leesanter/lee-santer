@@ -7,26 +7,32 @@
 /* -------------------------------------
    Section rhythm
 ------------------------------------- */
-/* 1) Default: every section has TOP padding only */
+/* 1) Default: every section has TOP padding only (unchanged) */
 :where(.section) {
-	padding-top: var(--layout--section-y);
-	padding-bottom: 0;
+  padding-top: var(--layout--section-y);
+  padding-bottom: 0;
 }
 
-/* 2) First section gets extra space for the fixed header */
-main > :where(.section):first-child:not(.is-flush) {
-	padding-top: calc(var(--header-height, 56px) + var(--layout--section-y));
+/* 2) First section gets extra space for the fixed header
+   – works for:
+     • main > .section
+     • main > * > .section  (e.g. main > article > .section) */
+main > :where(.section):first-child:not(.is-flush),
+main > * > :where(.section):first-child:not(.is-flush) {
+  padding-top: calc(var(--header-height, 56px) + var(--layout--section-y));
 }
 
-/* 3) Last section gets BOTTOM padding so the page never kisses the footer */
-main > :where(.section):last-child {
-	padding-bottom: var(--layout--section-y);
+/* 3) Last section gets BOTTOM padding so the page never kisses the footer
+   – works for both direct and one-level nested .section */
+main > :where(.section):last-child,
+main > * > :where(.section):last-child {
+  padding-bottom: var(--layout--section-y);
 }
 
-/* 4) Filled band: be symmetric inside the coloured block */
+/* 4) Filled band: be symmetric inside the coloured block (unchanged) */
 :where(.section--fill) {
-	padding-top: var(--layout--section-y);
-	padding-bottom: var(--layout--section-y);
+  padding-top: var(--layout--section-y);
+  padding-bottom: var(--layout--section-y);
 }
 
 /* 5) Prevent double gap after a filled section:

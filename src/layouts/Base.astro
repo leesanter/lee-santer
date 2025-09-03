@@ -17,6 +17,11 @@ import ScrollListener from '../components/utils/ScrollListener.astro';
 import CookieConsent from '../components/utils/CookieConsent.astro';
 import ThemeController from '../components/utils/ThemeController.astro';
 
+interface BaseProps {
+	/* existing props … */
+	headerOverlay?: 'auto' | 'dark' | 'light'; // NEW
+}
+
 const ENV = import.meta.env;
 const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || '')
 	.split(',')
@@ -40,6 +45,8 @@ const {
 	seoImage, // string | ImageMetadata
 	seoTitleTemplate, // e.g. "%s | Freelance Web & Brand Designer in Kent"
 	seoAppendSiteName = 'auto', // boolean | 'auto'
+
+	headerOverlay = 'auto', // NEW
 } = Astro.props;
 
 // Prefer new seoImage; fall back to ogImage for back-compat
@@ -48,7 +55,7 @@ const image = seoImage ?? ogImage;
 
 <!doctype html>
 <!-- Base.astro outer html element -->
-<html lang={HTML_LANG} data-initial-scheme={Astro.props.schemeHint /* 'dark' | 'light' */}>
+<html lang={HTML_LANG} data-scheme={Astro.props.schemeHint /* 'dark' | 'light' */}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -60,7 +67,7 @@ const image = seoImage ?? ogImage;
 					var root = document.documentElement;
 
 					// Optional page-level hint: set data-initial-scheme="dark|light" on <html> from Base
-					var hint = root.getAttribute('data-initial-scheme');
+					var hint = root.getAttribute('data-scheme');
 					var fromHint = hint === 'dark' || hint === 'light' ? hint : null;
 
 					// Last scheme you used on this site (set by theme.ts)
@@ -103,8 +110,7 @@ const image = seoImage ?? ogImage;
 		<a class="skip-to-content" href="#main">Skip to content</a>
 
 		<div class="page-wrapper">
-			<SiteHeader />
-
+			<SiteHeader overlay={headerOverlay} />
 			<main id="main" class:list={['main-wrapper', pageClass]} tabindex="-1">
 				<slot />
 			</main>

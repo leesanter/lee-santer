@@ -54,9 +54,9 @@ export function initThemeSync() {
   let current: Color = currentRootScheme() ?? 'light';
   setScheme(current); // mirror to body + persist cookie
 
-  const targets = Array.from(document.querySelectorAll<HTMLElement>('section[data-bg-color]'));
+  // Observe ALL theming regions (header/section/footer/etc.)
+  const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-bg-color]'));
   if (targets.length === 0) {
-    // Re-enable transitions even if there’s nothing to observe
     requestAnimationFrame(() => document.documentElement.classList.remove('no-theme-transitions'));
     return;
   }
@@ -71,29 +71,49 @@ export function initThemeSync() {
         setScheme(current);
       }
     },
-    {
-      threshold: Array.from({ length: 21 }, (_, i) => i / 20),
-      rootMargin: '-10% 0px -10% 0px',
-    }
+    { threshold: Array.from({ length: 21 }, (_, i) => i / 20), rootMargin: '-10% 0px -10% 0px' }
   );
-
   for (const el of targets) io.observe(el);
+
+  // --- NEW: initial scheme pick based on what's actually under the header line ---
+  const initialPick = () => {
+    const html = document.documentElement;
+    const hVar = getComputedStyle(html).getPropertyValue('--header-height').trim();
+    const headerH = Math.max(0, parseFloat(hVar) || 56) + 1; // 56px fallback
+    const x = window.innerWidth / 2;
+    const y = Math.min(window.innerHeight - 1, headerH);
+    const next =
+      nearestBgFromPoint(x, y) ??
+      nearestBgFromPoint(window.innerWidth / 2, window.innerHeight / 2) ??
+      current;
+
+    if (next !== current) {
+      current = next;
+      setScheme(current);
+    }
+  };
+
+  // Run the initial pick on the next frame (after layout), then enable transitions
+  requestAnimationFrame(() => {
+    initialPick();
+    document.documentElement.classList.remove('no-theme-transitions');
+  });
 
   // Handle viewport changes (orientation/resize) gracefully
   let raf = 0;
   const onResize = () => {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
-      const next = nearestBgFromPoint(window.innerWidth / 2, window.innerHeight / 2) ?? current;
+      const next =
+        nearestBgFromPoint(window.innerWidth / 2, Math.max(1, (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 56) + 1)) ??
+        nearestBgFromPoint(window.innerWidth / 2, window.innerHeight / 2) ??
+        current;
       if (next !== current) {
-        current = next;
+        current = next as Color;
         setScheme(current);
       }
     });
   };
   window.addEventListener('resize', onResize, { passive: true });
   window.addEventListener('orientationchange', onResize, { passive: true });
-
-  // Allow transitions after first frame
-  requestAnimationFrame(() => document.documentElement.classList.remove('no-theme-transitions'));
 }

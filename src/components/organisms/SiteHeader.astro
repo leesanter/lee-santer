@@ -24,6 +24,7 @@ interface Props {
 	nav?: NavItem[];
 	cta?: CTA; // omit to hide CTA; we’ll render a sensible default if not provided
 	transparent?: boolean;
+	overlay?: 'auto' | 'dark' | 'light'; // NEW
 }
 
 /** Props + defaults */
@@ -32,6 +33,8 @@ const props = Astro.props as Props;
 const logoHref = props.logoHref ?? '/';
 const logoAlt = props.logoAlt ?? SITE_NAME;
 const transparent = props.transparent ?? true;
+const overlay = props.overlay ?? 'auto'; // NEW
+const onDark = overlay === 'dark'; // NEW
 
 const defaultNav: NavItem[] = [
 	{
@@ -66,7 +69,11 @@ const navWithState: NavItem[] = nav.map((item) => {
 });
 ---
 
-<header data-header class={`site-header${transparent ? ' is-transparent' : ''}`} role="banner">
+<header
+	data-header
+	class={`site-header${transparent ? ' is-transparent' : ''}${onDark ? ' on-dark' : ''}`}
+	role="banner"
+>
 	<div class="site-header__inner container container--large">
 		<!-- Branding -->
 		<a href={logoHref} class="site-header__brand" aria-label={`${logoAlt} — Home`}>
@@ -560,6 +567,14 @@ const navWithState: NavItem[] = nav.map((item) => {
 	/* Optional: lock page scroll when mobile nav open */
 	body.no-scroll {
 		overflow: hidden;
+	}
+
+	.site-header.is-transparent:not(.has-bg).on-dark {
+		--heading-colour: var(--palette--white);
+		--text-colour: var(--palette--white);
+		--link-colour: var(--palette--white);
+		--link-hover-colour: var(--palette--white);
+		--border-colour: color-mix(in srgb, var(--palette--white) 30%, transparent);
 	}
 </style>
 

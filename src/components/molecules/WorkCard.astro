@@ -1,32 +1,88 @@
 ---
+import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
-type Chip = { label: string; href: string | null };
+type Service = { label: string; href: string | null };
+
 interface Props {
 	href: string;
 	title: string;
 	summary: string;
 	img: ImageMetadata;
 	alt: string;
-	chips?: Chip[];
+	services?: Service[];
+
+	// optional niceties
+	compact?: boolean;
+	class?: string;
+	widths?: number[];
+	sizes?: string;
 }
 
-const { href, title, summary, img, alt, chips = [] } = Astro.props as Props;
+const {
+	href,
+	title,
+	summary = '',
+	img,
+	alt,
+	services = [],
+	compact = false,
+	class: className = '',
+	widths,
+	sizes,
+	...attrs
+} = Astro.props as Props;
+
+const imgWidths = widths ?? (compact ? [360, 560, 720] : [480, 720, 960]);
+const imgSizes =
+	sizes ??
+	(compact
+		? '(min-width: 1200px) 420px, (min-width: 800px) 50vw, 100vw'
+		: '(min-width: 1400px) 420px, (min-width: 1024px) 33vw, 100vw');
+
+const rootClass = {
+	'entry-card': true,
+	'entry-card--work': true,
+	'entry-card--compact': compact,
+	[className]: !!className,
+};
 ---
 
-<article class="work-card">
-	<a href={href}>
-		<img src={img.src} alt={alt} loading="lazy" />
-		<h3>{title}</h3>
-		<p>{summary}</p>
+<article class:list={rootClass} {...attrs}>
+	<a class="entry-card__link" href={href} aria-label={title}>
+		<figure class="entry-card__media">
+			<Image
+				src={img}
+				alt={alt}
+				widths={imgWidths}
+				sizes={imgSizes}
+				loading="lazy"
+				decoding="async"
+			/>
+		</figure>
+
+		<div class="entry-card__body">
+			<h3 class="entry-card__title">{title}</h3>
+
+			{
+				services.length > 0 ? (
+					<ul class="entry-card__services" role="list">
+						{services.map((c) =>
+							c.href ? (
+								<li>
+									<a href={c.href}>{c.label}</a>
+								</li>
+							) : (
+								<li>
+									<span>{c.label}</span>
+								</li>
+							)
+						)}
+					</ul>
+				) : (
+					!compact && summary && <p class="entry-card__summary">{summary}</p>
+				)
+			}
+		</div>
 	</a>
-	{
-		chips.length > 0 && (
-			<p class="chips">
-				{chips.map((c) =>
-					c.href ? <a href={c.href}>{c.label}</a> : <span>{c.label}</span>
-				)}
-			</p>
-		)
-	}
 </article>
