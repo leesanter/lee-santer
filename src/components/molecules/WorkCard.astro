@@ -7,7 +7,7 @@ type Service = { label: string; href: string | null };
 interface Props {
 	href: string;
 	title: string;
-	summary: string;
+	summary?: string;
 	img: ImageMetadata;
 	alt: string;
 	services?: Service[];
@@ -22,7 +22,7 @@ interface Props {
 const {
 	href,
 	title,
-	summary = '',
+	summary,
 	img,
 	alt,
 	services = [],

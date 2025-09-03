@@ -17,11 +17,6 @@ import ScrollListener from '../components/utils/ScrollListener.astro';
 import CookieConsent from '../components/utils/CookieConsent.astro';
 import ThemeController from '../components/utils/ThemeController.astro';
 
-interface BaseProps {
-	/* existing props … */
-	headerOverlay?: 'auto' | 'dark' | 'light'; // NEW
-}
-
 const ENV = import.meta.env;
 const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || '')
 	.split(',')
