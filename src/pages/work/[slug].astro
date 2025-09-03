@@ -1,13 +1,12 @@
 ---
 // src/pages/work/[slug].astro
 import Base from '../../layouts/Base.astro';
+import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { getAllWork, nextPrev, mapServiceKeysToLinks } from '../../lib/content';
 import { md } from '../../lib/md';
-import RevealImage from '../../components/molecules/RevealImage.astro';
 import WorkCard from '../../components/molecules/WorkCard.astro';
 import ClientSection from 'src/components/organisms/ClientSection.astro';
-import { getTestimonialsForWork } from '../../lib/content'; // re-export from lib/work
 import { formatDate } from 'src/lib/format';
 
 export async function getStaticPaths() {
@@ -138,22 +137,25 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 	headerOverlay="dark"
 >
 	<article class="entry entry--work">
+		<!-- HERO -->
 		<header class="entry__header">
-			<figure class="entry__hero">
-				<RevealImage
-					image={entry.data.featuredImage}
+			<figure class="entry__hero" data-anim="reveal" data-parallax="10" data-size="hero">
+				<Image
+					src={entry.data.featuredImage}
 					alt={entry.data.featuredAlt}
 					widths={[1200, 1600, 2000, 2400]}
 					sizes="100vw"
 					loading="eager"
 					decoding="async"
-					parallax
+					class="parallax-target"
 				/>
+				<figcaption class="sr-only">{entry.data.title}</figcaption>
 			</figure>
 			<h1 class="entry__title">{entry.data.title}</h1>
 		</header>
 
-		<section class="section" data-bg-color="light">
+		<!-- META + OVERVIEW -->
+		<section class="section" data-scheme="light">
 			<div class="container container--medium">
 				<div class="entry__wrapper">
 					<div class="entry__intro">
@@ -198,6 +200,7 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 								}
 							</div>
 						</aside>
+
 						<section class="entry__overview">
 							<div class="stack xsmall">
 								<h2 class="h3">{overviewTitle}</h2>
@@ -206,19 +209,26 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 						</section>
 					</div>
 
+					<!-- STREAM -->
 					<div class="entry__body">
 						{
 							blocks.map((b, i) =>
 								b.kind === 'image' ? (
-									<RevealImage
+									<figure
 										class={`entry__image${i === mainImageIndex ? ' entry__image--main' : ''}`}
-										image={b.src}
-										alt={b.alt}
-										widths={[768, 1280, 1600]}
-										sizes="100vw"
-									/>
+										data-anim="reveal"
+									>
+										<Image
+											src={b.src}
+											alt={b.alt}
+											widths={[768, 1280, 1600]}
+											sizes="100vw"
+											loading="lazy"
+											decoding="async"
+										/>
+									</figure>
 								) : (
-									<section class="entry__section">
+									<section class="entry__section" data-anim="fade-up">
 										<div class="stack xsmall">
 											<h3 class="h4">{b.title}</h3>
 											<div class="prose" set:html={b.html} />
@@ -235,6 +245,7 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 
 	<ClientSection workEntry={entry} showWorkLink={false} />
 
+	<!-- NEXT -->
 	<footer class="section">
 		<div class="container container--large">
 			<div class="entry__nav">
@@ -262,8 +273,8 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 		.entry--work {
 			.entry__header {
 				position: relative;
-				max-height: 100vh;
 				overflow: hidden;
+
 				.entry__title {
 					position: absolute;
 					left: var(--size--large);
@@ -332,8 +343,6 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 			justify-content: space-between;
 			align-items: flex-start;
 
-			div {
-			}
 			.nextprev--cards {
 				flex-basis: 65%;
 			}

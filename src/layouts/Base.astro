@@ -15,7 +15,7 @@ import SiteHeader from '../components/organisms/SiteHeader.astro';
 import SiteFooter from '../components/organisms/SiteFooter.astro';
 import ScrollListener from '../components/utils/ScrollListener.astro';
 import CookieConsent from '../components/utils/CookieConsent.astro';
-import ThemeController from '../components/utils/ThemeController.astro';
+import MotionController from '../components/utils/MotionController.astro';
 
 const ENV = import.meta.env;
 const fontPreloads = (ENV.PUBLIC_FONT_PRELOADS || '')
@@ -55,34 +55,6 @@ const image = seoImage ?? ogImage;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="light" />
-
-		<script is:inline>
-			(function () {
-				try {
-					var root = document.documentElement;
-
-					// Optional page-level hint: set data-initial-scheme="dark|light" on <html> from Base
-					var hint = root.getAttribute('data-scheme');
-					var fromHint = hint === 'dark' || hint === 'light' ? hint : null;
-
-					// Last scheme you used on this site (set by theme.ts)
-					var m = document.cookie.match(/(?:^|;)\s*scheme=([^;]+)/);
-					var fromCookie = m ? decodeURIComponent(m[1]) : null;
-					if (fromCookie !== 'dark' && fromCookie !== 'light') fromCookie = null;
-
-					var scheme = fromHint || fromCookie || 'light';
-
-					// Apply immediately, before CSS paints
-					root.dataset.scheme = scheme;
-					// Optional legacy mirror (harmless if unused)
-					if (document.body) document.body.dataset.bodyBg = scheme;
-
-					// Suppress transitions on first paint; re-enabled by theme.ts
-					root.classList.add('no-theme-transitions');
-				} catch (_) {}
-			})();
-		</script>
-
 		<SEO
 			title={title}
 			description={description}
@@ -109,12 +81,11 @@ const image = seoImage ?? ogImage;
 			<main id="main" class:list={['main-wrapper', pageClass]} tabindex="-1">
 				<slot />
 			</main>
-
 			<SiteFooter />
 
 			<ScrollListener />
+			<MotionController />
 			<CookieConsent />
-			<ThemeController />
 		</div>
 	</body>
 </html>
