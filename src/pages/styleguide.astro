@@ -197,7 +197,35 @@ export const prerender = true;
 						'--container--max-large',
 						'--button-radius',
 					],
-					motion: ['--ease-standard', '--duration-fast', '--duration', '--duration-slow'],
+					motion: [
+						// Easings (primitives)
+						'--ease-std',
+						'--ease-emph',
+
+						// Duration scale (primitives)
+						'--dur-100', // 120ms
+						'--dur-200', // 200ms
+						'--dur-300', // 320ms
+						'--dur-600', // 600ms
+						'--dur-1200', // 1200ms
+
+						// UI interaction semantics
+						'--ui-duration',
+						'--ui-ease',
+
+						// Scheme flip semantics
+						'--scheme-ease',
+						'--scheme-fg-duration',
+						'--scheme-bg-duration',
+						'--scheme-shadow-duration',
+
+						// Motion system (effects + reveal)
+						'--anim-ease',
+						'--anim-step',
+						'--anim-duration',
+						'--reveal-duration',
+						'--anim-distance',
+					],
 				};
 
 				const root = document.documentElement;

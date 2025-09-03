@@ -1,0 +1,115 @@
+/* -----------------------------------------------------------------------------
+   Motion tokens + effect primitives
+   - Attribute API: data-anim="…" + data-anim-state="ready|in|done"
+   - Optional timing:
+       data-anim-delay="N" (N×--anim-step)
+       data-anim-duration="ms"
+       data-anim-distance="<length>"
+   - Auto-stagger via JS sets: --anim-delay-ms on each element
+----------------------------------------------------------------------------- */
+
+:root {
+  /* Read from your consolidated tokens */
+  --anim-ease: var(--ease-std);
+  --anim-step: var(--dur-100);      /* stepped delays */
+  --anim-duration: var(--dur-600);  /* default element effect duration */
+  --reveal-duration: var(--dur-1200);
+  --anim-distance: 16px;            /* slide/fade distance */
+  --reveal-to-x: -101%;             /* overlay slides left → reveals right→left */
+}
+
+html.no-motion *[data-anim] { transition: none !important; }
+
+*[data-anim] {
+  --_duration: var(--anim-duration);
+  --_delay: var(--anim-delay-ms, 0ms);
+  --_ease: var(--anim-ease);
+  transition:
+    opacity var(--_duration) var(--_ease) var(--_delay),
+    transform var(--_duration) var(--_ease) var(--_delay),
+    filter var(--_duration) var(--_ease) var(--_delay);
+}
+
+/* States */
+*[data-anim-state="ready"] { opacity: 0; }
+*[data-anim-state="in"], *[data-anim-state="done"] { opacity: 1; }
+
+/* Effects */
+*[data-anim="fade"][data-anim-state="ready"] { opacity: 0; }
+*[data-anim="fade-up"][data-anim-state="ready"] { transform: translate3d(0, var(--anim-distance), 0); }
+*[data-anim="slide-left"][data-anim-state="ready"] { transform: translate3d(var(--anim-distance), 0, 0); }
+*[data-anim="slide-right"][data-anim-state="ready"] { transform: translate3d(calc(var(--anim-distance) * -1), 0, 0); }
+*[data-anim="pop"][data-anim-state="ready"] { transform: scale(0.96); filter: blur(1px); }
+*[data-anim="blur-in"][data-anim-state="ready"] { filter: blur(8px); }
+
+*[data-anim="fade-up"][data-anim-state="in"],
+*[data-anim="fade-up"][data-anim-state="done"],
+*[data-anim="slide-left"][data-anim-state="in"],
+*[data-anim="slide-left"][data-anim-state="done"],
+*[data-anim="slide-right"][data-anim-state="in"],
+*[data-anim="slide-right"][data-anim-state="done"],
+*[data-anim="pop"][data-anim-state="in"],
+*[data-anim="pop"][data-anim-state="done"],
+*[data-anim="blur-in"][data-anim-state="in"],
+*[data-anim="blur-in"][data-anim-state="done"] {
+  transform: none;
+  filter: none;
+}
+
+/* Reveal (wipe) via ::before — no extra DOM */
+*[data-anim="reveal"] { position: relative; overflow: hidden; }
+*[data-anim="reveal"]::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 2;
+  width: 110%; height: 100%;
+  background: var(--reveal-bg, #fff);
+  transform: translate3d(0,0,0);
+  transition: transform var(--reveal-duration) var(--anim-ease);
+  will-change: transform;
+}
+/* Direction attribute (optional) */
+*[data-anim="reveal"][data-reveal-from="right"] { --reveal-to-x: -101%; } /* default */
+*[data-anim="reveal"][data-reveal-from="left"]  { --reveal-to-x:  101%; }
+
+*[data-anim="reveal"][data-anim-state="in"]::before,
+*[data-anim="reveal"][data-anim-state="done"]::before {
+  transform: translate3d(var(--reveal-to-x), 0, 0);
+}
+
+/* Parallax helper (merged with sizing presets) */
+*[data-parallax] {
+  position: relative;
+  overflow: hidden;
+
+  /* frame sizing helpers — pick ONE per instance */
+  min-block-size: var(--frame-min-h, auto); /* e.g. 60svh or 480px */
+  aspect-ratio: var(--frame-ratio, auto);   /* e.g. 3 / 2 */
+}
+
+.parallax-target {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  will-change: transform;
+}
+
+/* handy presets */
+[data-parallax][data-size="hero"]   { min-block-size: 100svh; }
+[data-parallax][data-size="banner"] { aspect-ratio: 16 / 9; }
+[data-parallax][data-size="portrait"] { aspect-ratio: 3 / 2; }
+[data-parallax][data-size="square"] { aspect-ratio: 1 / 1; }
+
+/* Non-parallax reveal images keep natural height */
+[data-anim="reveal"]:not([data-parallax]) img,
+[data-anim="reveal"]:not([data-parallax]) picture > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+
+/* Optional: make wipe colour follow scheme (nice polish) */
+html[data-scheme="light"] [data-anim="reveal"] { --reveal-bg: #fff; }
+html[data-scheme="dark"]  [data-anim="reveal"] { --reveal-bg: var(--palette--neutral-900, #000); }

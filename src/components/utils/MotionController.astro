@@ -1,0 +1,244 @@
+<script is:inline>
+	(function () {
+		const doc = document;
+		const html = doc.documentElement;
+		const body = doc.body;
+
+		// One knob for everything: fraction of viewport height from the top
+		// Override per-site or per-page: <html data-motion-line="0.3">
+		const MOTION_LINE = (() => {
+			const raw = html.getAttribute('data-motion-line');
+			const v = raw ? parseFloat(raw) : NaN;
+			return Number.isFinite(v) && v > 0 && v < 1 ? v : 0.65;
+		})();
+
+		html.classList.add('js');
+
+		const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (prefersReduced) html.classList.add('no-motion');
+
+		/* ---- Read durations from CSS vars so JS matches CSS ---- */
+		const cssMs = (name, fallback) => {
+			const v = getComputedStyle(html).getPropertyValue(name).trim();
+			const n = parseFloat(v);
+			return Number.isFinite(n) ? n : fallback;
+		};
+		const STEP_MS = cssMs('--anim-step', 120);
+		const DEFAULT_DURATION = cssMs('--anim-duration', 600);
+		const REVEAL_DURATION = cssMs('--reveal-duration', 1200);
+
+		/* ----------------------- Scheme helpers ----------------------- */
+		const setScheme = (scheme) => {
+			if (scheme !== 'light' && scheme !== 'dark') return;
+			if (html.dataset.scheme !== scheme) {
+				html.dataset.scheme = scheme;
+				if (body && body.dataset.bodyBg !== scheme) body.dataset.bodyBg = scheme;
+				try {
+					document.cookie = `scheme=${encodeURIComponent(scheme)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+				} catch {}
+				html.dispatchEvent(new CustomEvent('schemechange', { detail: scheme }));
+			}
+		};
+
+		const schemeAtPoint = (x, y) => {
+			let el = doc.elementFromPoint(x, y);
+			while (el) {
+				if (el instanceof HTMLElement) {
+					const s = (
+						el.getAttribute('data-scheme') ||
+						el.getAttribute('data-bg-color') ||
+						''
+					).toLowerCase();
+					if (s === 'light' || s === 'dark') return s;
+					el = el.parentElement;
+				} else break;
+			}
+			return null;
+		};
+
+		/* ----------------------- Anim registry ------------------------ */
+		const animEls = Array.prototype.slice.call(doc.querySelectorAll('[data-anim]'));
+		const groups = Array.prototype.slice.call(doc.querySelectorAll('[data-anim-group]'));
+		const parallaxWrappers = Array.prototype.slice.call(
+			doc.querySelectorAll('[data-parallax]')
+		);
+
+		// Prime elements
+		animEls.forEach((el) => {
+			if (!(el instanceof HTMLElement)) return;
+			if (prefersReduced) {
+				el.setAttribute('data-anim-state', 'done');
+				return;
+			}
+			el.setAttribute('data-anim-state', 'ready');
+
+			const steps = parseInt(el.getAttribute('data-anim-delay') || '0', 10);
+			const ownMs = Math.max(0, steps) * STEP_MS;
+			const dur = parseInt(
+				el.getAttribute('data-anim-duration') || String(DEFAULT_DURATION),
+				10
+			);
+			el.style.setProperty('--anim-delay-ms', ownMs + 'ms');
+			el.style.setProperty('--anim-duration', dur + 'ms');
+
+			const dist = el.getAttribute('data-anim-distance');
+			if (dist) el.style.setProperty('--anim-distance', dist);
+		});
+
+		// Auto-stagger groups
+		groups.forEach((group) => {
+			if (!(group instanceof HTMLElement)) return;
+			const selector = group.getAttribute('data-anim-order') || ':scope > [data-anim]';
+			const stagger = parseInt(group.getAttribute('data-anim-stagger') || '90', 10);
+			const children = Array.prototype.slice.call(group.querySelectorAll(selector));
+			children.forEach((child, i) => {
+				if (!(child instanceof HTMLElement)) return;
+				const own = parseInt(
+					(child.style.getPropertyValue('--anim-delay-ms') || '0').replace('ms', '') ||
+						'0',
+					10
+				);
+				child.style.setProperty('--anim-delay-ms', own + i * stagger + 'ms');
+			});
+		});
+
+		/* ----------------------- Update loop -------------------------- */
+		const lineY = () => Math.round((window.innerHeight || 0) * MOTION_LINE);
+		const isOnLine = (rect, y) => rect.top <= y && rect.bottom >= y;
+
+		const ensureDone = (el) => {
+			const once = (el.getAttribute('data-anim-once') ?? 'true') !== 'false';
+			if (!once) return;
+			const d = parseInt(
+				(el.style.getPropertyValue('--anim-duration') || String(DEFAULT_DURATION)).replace(
+					'ms',
+					''
+				) || '0',
+				10
+			);
+			const delay = parseInt(
+				(el.style.getPropertyValue('--anim-delay-ms') || '0').replace('ms', '') || '0',
+				10
+			);
+			const total =
+				el.getAttribute('data-anim') === 'reveal' ? REVEAL_DURATION + delay : d + delay;
+			setTimeout(() => {
+				if (el.getAttribute('data-anim-state') === 'in')
+					el.setAttribute('data-anim-state', 'done');
+			}, total + 50);
+		};
+
+		const tick = () => {
+			if (prefersReduced) return;
+
+			const x = Math.round((window.innerWidth || 0) / 2);
+			const y = lineY();
+
+			// Scheme flip
+			const s = schemeAtPoint(x, y);
+			if (s) setScheme(s);
+
+			// Element animations
+			for (let i = 0; i < animEls.length; i++) {
+				const el = animEls[i];
+				if (!(el instanceof HTMLElement)) continue;
+
+				const once = (el.getAttribute('data-anim-once') ?? 'true') !== 'false';
+				const state = el.getAttribute('data-anim-state');
+				if (state === 'done' && once) continue;
+
+				const customT = el.getAttribute('data-anim-threshold');
+				const yy = customT
+					? Math.round(
+							(window.innerHeight || 0) *
+								Math.max(0, Math.min(1, parseFloat(customT)))
+						)
+					: y;
+
+				const r = el.getBoundingClientRect();
+				if (isOnLine(r, yy)) {
+					if (state !== 'in' && state !== 'done') {
+						requestAnimationFrame(() => {
+							requestAnimationFrame(() => {
+								el.setAttribute('data-anim-state', 'in');
+								ensureDone(el);
+							});
+						});
+					}
+				} else if (!once && state === 'in') {
+					el.setAttribute('data-anim-state', 'ready');
+				}
+			}
+		};
+
+		let raf = 0;
+		const onScroll = () => {
+			if (raf) return;
+			raf = requestAnimationFrame(() => {
+				raf = 0;
+				tick();
+			});
+		};
+
+		addEventListener('scroll', onScroll, { passive: true });
+		addEventListener('resize', onScroll, { passive: true });
+		addEventListener('orientationchange', onScroll, { passive: true });
+
+		// Initial pick after layout + one extra frame (handles on-load-in-view)
+		requestAnimationFrame(() => {
+			tick();
+			requestAnimationFrame(tick);
+			html.classList.remove('no-theme-transitions');
+		});
+
+		/* ----------------------- Parallax (light) --------------------- */
+		if (!prefersReduced) {
+			const active = new Set();
+			const wraps = Array.prototype.slice.call(doc.querySelectorAll('[data-parallax]'));
+			if (wraps.length) {
+				const parTick = () => {
+					active.forEach((wrap) => {
+						const img = wrap.querySelector('.parallax-target');
+						if (!(img instanceof HTMLElement)) return;
+						const amt = parseFloat(wrap.getAttribute('data-parallax') || '10');
+						const rect = wrap.getBoundingClientRect();
+						const vh = window.innerHeight || 0;
+						const progress = Math.min(
+							1,
+							Math.max(0, (vh - rect.top) / (vh + rect.height))
+						);
+						const offset = (progress - 0.5) * 2 * amt; // -amt..+amt %
+						img.style.transform = `translate3d(0, ${offset}%, 0)`;
+					});
+					parRAF = 0;
+				};
+				let parRAF = 0;
+				const parScroll = () => {
+					if (!parRAF) parRAF = requestAnimationFrame(parTick);
+				};
+
+				const vis = new IntersectionObserver(
+					(entries) => {
+						entries.forEach((e) => {
+							const el = e.target;
+							if (!(el instanceof HTMLElement)) return;
+							if (e.isIntersecting) {
+								active.add(el);
+								parScroll();
+							} else {
+								active.delete(el);
+								const img = el.querySelector('.parallax-target');
+								if (img instanceof HTMLElement) img.style.transform = '';
+							}
+						});
+					},
+					{ threshold: 0 }
+				);
+
+				wraps.forEach((w) => vis.observe(w));
+				addEventListener('scroll', parScroll, { passive: true });
+				addEventListener('resize', parScroll, { passive: true });
+			}
+		}
+	})();
+</script>

@@ -238,9 +238,9 @@ const navWithState: NavItem[] = nav.map((item) => {
 
 		background: transparent;
 		transition:
-			background-color var(--duration) var(--ease-standard),
-			box-shadow var(--duration) var(--ease-standard),
-			transform var(--duration) var(--ease-standard);
+			background-color var(--ui-duration) var(--ui-ease),
+			box-shadow var(--ui-duration) var(--ui-ease),
+			transform var(--ui-duration) var(--ui-ease);
 		will-change: background-color, box-shadow;
 
 		&.has-bg {
@@ -320,8 +320,8 @@ const navWithState: NavItem[] = nav.map((item) => {
 		height: 2px;
 		background: var(--nav-icon-colour);
 		transition:
-			transform var(--duration) var(--ease-standard),
-			opacity var(--duration) var(--ease-standard);
+			transform var(--ui-duration) var(--ui-ease),
+			opacity var(--ui-duration) var(--ui-ease);
 	}
 
 	/* Mobile panel (full screen, scrollable) */
@@ -345,8 +345,8 @@ const navWithState: NavItem[] = nav.map((item) => {
 		opacity: 0;
 		pointer-events: none;
 		transition:
-			opacity var(--duration) var(--ease-standard),
-			transform var(--duration) var(--ease-standard);
+			opacity var(--ui-duration) var(--ui-ease),
+			transform var(--ui-duration) var(--ui-ease);
 
 		/* spacing: gutters + safe-areas (no header-height padding anymore) */
 		padding-top: calc(
@@ -505,8 +505,8 @@ const navWithState: NavItem[] = nav.map((item) => {
 			line-height: 1;
 			transform-origin: 50% 45%;
 			transition:
-				transform var(--duration) var(--ease-standard),
-				opacity var(--duration) var(--ease-standard);
+				transform var(--ui-duration) var(--ui-ease),
+				opacity var(--ui-duration) var(--ui-ease);
 			opacity: 0.85;
 		}
 

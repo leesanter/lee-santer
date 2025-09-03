@@ -1,9 +1,0 @@
----
-/** Mounts the auto light/dark sync in the client. */
----
-
-<script type="module" is:inline>
-	import { initThemeSync } from '/src/lib/theme.ts';
-	// Kick off after first paint
-	queueMicrotask(initThemeSync);
-</script>

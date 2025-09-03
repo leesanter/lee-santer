@@ -425,12 +425,12 @@ html.no-theme-transitions *, html.no-theme-transitions {
   input, textarea, select, svg, .icon, .prose
 ) {
   transition:
-    color var(--theme-anim-fg),
-    background-color var(--theme-anim-bg),
-    border-color var(--theme-anim-fg),
-    fill var(--theme-anim-fg),
-    stroke var(--theme-anim-fg),
-    box-shadow var(--theme-anim-shadow);
+    color            var(--scheme-fg-duration)     var(--scheme-ease),
+    background-color var(--scheme-bg-duration)     var(--scheme-ease),
+    border-color     var(--scheme-fg-duration)     var(--scheme-ease),
+    fill             var(--scheme-fg-duration)     var(--scheme-ease),
+    stroke           var(--scheme-fg-duration)     var(--scheme-ease),
+    box-shadow       var(--scheme-shadow-duration) var(--scheme-ease);
 }
 
 /* Respect reduced motion */

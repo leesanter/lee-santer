@@ -117,15 +117,33 @@
 	/* ----------------------------- */
 	/* Motion                        */
 	/* ----------------------------- */
-	--ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
-	--duration-fast: 120ms;
-	--duration: 200ms;
-	--duration-slow: 320ms;
+	/* PRIMITIVES --------- */
+	--ease-std: cubic-bezier(0.2, 0, 0.2, 1);
+	--ease-emph: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-	--theme-anim-ease: cubic-bezier(.2, 0, 0, 1);
-	--theme-anim-fg: 220ms var(--theme-anim-ease);   // text, borders, icons
-	--theme-anim-bg: 320ms var(--theme-anim-ease);   // backgrounds (slightly longer)
-	--theme-anim-shadow: 240ms var(--theme-anim-ease);
+	--dur-100: 120ms;
+	--dur-200: 200ms;
+	--dur-300: 320ms;
+	--dur-600: 600ms;
+	--dur-1200: 1200ms;
+
+	/* SEMANTIC LAYERS --- */
+	/* General UI interactions (buttons, header transforms, panels) */
+	--ui-ease: var(--ease-std);
+	--ui-duration: var(--dur-200);
+
+	/* Scheme flips (text/borders/icons vs backgrounds/shadows) */
+	--scheme-ease: cubic-bezier(.2, 0, 0, 1);
+	--scheme-fg-duration: var(--dur-200);
+	--scheme-bg-duration: var(--dur-300);
+	--scheme-shadow-duration: var(--dur-200);
+
+	/* Motion system (effects + image reveal) */
+	--anim-ease: var(--ease-std);
+	--anim-step: var(--dur-100);
+	--anim-duration: var(--dur-600);
+	--reveal-duration: var(--dur-1200);
+	--anim-distance: 16px;
 
 	/* ----------------------------- */
 	/* Breakpoints (reference only)  */
