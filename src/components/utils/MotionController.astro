@@ -2,7 +2,7 @@
 	(function () {
 		const doc = document;
 		const html = doc.documentElement;
-		const body = doc.body;
+		// (no 'body' – removing unused write prevents hints)
 
 		// One knob for everything: fraction of viewport height from the top
 		// Override per-site or per-page: <html data-motion-line="0.3">
@@ -32,7 +32,6 @@
 			if (scheme !== 'light' && scheme !== 'dark') return;
 			if (html.dataset.scheme !== scheme) {
 				html.dataset.scheme = scheme;
-				if (body && body.dataset.bodyBg !== scheme) body.dataset.bodyBg = scheme;
 				try {
 					document.cookie = `scheme=${encodeURIComponent(scheme)}; Path=/; Max-Age=31536000; SameSite=Lax`;
 				} catch {}
@@ -44,11 +43,8 @@
 			let el = doc.elementFromPoint(x, y);
 			while (el) {
 				if (el instanceof HTMLElement) {
-					const s = (
-						el.getAttribute('data-scheme') ||
-						el.getAttribute('data-bg-color') ||
-						''
-					).toLowerCase();
+					// Legacy data-bg-color removed; standardise on data-scheme
+					const s = (el.getAttribute('data-scheme') || '').toLowerCase();
 					if (s === 'light' || s === 'dark') return s;
 					el = el.parentElement;
 				} else break;
@@ -59,9 +55,7 @@
 		/* ----------------------- Anim registry ------------------------ */
 		const animEls = Array.prototype.slice.call(doc.querySelectorAll('[data-anim]'));
 		const groups = Array.prototype.slice.call(doc.querySelectorAll('[data-anim-group]'));
-		const parallaxWrappers = Array.prototype.slice.call(
-			doc.querySelectorAll('[data-parallax]')
-		);
+		// Removed unused 'parallaxWrappers' (we query where needed below)
 
 		// Prime elements
 		animEls.forEach((el) => {
