@@ -23,20 +23,21 @@ A clean Astro build focused on real-world delivery, now with a **lightweight mot
 2. [Scripts](#scripts)  
 3. [Project structure](#project-structure)  
 4. [Environment variables](#environment-variables)  
-5. [Design system](#design-system)  
+5. [Site Settings](#site-settings)
+6. [Design system](#design-system)  
    - [Tokens & theme](#tokens--theme)  
    - [Typography](#typography)  
    - [Layout](#layout)  
    - [UI primitives](#ui-primitives)  
    - [Utilities](#utilities)  
-6. [Theming & header behavior](#theming--header-behavior)  
-7. [Motion system](#motion-system)  
+7. [Theming & header behavior](#theming--header-behavior)  
+8. [Motion system](#motion-system)  
    - [Attribute API](#attribute-api)  
    - [Reveal (wipe)](#reveal-wipe)  
    - [Parallax & sizing helpers](#parallax--sizing-helpers)  
    - [Groups, delays & thresholds](#groups-delays--thresholds)  
-8. [Content helpers (Work/Services/Insights)](#content-helpers-workservicesinsights)  
-9. [Components](#components)  
+9. [Content helpers (Work/Services/Insights)](#content-helpers-workservicesinsights)  
+10. [Components](#components)  
    - [SiteHeader](#siteheaderastro)  
    - [SiteFooter](#sitefooterastro)  
    - [SEO](#seoastro)  
@@ -48,18 +49,18 @@ A clean Astro build focused on real-world delivery, now with a **lightweight mot
    - [WorkCard](#workcardastro)  
    - [WorkListing](#worklistingastro)  
    - [ClientSection & Testimonials](#clientsection--testimonials)  
-10. [Images & assets](#images--assets)  
-11. [SEO, Sitemap, Robots & RSS](#seo-sitemap-robots--rss)  
-12. [Fonts](#fonts)  
-13. [Accessibility & performance](#accessibility--performance)  
-14. [Clone-for-client checklist](#clone-for-client-checklist)  
-15. [Go-live checklist](#go-live-checklist)  
-16. [Deploy](#deploy)  
-17. [Security headers & CSP](#security-headers--csp)
-18. [Maintenance & backporting](#maintenance--backporting)
-19. [BEM naming](#bem-naming)
-20. [Troubleshooting](#troubleshooting)
-21. [Licence](#licence)
+11. [Images & assets](#images--assets)  
+12. [SEO, Sitemap, Robots & RSS](#seo-sitemap-robots--rss)  
+13. [Fonts](#fonts)  
+14. [Accessibility & performance](#accessibility--performance)  
+15. [Clone-for-client checklist](#clone-for-client-checklist)  
+16. [Go-live checklist](#go-live-checklist)  
+17. [Deploy](#deploy)  
+18. [Security headers & CSP](#security-headers--csp)
+19. [Maintenance & backporting](#maintenance--backporting)
+20. [BEM naming](#bem-naming)
+21. [Troubleshooting](#troubleshooting)
+22. [Licence](#licence)
 
 ---
 
@@ -230,6 +231,18 @@ PUBLIC_CONSENT_VERSION="1"                 # bump when consent text/purposes cha
 ```
 
 **Type-safe env (optional):** add `src/env.d.ts` typings for `import.meta.env` keys so your IDE and builds catch mistakes early.
+
+---
+
+## Site Settings
+
+**Site settings (`src/content/site/settings.json`):**
+- `siteName` (string)
+- `defaultDescription` (string)
+- `defaultOgImage` (string path, e.g. `/og-default.jpg`)
+- `twitterHandle` (string, optional)
+
+> Note: Header logo is imported directly from `/src/assets/brand/wordmark.svg` — no `brandLogoPath` key.
 
 ---
 
