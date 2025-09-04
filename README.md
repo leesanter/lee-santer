@@ -470,31 +470,106 @@ Self-hosted variable Inter by default; swap families as needed via `FontAssets` 
 
 ## Clone-for-client checklist
 
-(Keep your existing section.)
+**15-minute sweep** when starting a fresh client build.
+
+1) **Project identity**  
+   Replace `/public/logo.svg`. Update `/public/site.webmanifest` `name`/`short_name`. Set `PUBLIC_THEME_COLOR`.
+
+2) **Domain & URLs**  
+   `PUBLIC_SITE_URL` set; keep `astro.config.mjs -> site` reading from env. Use `INDEXING=false` on staging.
+
+3) **Head & SEO**  
+   Update default title/description envs. Swap `/og-default.jpg`. Check `SEO.astro` title format.
+
+4) **Nav & footer**  
+   Update header nav & footer groups; “Cookie preferences” → `window.showCookiePreferences?.()`.
+
+5) **Analytics & consent**  
+   Set `PUBLIC_GTM_ID`. Review banner copy; bump `PUBLIC_CONSENT_VERSION` after changes.
+
+6) **Content collections**  
+   Adjust `content/config.ts`; add first entries; confirm routes render.
+
+7) **Security headers**  
+   `public/_headers` present (HSTS, Referrer, Permissions, CSP-Report-Only). Add third-party origins as needed; enforce CSP later.
+
+8) **Smoke test**  
+   `npm run build && npx serve dist` then click around: `/`, `/blog`, `/blog/page/2`, a post, `/robots.txt`, `/sitemap-index.xml`, `/rss.xml`.
 
 ---
 
 ## Go-live checklist
 
-(Keep your existing section.)
+- Prod env: `PUBLIC_SITE_URL` set, `INDEXING=true`, analytics keys present  
+- Canonicals & OG correct per key page  
+- Accessibility: keyboard flows & focus rings OK  
+- Performance: Lighthouse on Home, list, detail; image sizes sane  
+- Header/nav: no flicker; mobile parent links clickable  
+- Cookie consent: GPC respected; GTM loads only after consent  
+- Forms: submissions arrive; success/error states OK  
+- Icons & manifest render everywhere  
+- `/robots.txt` shows `Allow: /` and absolute sitemap URL in production  
+- Monitoring/rollback optional but recommended
 
 ---
 
 ## Deploy
 
-(Keep your existing section — Netlify + other static hosts.)
+### Netlify
+1. Create site from this repo.  
+2. Build command: `npm run build`  
+3. Publish directory: `dist`  
+4. Environment variables:
+   - Production: `PUBLIC_SITE_URL` = live domain, `INDEXING=true`
+   - Deploy Previews/Branch deploys: `INDEXING=false`
+   - Any others you use (GTM, theme colour, etc.)
+
+### Other static hosts
+Serve `dist/`. For SSR targets, install the relevant Astro adapter.
+
 
 ---
 
 ## Security headers & CSP
 
-(Keep your existing section + example `_headers`.)
+`public/_headers` ships sensible defaults (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy). Start with **CSP in Report-Only** while testing third-party origins; then enforce:
+
+```
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; frame-src https://www.youtube.com https://player.vimeo.com
+*/
+```
+Adjust as you add services (Hotjar, Sentry, etc.).
+
 
 ---
 
 ## Maintenance & backporting
 
-(Keep your existing section.)
+This starter is intentionally simple. When you find a **generic** improvement while building a client site, you can copy the minimal fix back here and tag a release. Keep it lightweight.
+
+### When to backport (tripwires)
+- You hit the **same bug twice** across projects, or
+- It’s obviously generic (tokens/scheme hooks, header/nav a11y, grid overflow, cookie banner theming, CSP/SEO standards), or
+- A platform change (e.g. Consent Mode/CSP/meta) affects all sites.
+
+### How to backport (2–3 minutes)
+1. Make the **minimal** change in this starter (keep client-specific tweaks in the client repo).
+2. Commit with a clear type:
+   - `fix(header): align solid/transparent transitions; respect data-scheme`
+   - `fix(styleguide): prevent grid overflow on small screens`
+   - `feat(theme): add --nav-* hooks for header variants`
+   - `docs: README—explain “pin only when solid” + cookie reopen`
+3. Update `CHANGELOG.md` with one–two bullets.
+4. Tag using SemVer:
+   - **patch** (`1.1.1`) for bugfixes,
+   - **minor** (`1.2.0`) for new non-breaking features,
+   - **major** (`2.0.0`) if you change/break public tokens, class names, or component APIs.
+5. Push the tag:
+   ```bash
+   git tag -a v1.1.0 -m "feat(theme): semantic tokens; fix(styleguide): overflow; docs: README"
+   git push origin v1.1.0
+
 
 ---
 
