@@ -185,6 +185,9 @@ if (props.structuredData) {
 	if (Array.isArray(props.structuredData)) ld.push(...props.structuredData);
 	else ld.push(props.structuredData);
 }
+
+/* RSS feed (absolute when possible) */
+const rssHref = SITE_URL ? new URL('/rss.xml', SITE_URL).href : '/rss.xml';
 ---
 
 <!-- Core -->
@@ -200,6 +203,13 @@ if (props.structuredData) {
 <!-- Canonical + robots -->
 {canonical && <link rel="canonical" href={canonical} />}
 <meta name="robots" content={robots} />
+
+<!-- Feed discovery -->
+{
+	rssHref && (
+		<link rel="alternate" type="application/rss+xml" title="Insights — RSS" href={rssHref} />
+	)
+}
 
 <!-- Open Graph -->
 <meta property="og:site_name" content={SITE_NAME} />
