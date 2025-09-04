@@ -164,7 +164,9 @@ src/
     insights/
       [...page].astro          # /insights listing
       [slug].astro             # /insights/:slug detail
+    rss.xml.ts                 # /rss.xml (Insights feed via @astrojs/rss)
     404.astro
+    500.astro
   styles/
     main.scss                  # imports partials (incl. _motion.scss)
     _tokens.scss               # palette + motion tokens (--dur-*, --ease-*, --anim-*)
@@ -180,6 +182,7 @@ scripts/
   validate-service-links.mjs
 public/
   _headers
+  _redirects
   og/…
 ```
 
@@ -363,7 +366,7 @@ Single source of truth under `src/lib`:
 (Dark footer with CTA, three link columns, and legal row. Uses scoped footer tokens.)
 
 ### `SEO.astro`
-(Canonicals, Open Graph/Twitter, optional JSON-LD.)
+(Canonicals, Open Graph/Twitter, optional JSON-LD, and an automatic RSS discovery link pointing to /rss.xml.)
 
 ### `HeadAssets.astro` & `FontAssets.astro`
 (Manifest/favicons/theme colour + font preloads.)
@@ -448,7 +451,17 @@ interface Props {{
 
 ## SEO, Sitemap, Robots & RSS
 
-(As in your README — `@astrojs/sitemap`, `/robots.txt`, optional RSS.)
+- Sitemap: via @astrojs/sitemap (uses PUBLIC_SITE_URL / astro.config.mjs site). Draft content is excluded by collection filters.
+- Robots: /robots.txt is generated with indexing controlled by INDEXING=true|false and includes an absolute sitemap URL in production.
+- RSS (canonical): /rss.xml serves the Insights feed, generated with @astrojs/rss. Absolute URLs come from PUBLIC_SITE_URL (fallbacks to context.site when available).
+  - Discovery: SEO.astro injects:
+    ```
+    <link rel="alternate" type="application/rss+xml" title="Insights — RSS" href="/rss.xml" />
+    ```
+    (It resolves to an absolute URL when PUBLIC_SITE_URL is set.)
+  - Legacy: /insights.xml is permanently redirected to /rss.xml via /public/_redirects.
+
+If you later want a site-wide feed (not just Insights), add a second generator under src/pages/ (e.g. all.xml.ts) and document that separately.
 
 ---
 
