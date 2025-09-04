@@ -208,13 +208,18 @@ PUBLIC_TWITTER=""
 PUBLIC_SITE_URL="https://example.com"     # used by SEO + rss + robots
 INDEXING=true                              # false for staging / previews
 
-# Branding / Head assets
-PUBLIC_THEME_COLOR="#1d2d44"
-PUBLIC_FAVICON="/favicon.svg"
+# Favicons & head assets
+PUBLIC_FAVICON="/favicon.svg"              # Prefer SVG (present in /public by default)
+# Optional fallbacks:
+# PUBLIC_FAVICON_ICO="/favicon.ico"
+# PUBLIC_FAVICON_PNG_32="/favicon-32.png"
+# PUBLIC_FAVICON_PNG_16="/favicon-16.png"
 PUBLIC_APPLE_TOUCH_ICON="/apple-touch-icon.png"
 PUBLIC_MASK_ICON="/safari-pinned-tab.svg"
 PUBLIC_MASK_ICON_COLOR="#000000"
-PUBLIC_MANIFEST="/site.webmanifest"        # <— HeadAssets reads this key
+PUBLIC_MANIFEST="/site.webmanifest"        # Linked by default if present
+PUBLIC_THEME_COLOR="#1d2d44"
+# PUBLIC_THEME_COLOR_DARK="#000000"
 
 # Analytics / Consent
 PUBLIC_GTM_ID=""
