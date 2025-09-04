@@ -268,7 +268,7 @@ Text size/weight/alignment helpers, colour helpers, max-width clamps, display/fl
 
 ## Theming & header behavior
 
-- **Section-driven:** add `data-scheme="light|dark"` to sections (legacy `data-bg-color` still read).  
+- **Section-driven:** add `data-scheme="light|dark"` to sections.
 - **Decision line:** the scheme flips when the section crosses a line measured from the top of the viewport. Default is **25%** of viewport height; override per page:  
   ```html
   <html data-motion-line="0.3"> <!-- 30% -->
