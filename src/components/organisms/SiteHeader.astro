@@ -183,7 +183,7 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 					{
 						ctaBtn && (
 							<li class="menu__item menu__cta">
-								<a href={ctaBtn.href} class="btn btn--sm">
+								<a href={ctaBtn.href} class="btn btn--outline">
 									{ctaBtn.label}
 								</a>
 							</li>
@@ -196,36 +196,23 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 </header>
 
 <style lang="scss">
-	/* Header-scoped colour semantics (inherit global [data-scheme] unless solid or forced) */
+	/* ======================================================================
+	   Header — DRY semantic variables
+	   Submenu/panel is ALWAYS light for contrast over heroes.
+	====================================================================== */
 	.site-header {
-		--nav-bg-colour: transparent;
-		--nav-panel-bg-colour: var(--bg-colour);
-		--nav-link-colour: var(--heading-colour);
-		--nav-link-active-colour: var(--palette--primary);
-		--nav-border-colour: var(--border-colour);
-		--nav-icon-colour: var(--nav-link-colour);
-		--nav-hover-bg-colour: color-mix(
-			in srgb,
-			var(--nav-link-colour) 10%,
-			var(--nav-panel-bg-colour)
-		);
-	}
+		/* Header surface + items (top level) */
+		--header-fg: var(--heading-colour); /* links/icons at top level */
+		--header-bg: transparent; /* transparent state */
+		--header-accent: var(--palette--primary); /* active state */
+		--header-hover-bg: color-mix(in srgb, var(--header-fg) 10%, transparent);
 
-	.site-header[data-scheme='light'] {
-		--nav-link-colour: var(--palette--neutral-900);
-		--nav-icon-colour: var(--nav-link-colour);
-		--nav-panel-bg-colour: var(--palette--white);
-	}
-	.site-header[data-scheme='dark'] {
-		--nav-link-colour: var(--palette--white);
-		--nav-icon-colour: var(--nav-link-colour);
-		--nav-panel-bg-colour: var(--palette--neutral-900);
-	}
+		/* Submenu / mobile panel surface (forced light) */
+		--header-panel-bg: var(--palette--white); /* dropdown + mobile panel */
+		--header-panel-fg: var(--palette--neutral-900); /* text inside panel */
+		--header-panel-border: color-mix(in srgb, var(--header-panel-fg) 20%, transparent);
+		--menu-sub-hover-bg: color-mix(in srgb, var(--header-panel-fg) 10%, var(--header-panel-bg));
 
-	$linkSizeDesktop: var(--size--regular);
-	$linkSizeMobile: $linkSizeDesktop;
-
-	.site-header {
 		--header-pad-y: var(--size--small);
 		position: fixed;
 		top: 0;
@@ -240,10 +227,23 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		will-change: background-color, box-shadow;
 
 		&.has-bg {
-			background: var(--nav-panel-bg-colour);
-			box-shadow: 0 1px 0 color-mix(in oklab, var(--nav-link-colour), white 85%);
+			background: var(--header-panel-bg);
+			box-shadow: 0 1px 0 color-mix(in oklab, var(--header-fg), white 85%);
 		}
 	}
+
+	/* Explicit light/dark maps for the TOP LEVEL only */
+	.site-header[data-scheme='light'] {
+		--header-fg: var(--palette--neutral-900);
+		/* panel stays light */
+	}
+	.site-header[data-scheme='dark'] {
+		--header-fg: var(--palette--white); /* white links/icons over hero */
+		/* panel STILL light (white bg, dark text) */
+	}
+
+	$linkSizeDesktop: var(--size--regular);
+	$linkSizeMobile: $linkSizeDesktop;
 
 	.site-header__inner {
 		display: flex;
@@ -253,12 +253,13 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		gap: var(--size--small);
 	}
 
+	/* Branding */
 	.site-header__brand {
 		display: inline-flex;
 		align-items: center;
 		min-height: 2rem;
 		text-decoration: none;
-		color: var(--nav-link-colour);
+		color: var(--header-fg);
 		position: relative;
 		z-index: 1002;
 	}
@@ -268,10 +269,13 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		width: auto;
 	}
 
+	/* Nav */
 	.site-nav {
 		position: relative;
 		z-index: 1000;
 	}
+
+	/* Mobile toggle (hamburger) */
 	.nav-toggle {
 		appearance: none;
 		background: none;
@@ -295,21 +299,20 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 	.nav-toggle__bar {
 		width: 22px;
 		height: 2px;
-		background: var(--nav-icon-colour);
+		background: var(--header-fg);
 		transition:
 			transform var(--ui-duration) var(--ui-ease),
 			opacity var(--ui-duration) var(--ui-ease);
 	}
 
+	/* Mobile panel (ALWAYS light) */
 	.site-nav__panel {
 		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
+		inset: 0;
 		min-height: 100dvh;
 		z-index: 1001;
-		background: var(--nav-panel-bg-colour);
+		background: var(--header-panel-bg);
+		color: var(--header-panel-fg);
 		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
 		overscroll-behavior: contain;
@@ -325,6 +328,7 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		padding-right: max(var(--container--pad-x), env(safe-area-inset-right));
 	}
 
+	/* Menus */
 	.menu.root {
 		display: grid;
 		gap: var(--size--small);
@@ -336,9 +340,12 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 	.menu.sub {
 		list-style: none;
 		margin: 0;
-		padding: 0.25rem 0 0.5rem 0.75rem;
+		padding: 0.5rem;
 		display: none;
 		gap: 0.25rem;
+		background: var(--header-panel-bg);
+		border: 1px solid var(--header-panel-border);
+		box-shadow: 0 8px 24px color-mix(in srgb, var(--header-panel-fg) 15%, transparent);
 	}
 	.menu__cta {
 		margin-top: 100%;
@@ -346,30 +353,54 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 			width: 100%;
 		}
 	}
+
+	/* CTA outline — follow header (top-level) colour */
+	.site-header .menu__cta .btn.btn--outline {
+		background: transparent;
+		color: var(--header-fg);
+		border-color: color-mix(in srgb, var(--header-fg) 55%, transparent);
+		transition:
+			background-color var(--ui-duration) var(--ui-ease),
+			color var(--ui-duration) var(--ui-ease),
+			border-color var(--ui-duration) var(--ui-ease);
+	}
+	.site-header .menu__cta .btn.btn--outline:hover,
+	.site-header .menu__cta .btn.btn--outline:focus-visible {
+		background: var(--header-fg);
+		color: var(--palette--white); /* white text on dark fill OR still readable on light fill */
+		border-color: var(--header-fg);
+		outline: none;
+	}
+	.site-header .menu__cta .btn.btn--outline:active {
+		transform: translateY(1px);
+	}
+
 	.menu__linkwrap {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
 	}
+
+	/* Top-level links follow header fg */
 	.menu__link {
 		text-decoration: none;
-		color: var(--nav-link-colour);
+		color: var(--header-fg);
 		padding: 0.375rem 0;
 		display: inline-flex;
 		align-items: center;
 	}
 	.menu__item.is-active > .menu__link,
 	.menu__item.is-active-parent > .menu__link {
-		color: var(--nav-link-active-colour);
+		color: var(--header-accent);
 		font-weight: 600;
 	}
 
+	/* Submenu disclosure button (mobile) uses PANEL vars */
 	.submenu-toggle {
 		appearance: none;
-		border: 1px solid
-			color-mix(in srgb, var(--nav-border-colour) 65%, var(--nav-panel-bg-colour));
-		background: var(--nav-panel-bg-colour);
+		border: 1px solid var(--header-panel-border);
+		background: var(--header-panel-bg);
 		border-radius: 0.375rem;
 		inline-size: 2rem;
 		block-size: 2rem;
@@ -381,6 +412,7 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		outline: none;
 	}
 
+	/* Open states (mobile) */
 	.site-nav.is-open .site-nav__panel {
 		opacity: 1;
 		transform: translateY(0);
@@ -397,12 +429,13 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		transform: translateY(-6px) rotate(-45deg);
 	}
 	.menu__item.is-open > .menu__linkwrap > .submenu-toggle {
-		border-color: var(--nav-link-active-colour);
+		border-color: var(--header-accent);
 	}
 	.menu__item.is-open > .menu.sub {
 		display: grid;
 	}
 
+	/* Desktop */
 	@media (min-width: 992px) {
 		.nav-toggle {
 			display: none;
@@ -447,6 +480,8 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 			top: 100%;
 			height: var(--submenu-gap);
 		}
+
+		/* Parent chevron */
 		.menu__item.has-children > .menu__linkwrap > .menu__link {
 			display: inline-flex;
 			align-items: center;
@@ -463,16 +498,17 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 			opacity: 0.85;
 		}
 
+		/* Submenu PANEL (always light) */
 		.menu__item.has-children > .menu.sub {
 			position: absolute;
 			left: 0;
 			top: calc(100% + var(--submenu-gap));
 			min-width: 14rem;
-			background: var(--nav-panel-bg-colour);
-			border: 1px solid var(--nav-border-colour);
+			background: var(--header-panel-bg);
+			border: 1px solid var(--header-panel-border);
 			display: none;
 			padding: 0.5rem;
-			box-shadow: 0 8px 24px color-mix(in srgb, var(--nav-link-colour) 15%, transparent);
+			box-shadow: 0 8px 24px color-mix(in srgb, var(--header-panel-fg) 15%, transparent);
 			z-index: 10;
 		}
 		.menu__item.has-children:hover > .menu.sub,
@@ -482,16 +518,20 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 			gap: 0.25rem;
 		}
 
+		/* Submenu link colours use PANEL fg */
 		.menu.sub .menu__link {
+			color: var(--header-panel-fg);
 			padding: 0.375rem 0.5rem;
 			border-radius: calc(0.5rem - var(--button-radius));
 			width: 100%;
 		}
 		.menu.sub .menu__link:hover,
 		.menu.sub .menu__link:focus-visible {
-			background: var(--nav-hover-bg-colour);
+			background: var(--menu-sub-hover-bg);
 			outline: none;
 		}
+
+		/* Hide mobile disclosure button on desktop */
 		.menu__item.has-children > .menu__linkwrap > .submenu-toggle {
 			display: none;
 		}
@@ -502,14 +542,15 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		transform: translateY(-100%);
 	}
 	body.site-scroll--up .site-header {
-		background: var(--nav-panel-bg-colour);
-		box-shadow: 0 1px 0 color-mix(in srgb, var(--nav-link-colour) 12%, transparent);
+		background: var(--header-panel-bg);
+		box-shadow: 0 1px 0 color-mix(in srgb, var(--header-fg) 12%, transparent);
 	}
 	body.site-scroll--up .site-header,
 	body.site-scroll--inactive .site-header {
 		transform: translateY(0);
 	}
 
+	/* Optional: lock page scroll when mobile nav open */
 	body.no-scroll {
 		overflow: hidden;
 	}
