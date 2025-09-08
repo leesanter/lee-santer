@@ -75,6 +75,7 @@ const work = defineCollection({
 
         // NEW primary description for cards/SEO; keep legacy `summary` as fallback.
         description: z.string().optional(),
+        summary: z.string().optional(), // deprecated; migrate to `description`
 
         // Card/hero image (one source used in both places)
         featuredImage: image(),
@@ -161,6 +162,7 @@ const insights = defineCollection({
       .object({
         title: z.string(),
         description: z.string().optional(),
+        summary: z.string().optional(), // deprecated; migrate to `description`
         date: z.coerce.date(),
         featuredImage: image().optional(),
         featuredAlt: z.string().optional(),
