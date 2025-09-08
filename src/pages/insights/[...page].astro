@@ -27,7 +27,6 @@ const { page } = Astro.props as { page: PageProp };
 	<Fragment slot="head">
 		{page.url.prev && <link rel="prev" href={page.url.prev} />}
 		{page.url.next && <link rel="next" href={page.url.next} />}
-		<link rel="alternate" type="application/rss+xml" href="/insights/rss.xml" />
 	</Fragment>
 
 	<h1>Insights</h1>

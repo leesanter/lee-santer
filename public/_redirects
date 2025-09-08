@@ -17,3 +17,4 @@
 
 # Feeds
 /insights.xml         /rss.xml                    301
+/insights/rss.xml     /rss.xml   				  301
