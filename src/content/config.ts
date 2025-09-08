@@ -64,7 +64,8 @@ const services = defineCollection({
 
 /* =============================================================================
    Work (case studies)
-   - `description` replaces legacy `summary` (summary kept as fallback).
+   - `description` replaces legacy `summary` (kept as fallback).
+   - Optional `seoTitle` / `seoDescription` for fine-grained control.
 ============================================================================= */
 const work = defineCollection({
   type: 'content',
@@ -73,7 +74,11 @@ const work = defineCollection({
       .object({
         title: z.string(),
 
-        // NEW primary description for cards/SEO; keep legacy `summary` as fallback.
+        // SEO overrides (optional)
+        seoTitle: z.string().optional(),
+        seoDescription: z.string().optional(),
+
+        // NEW primary description for cards/SEO; legacy kept as fallback.
         description: z.string().optional(),
         summary: z.string().optional(), // deprecated; migrate to `description`
 
@@ -153,7 +158,8 @@ const work = defineCollection({
 
 /* =============================================================================
    Insights (blog)
-   - `description` replaces legacy `summary` (summary kept as fallback).
+   - `description` replaces legacy `summary` (kept as fallback).
+   - Optional `seoTitle` / `seoDescription`.
 ============================================================================= */
 const insights = defineCollection({
   type: 'content',
@@ -161,8 +167,14 @@ const insights = defineCollection({
     z
       .object({
         title: z.string(),
+
+        // SEO overrides (optional)
+        seoTitle: z.string().optional(),
+        seoDescription: z.string().optional(),
+
         description: z.string().optional(),
         summary: z.string().optional(), // deprecated; migrate to `description`
+
         date: z.coerce.date(),
         featuredImage: image().optional(),
         featuredAlt: z.string().optional(),
