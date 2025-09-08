@@ -6,7 +6,7 @@ import { getAllWork } from '../../lib/content';
 const entries = await getAllWork(); // already sorted newest→oldest
 ---
 
-<Base title="Work" seoTitleTemplate="%s | Work" description="Selected projects.">
+<Base title="Work" description="Selected projects.">
 	<h1>Work</h1>
 	<WorkListing entries={entries} showFilter active="all" lede="Filter by focus area." />
 </Base>

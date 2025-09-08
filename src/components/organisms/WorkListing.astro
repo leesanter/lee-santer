@@ -67,7 +67,7 @@ const cards = await Promise.all(
 	list.map(async (entry) => ({
 		href: `/work/${entry.slug}`,
 		title: entry.data.title,
-		summary: entry.data.summary,
+		description: entry.data.description,
 		img: entry.data.featuredImage, // ESM image
 		alt: entry.data.featuredAlt,
 		services: await mapServiceKeysToLinks(entry.data.services),

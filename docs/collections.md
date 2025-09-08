@@ -56,7 +56,7 @@ Structured data for portfolio work. Drives `/work` (index), `/work/[slug]` (deta
 ---
 title: "Forma"
 slug: "forma"
-summary: "A crisp, restrained site for a modern architecture studio—clarity first, imagery-led."
+description: "A crisp, restrained site for a modern architecture studio—clarity first, imagery-led."
 hero: "../../assets/case-studies/forma/hero.avif"
 heroAlt: "Homepage showing a minimalist grid with large architectural imagery"
 completedDate: 2025-04-01
@@ -116,7 +116,7 @@ Articles and notes you’ll publish under `/insights`.
 ---
 title: "Design tokens that survive real projects"
 slug: "design-tokens-that-survive"
-summary: "How to set tokens that won’t implode when the brand evolves."
+description: "How to set tokens that won’t implode when the brand evolves."
 date: 2025-07-12
 hero: "../../assets/insights/tokens/hero.avif"
 heroAlt: "Abstract grid with colour swatches"
