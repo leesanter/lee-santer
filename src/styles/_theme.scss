@@ -10,7 +10,7 @@
 }
 
 /* Dark scheme override (attach to body/section/header as needed) */
-[data-scheme='dark'] {
+[data-scheme='dark'], .scheme-local--dark {
 	--bg-colour: var(--palette--neutral-900);
 	--heading-colour: var(--palette--white);
 	--text-colour: #e6e6e6; /* ~90% white for readable body copy */
