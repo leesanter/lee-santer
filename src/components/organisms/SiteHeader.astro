@@ -1,6 +1,8 @@
 ---
 /* ======================================================================
    SiteHeader.astro — sticky header with dropdowns + mobile menu
+   Transparent: forced via overlay ('dark'|'light') or auto-samples BG under header
+   Solid: always pins to light for readability
 ====================================================================== */
 import LogoRaw from '../../assets/brand/wordmark.svg?raw';
 
@@ -22,9 +24,10 @@ interface Props {
 	logoHref?: string;
 	logoAlt?: string;
 	nav?: NavItem[];
-	cta?: CTA; // omit to hide CTA; we’ll render a sensible default if not provided
-	transparent?: boolean;
-	overlay?: 'auto' | 'dark' | 'light'; // NEW
+	cta?: CTA; // omit to hide CTA
+	transparent?: boolean; // transparent at top (default true)
+	overlay?: 'auto' | 'dark' | 'light'; // preferred prop (transparent phase only)
+	headerOverlay?: 'auto' | 'dark' | 'light'; // legacy alias
 }
 
 /** Props + defaults */
@@ -33,8 +36,8 @@ const props = Astro.props as Props;
 const logoHref = props.logoHref ?? '/';
 const logoAlt = props.logoAlt ?? SITE_NAME;
 const transparent = props.transparent ?? true;
-const overlay = props.overlay ?? 'auto'; // NEW
-const onDark = overlay === 'dark'; // NEW
+// prefer 'overlay', fall back to 'headerOverlay', default to 'auto'
+const overlay = (props.overlay ?? props.headerOverlay ?? 'auto') as 'auto' | 'dark' | 'light';
 
 const defaultNav: NavItem[] = [
 	{
@@ -47,7 +50,7 @@ const defaultNav: NavItem[] = [
 		],
 	},
 	{ label: 'About', href: '/about' },
-	{ label: 'Work', href: '/work' }, // was “Portfolio”
+	{ label: 'Work', href: '/work' },
 	{ label: 'Contact', href: '/contact' },
 ];
 
@@ -58,7 +61,7 @@ const ctaBtn: CTA | null = props.cta ?? { label: 'Get a quote', href: '/contact'
 const currentPath = Astro.url.pathname.replace(/\/$/, '');
 const normalize = (href: string) => href.replace(/\/$/, '');
 
-const navWithState: NavItem[] = nav.map((item) => {
+const navWithState: NavItem[] = nav.map((item, i) => {
 	const isActive = normalize(item.href) === currentPath;
 	const children: NavChild[] = (item.children ?? []).map((c) => ({
 		...c,
@@ -71,7 +74,8 @@ const navWithState: NavItem[] = nav.map((item) => {
 
 <header
 	data-header
-	class={`site-header${transparent ? ' is-transparent' : ''}${onDark ? ' on-dark' : ''}`}
+	data-overlay={overlay}
+	class={`site-header${transparent ? ' is-transparent' : ''}`}
 	role="banner"
 >
 	<div class="site-header__inner container container--large">
@@ -192,18 +196,14 @@ const navWithState: NavItem[] = nav.map((item) => {
 </header>
 
 <style lang="scss">
-	/* ======================================================================
-      Header layout + behaviour
-  ====================================================================== */
-	/* Header-scoped colour semantics (adapt via [data-scheme]) */
+	/* Header-scoped colour semantics (inherit global [data-scheme] unless solid or forced) */
 	.site-header {
-		/* defaults (inherit page scheme) */
-		--nav-bg-colour: transparent; /* header background when transparent */
-		--nav-panel-bg-colour: var(--bg-colour); /* mobile panel + dropdowns */
-		--nav-link-colour: var(--heading-colour); /* default link colour */
-		--nav-link-active-colour: var(--palette--primary); /* active state accent */
-		--nav-border-colour: var(--border-colour); /* borders in header */
-		--nav-icon-colour: var(--nav-link-colour); /* hamburger bars, chevrons */
+		--nav-bg-colour: transparent;
+		--nav-panel-bg-colour: var(--bg-colour);
+		--nav-link-colour: var(--heading-colour);
+		--nav-link-active-colour: var(--palette--primary);
+		--nav-border-colour: var(--border-colour);
+		--nav-icon-colour: var(--nav-link-colour);
 		--nav-hover-bg-colour: color-mix(
 			in srgb,
 			var(--nav-link-colour) 10%,
@@ -211,7 +211,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 		);
 	}
 
-	/* Force light/dark header independent of page */
 	.site-header[data-scheme='light'] {
 		--nav-link-colour: var(--palette--neutral-900);
 		--nav-icon-colour: var(--nav-link-colour);
@@ -226,16 +225,13 @@ const navWithState: NavItem[] = nav.map((item) => {
 	$linkSizeDesktop: var(--size--regular);
 	$linkSizeMobile: $linkSizeDesktop;
 
-	/* Header container (fixed, full-width, transparent start) */
 	.site-header {
 		--header-pad-y: var(--size--small);
-
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
 		z-index: 1000;
-
 		background: transparent;
 		transition:
 			background-color var(--ui-duration) var(--ui-ease),
@@ -249,15 +245,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 		}
 	}
 
-	/* Only affects transparent state. Add .on-dark (or data-overlay="dark") on pages with dark hero. */
-	.site-header.is-transparent:not(.has-bg).on-dark {
-		--heading-colour: var(--palette--white);
-		--text-colour: var(--palette--white);
-		--link-colour: var(--palette--white);
-		--link-hover-colour: var(--palette--white);
-		--border-colour: color-mix(in srgb, var(--palette--white) 30%, transparent);
-	}
-
 	.site-header__inner {
 		display: flex;
 		align-items: center;
@@ -266,7 +253,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 		gap: var(--size--small);
 	}
 
-	/* Branding */
 	.site-header__brand {
 		display: inline-flex;
 		align-items: center;
@@ -274,27 +260,18 @@ const navWithState: NavItem[] = nav.map((item) => {
 		text-decoration: none;
 		color: var(--nav-link-colour);
 		position: relative;
-		z-index: 1002; /* above panel */
+		z-index: 1002;
 	}
-	.site-header__brand {
-		.logo {
-			:global(svg) {
-				display: block;
-				height: 1.5rem;
-				width: auto;
-			}
-		}
+	.site-header__brand .logo :global(svg) {
+		display: block;
+		height: 1.5rem;
+		width: auto;
 	}
 
-	/* ======================================================================
-      Nav structure
-  	====================================================================== */
 	.site-nav {
 		position: relative;
 		z-index: 1000;
 	}
-
-	/* Mobile toggle (hamburger) */
 	.nav-toggle {
 		appearance: none;
 		background: none;
@@ -308,8 +285,8 @@ const navWithState: NavItem[] = nav.map((item) => {
 		align-items: center;
 		justify-content: center;
 		position: relative;
-		z-index: 1002; /* ADD */
-		pointer-events: auto; /* ADD */
+		z-index: 1002;
+		pointer-events: auto;
 	}
 	.nav-toggle:focus-visible {
 		box-shadow: 0 0 0 3px var(--focus-ring-colour);
@@ -324,40 +301,30 @@ const navWithState: NavItem[] = nav.map((item) => {
 			opacity var(--ui-duration) var(--ui-ease);
 	}
 
-	/* Mobile panel (full screen, scrollable) */
 	.site-nav__panel {
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
 		bottom: 0;
-
 		min-height: 100dvh;
-
-		z-index: 1001; /* ADD */
+		z-index: 1001;
 		background: var(--nav-panel-bg-colour);
 		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
-		overscroll-behavior: contain; /* stop background bounce on iOS */
-
-		/* closed state */
+		overscroll-behavior: contain;
 		transform: translateY(-4%);
 		opacity: 0;
 		pointer-events: none;
 		transition:
 			opacity var(--ui-duration) var(--ui-ease),
 			transform var(--ui-duration) var(--ui-ease);
-
-		/* spacing: gutters + safe-areas (no header-height padding anymore) */
-		padding-top: calc(
-			var(--header-height, 56px) /* sit just below header */ + var(--size--large)
-		);
+		padding-top: calc(var(--header-height, 56px) + var(--size--large));
 		padding-bottom: max(var(--size--large), env(safe-area-inset-bottom));
 		padding-left: max(var(--container--pad-x), env(safe-area-inset-left));
 		padding-right: max(var(--container--pad-x), env(safe-area-inset-right));
 	}
 
-	/* Menu lists */
 	.menu.root {
 		display: grid;
 		gap: var(--size--small);
@@ -372,10 +339,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 		padding: 0.25rem 0 0.5rem 0.75rem;
 		display: none;
 		gap: 0.25rem;
-
-		.menu__item {
-			margin-block: 0;
-		}
 	}
 	.menu__cta {
 		margin-top: 100%;
@@ -402,7 +365,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 		font-weight: 600;
 	}
 
-	/* Mobile submenu disclosure button */
 	.submenu-toggle {
 		appearance: none;
 		border: 1px solid
@@ -419,12 +381,11 @@ const navWithState: NavItem[] = nav.map((item) => {
 		outline: none;
 	}
 
-	/* Open states (mobile) */
 	.site-nav.is-open .site-nav__panel {
 		opacity: 1;
 		transform: translateY(0);
 		pointer-events: auto;
-		visibility: visible; /* ADD */
+		visibility: visible;
 	}
 	.site-nav.is-open .nav-toggle__bar:nth-child(1) {
 		transform: translateY(6px) rotate(45deg);
@@ -442,9 +403,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 		display: grid;
 	}
 
-	/* ======================================================================
-      Desktop
-  ====================================================================== */
 	@media (min-width: 992px) {
 		.nav-toggle {
 			display: none;
@@ -477,23 +435,18 @@ const navWithState: NavItem[] = nav.map((item) => {
 			}
 		}
 
-		/* Hover dropdowns with hover-bridge + chevron */
 		.menu__item.has-children {
 			position: relative;
 			--submenu-gap: 0.5rem;
-
-			/* BRIDGE: keep :hover while cursor crosses the gap */
-			&::after {
-				content: '';
-				position: absolute;
-				left: 0;
-				right: 0;
-				top: 100%;
-				height: var(--submenu-gap);
-			}
 		}
-
-		/* Parent chevron */
+		.menu__item.has-children::after {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 100%;
+			height: var(--submenu-gap);
+		}
 		.menu__item.has-children > .menu__linkwrap > .menu__link {
 			display: inline-flex;
 			align-items: center;
@@ -510,7 +463,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 			opacity: 0.85;
 		}
 
-		/* Submenu panel */
 		.menu__item.has-children > .menu.sub {
 			position: absolute;
 			left: 0;
@@ -523,8 +475,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 			box-shadow: 0 8px 24px color-mix(in srgb, var(--nav-link-colour) 15%, transparent);
 			z-index: 10;
 		}
-
-		/* KEEP OPEN: parent hover/focus OR hovering the submenu itself */
 		.menu__item.has-children:hover > .menu.sub,
 		.menu__item.has-children:focus-within > .menu.sub,
 		.menu__item.has-children > .menu.sub:hover {
@@ -542,16 +492,12 @@ const navWithState: NavItem[] = nav.map((item) => {
 			background: var(--nav-hover-bg-colour);
 			outline: none;
 		}
-
-		/* Hide mobile disclosure button on desktop */
 		.menu__item.has-children > .menu__linkwrap > .submenu-toggle {
 			display: none;
 		}
 	}
 
-	/* ======================================================================
-      ScrollListener integration (hide/show on scroll)
-  	====================================================================== */
+	/* ScrollListener integration (hide/show on scroll) */
 	body.site-scroll--down .site-header {
 		transform: translateY(-100%);
 	}
@@ -564,17 +510,8 @@ const navWithState: NavItem[] = nav.map((item) => {
 		transform: translateY(0);
 	}
 
-	/* Optional: lock page scroll when mobile nav open */
 	body.no-scroll {
 		overflow: hidden;
-	}
-
-	.site-header.is-transparent:not(.has-bg).on-dark {
-		--heading-colour: var(--palette--white);
-		--text-colour: var(--palette--white);
-		--link-colour: var(--palette--white);
-		--link-hover-colour: var(--palette--white);
-		--border-colour: color-mix(in srgb, var(--palette--white) 30%, transparent);
 	}
 </style>
 
@@ -592,7 +529,6 @@ const navWithState: NavItem[] = nav.map((item) => {
 			var h = header.offsetHeight || 56;
 			document.documentElement.style.setProperty('--header-height', h + 'px');
 		}
-		// initial + after paint + on resize + when header’s size changes
 		setHeaderHeight();
 		requestAnimationFrame(setHeaderHeight);
 		window.addEventListener('load', setHeaderHeight);
@@ -637,43 +573,64 @@ const navWithState: NavItem[] = nav.map((item) => {
 			});
 		});
 
-		// --- Pin header to light scheme ONLY when it's solid ---
-		(function () {
-			var header = document.querySelector('[data-header]');
-			if (!header) return;
+		// ----- Scheme logic (transparent vs solid) -----
+		function isSolid() {
+			return (
+				document.body.classList.contains('site-scroll--up') ||
+				header.classList.contains('has-bg') ||
+				window.scrollY > 8
+			);
+		}
 
-			// Solid if: your ScrollListener marked the body, or you set .has-bg yourself,
-			// or we scrolled a tiny bit (fallback).
-			function isSolid() {
-				return (
-					document.body.classList.contains('site-scroll--up') ||
-					header.classList.contains('has-bg') ||
-					window.scrollY > 8
-				);
+		function schemeAtPoint(x, y) {
+			var el = document.elementFromPoint(x, y);
+			while (el) {
+				if (el instanceof HTMLElement) {
+					var s = (el.getAttribute('data-scheme') || '').toLowerCase();
+					if (s === 'light' || s === 'dark') return s;
+					el = el.parentElement;
+				} else break;
 			}
+			return null;
+		}
 
-			// Debounced apply to avoid thrash on rapid scroll
-			var rafId = 0;
-			function applyHeaderScheme() {
-				cancelAnimationFrame(rafId);
-				rafId = requestAnimationFrame(function () {
-					if (isSolid()) {
-						header.setAttribute('data-scheme', 'light'); // header subtree goes light
-					} else {
-						header.removeAttribute('data-scheme'); // inherit page scheme while transparent
-					}
-				});
-			}
+		// ✅ Read overlay from header attribute (set by Astro markup)
+		var overlay = header.getAttribute('data-overlay') || 'auto'; // 'auto'|'dark'|'light'
 
-			// Initial + on scroll/resize/load
-			applyHeaderScheme();
-			window.addEventListener('load', applyHeaderScheme, { once: true });
-			window.addEventListener('resize', applyHeaderScheme, { passive: true });
-			window.addEventListener('scroll', applyHeaderScheme, { passive: true });
+		var rafId = 0;
+		function applyHeaderScheme() {
+			cancelAnimationFrame(rafId);
+			rafId = requestAnimationFrame(function () {
+				if (isSolid()) {
+					header.setAttribute('data-scheme', 'light'); // solid header always light
+					return;
+				}
 
-			// If your ScrollListener toggles classes asynchronously, watch for them too
-			var mo = new MutationObserver(applyHeaderScheme);
-			mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-		})();
+				// Transparent phase
+				if (overlay && overlay !== 'auto') {
+					header.setAttribute('data-scheme', overlay);
+					return;
+				}
+
+				// Auto: sample the scheme directly beneath the header
+				var rect = header.getBoundingClientRect();
+				var x = Math.round((window.innerWidth || 0) / 2);
+				var y = Math.max(0, Math.round(rect.bottom - rect.height / 2)); // middle of header
+				var s = schemeAtPoint(x, y);
+				if (s) {
+					header.setAttribute('data-scheme', s);
+				} else {
+					header.removeAttribute('data-scheme'); // inherit global if nothing is tagged
+				}
+			});
+		}
+
+		// Initial + on scroll/resize/load + body class changes from ScrollListener
+		applyHeaderScheme();
+		window.addEventListener('load', applyHeaderScheme, { once: true });
+		window.addEventListener('resize', applyHeaderScheme, { passive: true });
+		window.addEventListener('scroll', applyHeaderScheme, { passive: true });
+		var mo = new MutationObserver(applyHeaderScheme);
+		mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 	})();
 </script>
