@@ -7,40 +7,32 @@
  * - Otherwise: allow all + output Sitemap lines.
  *
  * ENV you can set:
- *   INDEXING=true|false        (server-only; defaults to true in prod)
- *   PUBLIC_SITE_URL=https://example.com   (used for absolute Sitemap URLs)
- *
- * Also set `site` in astro.config.mjs for proper sitemaps.
+ *   INDEXING=true|false
+ *   PUBLIC_SITE_URL=https://example.com   // absolute Sitemap URLs if provided
  */
 export const prerender = true;
 
 export function GET() {
   const isProd = import.meta.env.PROD;
-  const indexingEnv = String(import.meta.env.INDEXING ?? "true").toLowerCase();
-  const allowIndex = isProd && indexingEnv !== "false";
+  const indexingEnv = String(import.meta.env.INDEXING ?? 'true').toLowerCase();
+  const allowIndex = isProd && indexingEnv !== 'false';
 
-  const lines = ["User-agent: *"];
+  const site = (import.meta.env.PUBLIC_SITE_URL as string | undefined)?.replace(/\/+$/, '') || '';
+
+  const lines: string[] = ['User-agent: *'];
 
   if (allowIndex) {
-    lines.push("Allow: /");
+    lines.push('Allow: /');
 
-    const site = import.meta.env.PUBLIC_SITE_URL || "";
-    try {
-      if (site) {
-        const base = new URL(site);
-        lines.push(new URL("/sitemap.xml", base).toString().startsWith("http") ? `Sitemap: ${new URL("/sitemap.xml", base)}` : "Sitemap: /sitemap.xml");
-        lines.push(new URL("/sitemap-index.xml", base).toString().startsWith("http") ? `Sitemap: ${new URL("/sitemap-index.xml", base)}` : "Sitemap: /sitemap-index.xml");
-      } else {
-        lines.push("Sitemap: /sitemap.xml");
-      }
-    } catch {
-      lines.push("Sitemap: /sitemap.xml");
-    }
+    // Prefer absolute URLs when site is configured; fall back to relative.
+    const base = site || '';
+    lines.push(`Sitemap: ${base ? `${base}/sitemap.xml` : '/sitemap.xml'}`);
+    lines.push(`Sitemap: ${base ? `${base}/sitemap-index.xml` : '/sitemap-index.xml'}`);
   } else {
-    lines.push("Disallow: /");
+    lines.push('Disallow: /');
   }
 
-  return new Response(lines.join("\n") + "\n", {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  return new Response(lines.join('\n') + '\n', {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });
 }
