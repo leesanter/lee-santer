@@ -533,9 +533,7 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 		requestAnimationFrame(setHeaderHeight);
 		window.addEventListener('load', setHeaderHeight);
 		window.addEventListener('resize', setHeaderHeight);
-		if ('ResizeObserver' in window) {
-			new ResizeObserver(setHeaderHeight).observe(header);
-		}
+		if ('ResizeObserver' in window) new ResizeObserver(setHeaderHeight).observe(header);
 
 		const firstMenuLink = panel.querySelector('.menu.root a');
 		function openNav() {
@@ -572,65 +570,5 @@ const navWithState: NavItem[] = nav.map((item, i) => {
 				if (li) li.classList.toggle('is-open', !expanded);
 			});
 		});
-
-		// ----- Scheme logic (transparent vs solid) -----
-		function isSolid() {
-			return (
-				document.body.classList.contains('site-scroll--up') ||
-				header.classList.contains('has-bg') ||
-				window.scrollY > 8
-			);
-		}
-
-		function schemeAtPoint(x, y) {
-			var el = document.elementFromPoint(x, y);
-			while (el) {
-				if (el instanceof HTMLElement) {
-					var s = (el.getAttribute('data-scheme') || '').toLowerCase();
-					if (s === 'light' || s === 'dark') return s;
-					el = el.parentElement;
-				} else break;
-			}
-			return null;
-		}
-
-		// ✅ Read overlay from header attribute (set by Astro markup)
-		var overlay = header.getAttribute('data-overlay') || 'auto'; // 'auto'|'dark'|'light'
-
-		var rafId = 0;
-		function applyHeaderScheme() {
-			cancelAnimationFrame(rafId);
-			rafId = requestAnimationFrame(function () {
-				if (isSolid()) {
-					header.setAttribute('data-scheme', 'light'); // solid header always light
-					return;
-				}
-
-				// Transparent phase
-				if (overlay && overlay !== 'auto') {
-					header.setAttribute('data-scheme', overlay);
-					return;
-				}
-
-				// Auto: sample the scheme directly beneath the header
-				var rect = header.getBoundingClientRect();
-				var x = Math.round((window.innerWidth || 0) / 2);
-				var y = Math.max(0, Math.round(rect.bottom - rect.height / 2)); // middle of header
-				var s = schemeAtPoint(x, y);
-				if (s) {
-					header.setAttribute('data-scheme', s);
-				} else {
-					header.removeAttribute('data-scheme'); // inherit global if nothing is tagged
-				}
-			});
-		}
-
-		// Initial + on scroll/resize/load + body class changes from ScrollListener
-		applyHeaderScheme();
-		window.addEventListener('load', applyHeaderScheme, { once: true });
-		window.addEventListener('resize', applyHeaderScheme, { passive: true });
-		window.addEventListener('scroll', applyHeaderScheme, { passive: true });
-		var mo = new MutationObserver(applyHeaderScheme);
-		mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 	})();
 </script>

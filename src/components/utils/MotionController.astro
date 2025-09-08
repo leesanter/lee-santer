@@ -2,7 +2,7 @@
 	(function () {
 		const doc = document;
 		const html = doc.documentElement;
-		// (no 'body' – removing unused write prevents hints)
+		const body = doc.body;
 
 		// One knob for everything: fraction of viewport height from the top
 		// Override per-site or per-page: <html data-motion-line="0.3">
@@ -32,6 +32,7 @@
 			if (scheme !== 'light' && scheme !== 'dark') return;
 			if (html.dataset.scheme !== scheme) {
 				html.dataset.scheme = scheme;
+				if (body && body.dataset.bodyBg !== scheme) body.dataset.bodyBg = scheme;
 				try {
 					document.cookie = `scheme=${encodeURIComponent(scheme)}; Path=/; Max-Age=31536000; SameSite=Lax`;
 				} catch {}
@@ -39,23 +40,27 @@
 			}
 		};
 
-		const schemeAtPoint = (x, y) => {
+		// Find the closest ancestor tagged with a scheme (ignoring local-scope/footers if flagged)
+		function schemeAtPoint(x, y) {
 			let el = doc.elementFromPoint(x, y);
 			while (el) {
 				if (el instanceof HTMLElement) {
-					// Legacy data-bg-color removed; standardise on data-scheme
+					// ignore elements that shouldn't influence global/header flips
+					if (el.hasAttribute('data-scheme-skip')) {
+						el = el.parentElement;
+						continue;
+					}
 					const s = (el.getAttribute('data-scheme') || '').toLowerCase();
 					if (s === 'light' || s === 'dark') return s;
 					el = el.parentElement;
 				} else break;
 			}
 			return null;
-		};
+		}
 
 		/* ----------------------- Anim registry ------------------------ */
 		const animEls = Array.prototype.slice.call(doc.querySelectorAll('[data-anim]'));
 		const groups = Array.prototype.slice.call(doc.querySelectorAll('[data-anim-group]'));
-		// Removed unused 'parallaxWrappers' (we query where needed below)
 
 		// Prime elements
 		animEls.forEach((el) => {
@@ -96,6 +101,15 @@
 			});
 		});
 
+		/* ----------------------- Header scheme control ---------------- */
+		const header = doc.querySelector('[data-header]');
+		const overlayPref = (header && header.getAttribute('data-overlay')) || 'auto';
+		const isHeaderSolid = () =>
+			!!header &&
+			(document.body.classList.contains('site-scroll--up') ||
+				header.classList.contains('has-bg') ||
+				window.scrollY > 8);
+
 		/* ----------------------- Update loop -------------------------- */
 		const lineY = () => Math.round((window.innerHeight || 0) * MOTION_LINE);
 		const isOnLine = (rect, y) => rect.top <= y && rect.bottom >= y;
@@ -128,9 +142,29 @@
 			const x = Math.round((window.innerWidth || 0) / 2);
 			const y = lineY();
 
-			// Scheme flip
+			// Global scheme flip at decision line
 			const s = schemeAtPoint(x, y);
 			if (s) setScheme(s);
+
+			// Header scheme: transparent vs solid
+			if (header instanceof HTMLElement) {
+				if (isHeaderSolid()) {
+					header.setAttribute('data-scheme', 'light'); // solid header always light
+				} else {
+					// transparent phase
+					if (overlayPref && overlayPref !== 'auto') {
+						header.setAttribute('data-scheme', overlayPref);
+					} else {
+						// sample what's directly under the header
+						const rect = header.getBoundingClientRect();
+						const sx = x;
+						const sy = Math.max(0, Math.round(rect.bottom - rect.height / 2));
+						const under = schemeAtPoint(sx, sy);
+						if (under) header.setAttribute('data-scheme', under);
+						else header.removeAttribute('data-scheme');
+					}
+				}
+			}
 
 			// Element animations
 			for (let i = 0; i < animEls.length; i++) {
