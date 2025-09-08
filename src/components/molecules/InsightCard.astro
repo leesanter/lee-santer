@@ -14,8 +14,8 @@ const href = `/insights/${entry.slug}`;
 
 const {
 	title,
-	summary,
-	// accept both new + legacy names to be safe
+	description,
+	summary, // legacy
 	featuredImage,
 	featuredAlt = '',
 	// @ts-ignore – legacy support, remove once all posts migrated
@@ -32,6 +32,8 @@ const formatted = formatDate(date, 'dd MMM yyyy');
 
 const { minutes } = readingTimeFromMarkdown(entry.body ?? '');
 const mins = Math.max(1, Math.round(minutes));
+
+const excerpt: string = (description || summary || '').toString();
 ---
 
 <article class="insight-card">
@@ -56,7 +58,7 @@ const mins = Math.max(1, Math.round(minutes));
 		<div class="insight-card__content">
 			<p class="insight-card__meta">{formatted} · {mins} min read</p>
 			<h3 class="insight-card__title">{title}</h3>
-			<p class="insight-card__summary">{summary}</p>
+			<p class="insight-card__summary">{excerpt}</p>
 		</div>
 	</a>
 </article>

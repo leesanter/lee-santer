@@ -69,9 +69,9 @@ type Block =
 const sections = entry.data.sections ?? [];
 const gallery = (entry.data.gallery ?? []) as { src: ImageMetadata; alt?: string }[];
 
-// Overview lives beside meta; fallback to summary if not provided.
+// Overview lives beside meta; fallback to description if not provided.
 const overviewTitle = entry.data.overviewTitle ?? 'Project Overview';
-const overviewHTML = await md(entry.data.overview ?? entry.data.summary);
+const overviewHTML = await md(entry.data.overview ?? entry.data.description);
 
 // If you kept an early section called “Project Overview”, hide it when top-level overview exists.
 const renderSections = entry.data.overview
@@ -112,7 +112,6 @@ if (placement === 'before') {
 }
 
 // Determine which image should get the "main" class.
-// Prefer filename-based (_main) detection; fall back to the first image in the stream.
 const isNamedMain = (blk: Block) =>
 	blk.kind === 'image' && /(^|[_-])main(?:[.@_-]|$)/i.test(blk.src.src);
 
@@ -127,10 +126,9 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 ---
 
 <Base
-	title={entry.data.title}
-	titleTemplate="%s | Case Study"
-	description={entry.data.summary}
-	image={ogImageForMeta}
+	title={entry.data.seoTitle || entry.data.title}
+	description={entry.data.seoDescription || entry.data.description}
+	seoImage={ogImageForMeta}
 	type="creativework"
 	publishedTime={entry.data.completedDate}
 	structuredData={[breadcrumbLd, caseLd]}
@@ -186,8 +184,9 @@ const ogImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlFa
 								<p>
 									<time
 										datetime={new Date(entry.data.completedDate).toISOString()}
-										>{completed}</time
 									>
+										{completed}
+									</time>
 								</p>
 							</div>
 							<div class="entry__site">

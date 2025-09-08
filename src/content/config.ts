@@ -19,16 +19,11 @@ const site = defineCollection({
 /* =============================================================================
    Shared enums
 ============================================================================= */
-import { CATEGORY_KEYS } from '../lib/categories'; // ← NEW
-const CATEGORIES = z.enum(CATEGORY_KEYS);  
+import { CATEGORY_KEYS } from '../lib/categories';
+const CATEGORIES = z.enum(CATEGORY_KEYS);
 
 /* =============================================================================
    Services (unified)
-   - ONE collection for BOTH:
-     • kind: 'category'  → category hub (Design/Strategy/Development/Growth)
-     • kind: 'service'   → sub-service sections (anchors on the hub page)
-   - Long-form prose should live in the MD/MDX body (entry.body).
-   - NOTE: In Astro v5 the schema callback only provides { image }.
 ============================================================================= */
 const services = defineCollection({
   type: 'content',
@@ -44,130 +39,143 @@ const services = defineCollection({
       draft: z.boolean().default(false),
 
       /** Sub-service fields (kind === 'service') */
-      anchor: z.string().optional(),           // defaults to filename if omitted
+      anchor: z.string().optional(),
       intro: z.string().optional(),
-      // Keep for migration convenience; prefer MDX body going forward:
+      // Prefer MD/MDX body going forward:
       body: z.string().optional(),
       outcomes: z.array(z.string()).default([]),
       deliverables: z.array(z.string()).default([]),
 
       /** Category overview fields (kind === 'category') */
-      summary: z.string().optional(),          // short blurb (Home cards + /services tiles)
+      summary: z.string().optional(),          // short blurb for tiles/cards
       featuredImage: image().optional(),
       featuredAlt: z.string().default(''),
-      featuredWorkSlug: z.string().optional(), // optional explicit case study to feature
+      featuredWorkSlug: z.string().optional(),
       faqs: z
-      .array(
-        z.object({
-          q: z.string(),
-          a: z.string(),        // HTML-safe; we’ll render as text in JSON-LD
-        })
-      )
-      .optional(),
-
-      /** Optional SEO overrides (page can pass these into <SEO/>) */
-      seoTitle: z.string().optional(),
-      seoDescription: z.string().optional(),
+        .array(
+          z.object({
+            q: z.string(),
+            a: z.string(), // HTML-safe; we’ll render as text in JSON-LD
+          }),
+        )
+        .optional(),
     }),
 });
 
 /* =============================================================================
    Work (case studies)
-   - serviceCategory drives /work filters
-   - services holds sub-service keys (filenames) for deep-link mapping to anchors
-   - testimonials: ARRAY ONLY (no legacy single object)
+   - `description` replaces legacy `summary` (summary kept as fallback).
 ============================================================================= */
 const work = defineCollection({
   type: 'content',
   schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      summary: z.string(),
+    z
+      .object({
+        title: z.string(),
 
-      // Card/hero image (one source used in both places)
-      featuredImage: image(),
-      featuredAlt: z.string(),
+        // NEW primary description for cards/SEO; keep legacy `summary` as fallback.
+        description: z.string().optional(),
+        summary: z.string().optional(), // deprecated; migrate to `description`
 
-      // Filtering + mapping
-      serviceCategories: z.array(CATEGORIES).default([]),
-      services: z.array(z.string()).default([]), // sub-service keys (filenames)
+        // Card/hero image (one source used in both places)
+        featuredImage: image(),
+        featuredAlt: z.string(),
 
-      // Meta
-      siteUrl: z.string().url().optional(),
-      completedDate: z.coerce.date(),
+        // Filtering + mapping
+        serviceCategories: z.array(CATEGORIES).default([]),
+        services: z.array(z.string()).default([]), // sub-service keys (filenames)
 
-      // Home featuring
-      featuredHome: z.boolean().default(false),
-      featureWeight: z.number().int().min(0).max(100).default(999), // lower = higher priority
+        // Meta
+        siteUrl: z.string().url().optional(),
+        completedDate: z.coerce.date(),
 
-      // High-level intro (lives next to meta)
-      overviewTitle: z.string().default('Project Overview'),
-      overview: z.string().optional(), // Markdown; falls back to summary when absent
+        // Home featuring
+        featuredHome: z.boolean().default(false),
+        featureWeight: z.number().int().min(0).max(100).default(999),
 
-      // Control where gallery goes (instead of forced interleave)
-      galleryPlacement: z.enum(['interleave', 'before', 'after']).default('interleave'),
+        // High-level intro (lives next to meta)
+        overviewTitle: z.string().default('Project Overview'),
+        overview: z.string().optional(), // Markdown; falls back to description when absent
 
-      // Rich sections (alternating text/media)
-      sections: z
-        .array(
-          z.object({
-            title: z.string(),
-            /** Write Markdown here; we'll render it */
-            body: z.string(),
-            image: image().optional(),
-            imageAlt: z.string().optional(),
-            imageAlign: z.enum(['left', 'right', 'full']).default('right'),
-          }),
-        )
-        .default([]),
+        // Control where gallery goes (instead of forced interleave)
+        galleryPlacement: z.enum(['interleave', 'before', 'after']).default('interleave'),
 
-      /** Decoupled gallery for standalone images between sections */
-      gallery: z
-        .array(
-          z.object({
-            src: image(),
-            alt: z.string().default(''),
-            caption: z.string().optional(), // unused now; nice to have later
-          }),
-        )
-        .default([]),
+        // Rich sections (alternating text/media)
+        sections: z
+          .array(
+            z.object({
+              title: z.string(),
+              /** Write Markdown here; we'll render it */
+              body: z.string(),
+              image: image().optional(),
+              imageAlt: z.string().optional(),
+              imageAlign: z.enum(['left', 'right', 'full']).default('right'),
+            }),
+          )
+          .default([]),
 
-      // Testimonials: array-only
-      testimonials: z
-        .array(
-          z.object({
-            quote: z.string(),
-            personName: z.string(),
-            role: z.string().optional(),
-            company: z.string().optional(),
-          }),
-        )
-        .default([]),
+        /** Decoupled gallery for standalone images between sections */
+        gallery: z
+          .array(
+            z.object({
+              src: image(),
+              alt: z.string().default(''),
+              caption: z.string().optional(),
+            }),
+          )
+          .default([]),
 
-      // Open Graph
-      ogImage: image().optional(),
+        // Testimonials: array-only
+        testimonials: z
+          .array(
+            z.object({
+              quote: z.string(),
+              personName: z.string(),
+              role: z.string().optional(),
+              company: z.string().optional(),
+            }),
+          )
+          .default([]),
 
-      draft: z.boolean().default(false),
-    }),
+        // Open Graph
+        ogImage: image().optional(),
+
+        draft: z.boolean().default(false),
+      })
+      .transform((data) => ({
+        ...data,
+        // Always expose a `description` value at runtime
+        description: data.description ?? data.summary ?? '',
+        // Keep `overview` fallback aligned to description (not legacy summary)
+        overview: data.overview ?? data.description ?? data.summary ?? undefined,
+      })),
 });
 
 /* =============================================================================
    Insights (blog)
+   - `description` replaces legacy `summary` (summary kept as fallback).
 ============================================================================= */
 const insights = defineCollection({
   type: 'content',
   schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      summary: z.string(),
-      date: z.coerce.date(),
-      featuredImage: image().optional(),
-      featuredAlt: z.string().optional(),
-      author: z.string().default('Lee Santer'),
-      tags: z.array(z.string()).default([]), // decorative; no /tags routes (for now)
-      ogImage: image().optional(),
-      draft: z.boolean().default(false),
-    }),
+    z
+      .object({
+        title: z.string(),
+        description: z.string().optional(),
+        summary: z.string().optional(), // deprecated; migrate to `description`
+        date: z.coerce.date(),
+        featuredImage: image().optional(),
+        featuredAlt: z.string().optional(),
+        author: z.string().default('Lee Santer'),
+        tags: z.array(z.string()).default([]), // decorative; no /tags routes (for now)
+        ogImage: image().optional(),
+        draft: z.boolean().default(false),
+      })
+      .transform((data) => ({
+        ...data,
+        // Normalize description shape at runtime
+        description: data.description ?? data.summary ?? '',
+      })),
 });
 
 export const collections = { site, services, work, insights };
