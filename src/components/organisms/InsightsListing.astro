@@ -31,7 +31,7 @@ if (excludeSlugs.length) list = list.filter((p) => !excludeSlugs.includes(p.slug
 	list.length === 0 ? (
 		<p class="muted">No posts yet.</p>
 	) : (
-		<ul class="post-list" role="list">
+		<ul class="post-list" role="list" aria-label="Insights">
 			{list.map((p) => (
 				<li>
 					<InsightCard entry={p} />
