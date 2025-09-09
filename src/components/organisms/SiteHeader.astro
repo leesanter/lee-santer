@@ -61,7 +61,7 @@ const ctaBtn: CTA | null = props.cta ?? { label: 'Get a quote', href: '/contact'
 const currentPath = Astro.url.pathname.replace(/\/$/, '');
 const normalize = (href: string) => href.replace(/\/$/, '');
 
-const navWithState: NavItem[] = nav.map((item, i) => {
+const navWithState: NavItem[] = nav.map((item) => {
 	const isActive = normalize(item.href) === currentPath;
 	const children: NavChild[] = (item.children ?? []).map((c) => ({
 		...c,

@@ -19,7 +19,7 @@ type PageProp = {
 const { page } = Astro.props as { page: PageProp };
 ---
 
-<Base title="Insights" seoTitleTemplate="%s | Insights" description="Latest articles and notes.">
+<Base title="Insights" description="Latest articles and notes.">
 	<Fragment slot="head">
 		{page.url.prev && <link rel="prev" href={page.url.prev} />}
 		{page.url.next && <link rel="next" href={page.url.next} />}

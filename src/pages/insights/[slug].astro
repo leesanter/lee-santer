@@ -37,7 +37,7 @@ const ogUrlFallback = `/og/insights/${entry.slug}.png`;
 const ogSrcCandidate = (entry.data.ogImage ?? entry.data.featuredImage)?.src ?? ogUrlFallback;
 const imageAbs = siteUrl ? new URL(ogSrcCandidate, siteUrl).href : ogSrcCandidate;
 
-// Article JSON-LD (BlogPosting ⊂ Article is fine)
+// Article JSON-LD
 const articleLd = {
 	'@context': 'https://schema.org',
 	'@type': 'BlogPosting',
@@ -54,9 +54,8 @@ const seoImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlF
 ---
 
 <Base
-	title={entry.data.title}
-	seoTitleTemplate="%s | Insights"
-	description={entry.data.summary}
+	title={entry.data.seoTitle || entry.data.title}
+	description={entry.data.seoDescription || entry.data.description}
 	seoImage={seoImageForMeta}
 	type="article"
 	publishedTime={entry.data.date}
@@ -76,9 +75,8 @@ const seoImageForMeta = entry.data.ogImage ?? entry.data.featuredImage ?? ogUrlF
 			)
 		}
 		<h1>{entry.data.title}</h1>
-		<p>{entry.data.summary}</p>
+		<p>{entry.data.description}</p>
 		<slot />
-		{/* MDX body renders automatically */}
 	</article>
 
 	<nav aria-label="Post navigation">
