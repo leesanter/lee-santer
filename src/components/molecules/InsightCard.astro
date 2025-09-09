@@ -12,32 +12,18 @@ interface Props {
 const { entry } = Astro.props;
 const href = `/insights/${entry.slug}`;
 
-const {
-	title,
-	description,
-	summary, // legacy
-	featuredImage,
-	featuredAlt = '',
-	// @ts-ignore – legacy support, remove once all posts migrated
-	hero,
-	// @ts-ignore – legacy support
-	heroAlt,
-	date,
-} = entry.data as Record<string, any>;
+const { title, featuredImage, featuredAlt = '', date } = entry.data as Record<string, any>;
 
-const cover: ImageMetadata | undefined = featuredImage ?? hero;
-const alt = (featuredAlt || heroAlt || title) as string;
+const cover: ImageMetadata | undefined = featuredImage;
+const alt = (featuredAlt || title) as string;
 
 const formatted = formatDate(date, 'dd MMM yyyy');
-
 const { minutes } = readingTimeFromMarkdown(entry.body ?? '');
 const mins = Math.max(1, Math.round(minutes));
-
-const excerpt: string = (description || summary || '').toString();
 ---
 
 <article class="insight-card">
-	<a class="insight-card__link" href={href}>
+	<a class="insight-card__link" href={href} aria-label={`Read: ${title}`}>
 		{
 			cover ? (
 				<figure class="insight-card__media">
@@ -58,7 +44,6 @@ const excerpt: string = (description || summary || '').toString();
 		<div class="insight-card__content">
 			<p class="insight-card__meta">{formatted} · {mins} min read</p>
 			<h3 class="insight-card__title">{title}</h3>
-			<p class="insight-card__summary">{excerpt}</p>
 		</div>
 	</a>
 </article>
@@ -91,9 +76,5 @@ const excerpt: string = (description || summary || '').toString();
 	}
 	.insight-card__title {
 		margin: 0;
-	}
-	.insight-card__summary {
-		margin: 0;
-		color: var(--text-muted-colour, #555);
 	}
 </style>
