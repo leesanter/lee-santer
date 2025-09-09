@@ -1,0 +1,73 @@
+---
+/**
+ * Section — minimal structural wrapper
+ * - Renders <section> (default) or <div>
+ * - Optional inner container: 'small' | 'medium' | 'large' | false
+ * - Optional scheme override via data-scheme
+ *
+ * Usage:
+ *  <Section scheme="dark" container="large">
+ *    ...content...
+ *  </Section>
+ */
+
+interface Props {
+	id?: string;
+	class?: string;
+	/** Element to render as */
+	as?: 'section' | 'div';
+	/** Container size or false for none (defaults to 'large') */
+	container?: 'small' | 'medium' | 'large' | false;
+	/** Force colour scheme for this block */
+	scheme?: 'light' | 'dark' | 'inherit';
+}
+
+const {
+	id,
+	class: className = '',
+	as = 'section',
+	container = 'large',
+	scheme = 'inherit',
+} = Astro.props as Props;
+
+const containerClass =
+	container === false
+		? ''
+		: container === 'small'
+			? 'container container--small'
+			: container === 'large'
+				? 'container container--large'
+				: 'container'; // 'medium'
+---
+
+{
+	as === 'div' ? (
+		<div
+			id={id}
+			class:list={['section', className]}
+			data-scheme={scheme !== 'inherit' ? scheme : undefined}
+		>
+			{container === false ? (
+				<slot />
+			) : (
+				<div class={containerClass}>
+					<slot />
+				</div>
+			)}
+		</div>
+	) : (
+		<section
+			id={id}
+			class:list={['section', className]}
+			data-scheme={scheme !== 'inherit' ? scheme : undefined}
+		>
+			{container === false ? (
+				<slot />
+			) : (
+				<div class={containerClass}>
+					<slot />
+				</div>
+			)}
+		</section>
+	)
+}
