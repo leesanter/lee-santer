@@ -147,13 +147,17 @@ const work = defineCollection({
 
         draft: z.boolean().default(false),
       })
-      .transform((data) => ({
-        ...data,
-        // Always expose a `description` value at runtime
-        description: data.description ?? data.summary ?? '',
-        // Keep `overview` fallback aligned to description (not legacy summary)
-        overview: data.overview ?? data.description ?? data.summary ?? undefined,
-      })),
+      .transform((data) => {
+        const description = data.description ?? data.summary ?? '';
+        if (process.env.NODE_ENV !== 'production' && !data.description && data.summary) {
+          console.warn('[content:work] Using legacy "summary"; consider renaming to "description" in', data.title);
+        }
+        return {
+          ...data,
+          description,
+          overview: data.overview ?? description ?? undefined,
+        };
+      }),
 });
 
 /* =============================================================================
@@ -183,11 +187,13 @@ const insights = defineCollection({
         ogImage: image().optional(),
         draft: z.boolean().default(false),
       })
-      .transform((data) => ({
-        ...data,
-        // Normalize description shape at runtime
-        description: data.description ?? data.summary ?? '',
-      })),
+      .transform((data) => {
+        const description = data.description ?? data.summary ?? '';
+        if (process.env.NODE_ENV !== 'production' && !data.description && data.summary) {
+          console.warn('[content:insights] Using legacy "summary"; consider renaming to "description" in', data.title);
+        }
+        return { ...data, description };
+      }),
 });
 
 export const collections = { site, services, work, insights };

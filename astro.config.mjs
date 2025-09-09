@@ -3,15 +3,21 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 
+const SITE = process.env.PUBLIC_SITE_URL;
+
 export default defineConfig({
-	site: process.env.PUBLIC_SITE_URL || 'https://example.com',
+	site: SITE,
 	integrations: [
 		mdx(),
 		sitemap({
 			filter: (page) => {
-				if (page === '/404' || /^\/404(\/|$)/.test(page)) return false; // skip 404
-				// Example: skip very deep pagination if added later
-				if (/\/insights\/page\/\d+/.test(page)) return false;
+				// Skip 404 and any nested 404s
+				if (page === '/404' || /^\/404(\/|$)/.test(page)) return false;
+
+				// If you ever re-enable pagination like /insights/2, skip numeric pages
+				// (This won't affect normal slugs like /insights/astro-seo-guide)
+				if (/^\/insights\/\d+(\/)?$/.test(page)) return false;
+
 				return true;
 			},
 			serialize: (page) => {
