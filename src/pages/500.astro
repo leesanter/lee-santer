@@ -12,11 +12,16 @@ import Base from '../layouts/Base.astro';
 export const prerender = true;
 ---
 
-<Base title="Something went wrong" description="An unexpected error occurred.">
-	<section class="container container--large">
+<Base
+	title="Something went wrong"
+	description="An unexpected error occurred."
+	noindex={true}
+	pageClass="error-page"
+>
+	<section class="section container container--large">
 		<div class="error-hero">
 			<div class="stack small center">
-				<h1 class="h1">4500 — Server error</h1>
+				<h1 class="h1">500 — Server error</h1>
 				<p>Please try again or <a class="link-style" href="/contact">contact us</a>.</p>
 				<p class="btn-row">
 					<a class="btn" href="/">Go home</a>
