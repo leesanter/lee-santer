@@ -11,13 +11,13 @@ export default defineConfig({
 		mdx(),
 		sitemap({
 			filter: (page) => {
-				// Skip 404 and any nested 404s
-				if (page === '/404' || /^\/404(\/|$)/.test(page)) return false;
-
-				// If you ever re-enable pagination like /insights/2, skip numeric pages
-				// (This won't affect normal slugs like /insights/astro-seo-guide)
-				if (/^\/insights\/\d+(\/)?$/.test(page)) return false;
-
+				// Exclude error/utility pages (we set noindex on these too)
+				if (/^\/404(\/|$)/.test(page)) return false;
+				if (/^\/500(\/|$)/.test(page)) return false;
+				// Optional: keep 'style-guide' out of the sitemap since it's noindex
+				if (/^\/style-guide(\/|$)/.test(page)) return false;
+				// Keep all /insights pages, including /insights/2, /insights/3, ...
+				// (removed stale /insights/page/{n} filter)
 				return true;
 			},
 			serialize: (page) => {
