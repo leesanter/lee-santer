@@ -7,6 +7,9 @@
  *  PUBLIC_DEFAULT_DESCRIPTION
  *  PUBLIC_OG_IMAGE              (optional absolute or /path)
  *  PUBLIC_TWITTER               e.g. @leesanter (optional)
+ *  PUBLIC_HTML_LANG             e.g. en-GB (optional; default en-GB)
+ *  PUBLIC_ENABLE_SEARCH         true|false (optional; default false)
+ *  PUBLIC_ENABLE_RSS            true|false (optional; default false)
  *  INDEXING=true|false          (robots)
  *
  * Props:
@@ -50,8 +53,15 @@ const DEFAULT_TITLE = import.meta.env.PUBLIC_DEFAULT_TITLE ?? SITE_NAME;
 const DEFAULT_DESC =
 	settings?.defaultDescription ?? import.meta.env.PUBLIC_DEFAULT_DESCRIPTION ?? '';
 const DEFAULT_OG = settings?.defaultOgImage ?? import.meta.env.PUBLIC_OG_IMAGE ?? '';
-const TWITTER = settings?.twitterHandle ?? import.meta.env.PUBLIC_TWITTER ?? '';
+const TWITTER = (settings?.twitterHandle ?? import.meta.env.PUBLIC_TWITTER ?? '').trim();
 const INDEXING = String(import.meta.env.INDEXING ?? 'true').toLowerCase() !== 'false';
+
+const HTML_LANG = import.meta.env.PUBLIC_HTML_LANG ?? 'en-GB';
+const OG_LOCALE = HTML_LANG.replace('-', '_');
+
+const ENABLE_SEARCH =
+	String(import.meta.env.PUBLIC_ENABLE_SEARCH ?? 'false').toLowerCase() === 'true';
+const ENABLE_RSS = String(import.meta.env.PUBLIC_ENABLE_RSS ?? 'false').toLowerCase() === 'true';
 
 const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/index.html';
 
@@ -140,25 +150,31 @@ const ogType = props.type ?? 'website';
 /* JSON-LD */
 const ld: any[] = [];
 
+// Organization (logo becomes absolute if provided in settings)
+const orgLogoAbs = settings?.brandLogoPath ? toAbs(settings.brandLogoPath) : undefined;
+
 if (SITE_NAME || SITE_URL) {
 	ld.push({
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
 		name: SITE_NAME || undefined,
 		url: SITE_URL || undefined,
-		logo: undefined, // add if/when you have a brand logo URL
+		logo: orgLogoAbs || undefined,
 	});
-	ld.push({
+	const websiteLd: any = {
 		'@context': 'https://schema.org',
 		'@type': 'WebSite',
 		name: SITE_NAME || undefined,
 		url: SITE_URL || undefined,
-		potentialAction: {
+	};
+	if (ENABLE_SEARCH && SITE_URL) {
+		websiteLd.potentialAction = {
 			'@type': 'SearchAction',
 			target: `${SITE_URL}/search?q={query}`,
 			'query-input': 'required name=query',
-		},
-	});
+		};
+	}
+	ld.push(websiteLd);
 }
 
 const publishedISO = props.publishedTime
@@ -195,8 +211,12 @@ if (props.structuredData) {
 	else ld.push(props.structuredData);
 }
 
-/* RSS feed (absolute when possible) */
-const rssHref = SITE_URL ? new URL('/rss.xml', SITE_URL).href : '/rss.xml';
+/* RSS feed (optional; avoid broken link if feed is removed) */
+const rssHref = ENABLE_RSS
+	? SITE_URL
+		? new URL('/rss.xml', SITE_URL).href
+		: '/rss.xml'
+	: undefined;
 ---
 
 <!-- Core -->
@@ -219,7 +239,7 @@ const rssHref = SITE_URL ? new URL('/rss.xml', SITE_URL).href : '/rss.xml';
 {canonical && <link rel="canonical" href={canonical} />}
 <meta name="robots" content={robots} />
 
-<!-- Feed discovery -->
+<!-- Feed discovery (optional) -->
 {
 	rssHref && (
 		<link rel="alternate" type="application/rss+xml" title="Insights — RSS" href={rssHref} />
@@ -235,6 +255,7 @@ const rssHref = SITE_URL ? new URL('/rss.xml', SITE_URL).href : '/rss.xml';
 {ogImage && <meta property="og:image" content={ogImage} />}
 {ogImageWidth && <meta property="og:image:width" content={String(ogImageWidth)} />}
 {ogImageHeight && <meta property="og:image:height" content={String(ogImageHeight)} />}
+<meta property="og:locale" content={OG_LOCALE} />
 
 <!-- Twitter -->
 {TWITTER && <meta name="twitter:site" content={TWITTER} />}
