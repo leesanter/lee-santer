@@ -1,7 +1,6 @@
 ---
 /**
- * 500.astro — Not Found page
- * ------------------------------------------------------------
+ * 500.astro — Server error
  * - Uses Base layout (header/footer present)
  * - noindex: true
  * - Token-driven spacing; no inline styles
@@ -32,10 +31,6 @@ export const prerender = true;
 </Base>
 
 <style lang="scss">
-	/* ======================================================================
-   404 page styles (scoped)
-   - Centers content and uses your spacing tokens
-====================================================================== */
 	.error-page .error-hero {
 		min-height: 60vh;
 		display: grid;
@@ -43,7 +38,6 @@ export const prerender = true;
 		text-align: center;
 		padding-block: var(--layout--section-y);
 	}
-
 	.error-page .btn-row {
 		display: flex;
 		gap: var(--size--small);

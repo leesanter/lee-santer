@@ -5,6 +5,7 @@ export type SiteSettings = {
   defaultDescription: string;
   defaultOgImage?: string;
   twitterHandle?: string;
+  brandLogoPath?: string;
   siteUrl?: string; // optional fallback; ENV should win
 };
 

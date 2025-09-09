@@ -8,6 +8,7 @@ const SITE = process.env.PUBLIC_SITE_URL;
 
 export default defineConfig({
 	site: SITE,
+	trailingSlash: 'never',
 	integrations: [
 		mdx(),
 		// Respect INDEXING=false by disabling sitemap entirely in non-indexable deploys
@@ -26,8 +27,6 @@ export default defineConfig({
 		),
 	],
 	image: {
-		service: {
-			entrypoint: 'astro/assets/services/sharp',
-		},
+		service: { entrypoint: 'astro/assets/services/sharp' },
 	},
 });
