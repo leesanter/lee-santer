@@ -41,7 +41,11 @@ const {
 	seoTitleTemplate, // e.g. "%s | Freelance Web & Brand Designer in Kent"
 	seoAppendSiteName = 'auto', // boolean | 'auto'
 
-	headerOverlay = 'auto', // NEW
+	headerOverlay = 'auto',
+
+	// NEW toggles (single source of truth for layouts)
+	showHeader = true,
+	showFooter = true,
 } = Astro.props;
 
 // Prefer new seoImage; fall back to ogImage for back-compat
@@ -54,7 +58,9 @@ const image = seoImage ?? ogImage;
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- allow UA widgets to adapt if you ever switch global scheme -->
 		<meta name="color-scheme" content="light dark" />
+
 		<SEO
 			title={title}
 			description={description}
@@ -77,11 +83,13 @@ const image = seoImage ?? ogImage;
 		<a class="skip-to-content" href="#main">Skip to content</a>
 
 		<div class="page-wrapper">
-			<SiteHeader overlay={headerOverlay} />
+			{showHeader && <SiteHeader overlay={headerOverlay} />}
+
 			<main id="main" class:list={['main-wrapper', pageClass]} tabindex="-1">
 				<slot />
 			</main>
-			<SiteFooter />
+
+			{showFooter && <SiteFooter />}
 
 			<ScrollListener />
 			<MotionController />
