@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import ContactForm from 'src/components/organisms/ContactForm.astro';
+export const prerender = true;
+
+const email = 'hello@example.com'; // swap when you’re ready
+---
+
+<Base title="Contact" description="Start a project or ask a question.">
+	<section class="section">
+		<div class="container">
+			<h1>Contact</h1>
+			<p>
+				Drop a line via <a href={`mailto:${email}`}>{email}</a> or fill out the form below.
+			</p>
+
+			<ContactForm />
+		</div>
+	</section>
+</Base>
