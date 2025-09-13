@@ -1,15 +1,21 @@
 ---
 import Base from '../layouts/Base.astro';
-import WorkListing from 'src/components/organisms/WorkListing.astro';
-import InsightsListing from 'src/components/organisms/InsightsListing.astro';
+import WorkList from 'src/components/organisms/WorkList.astro';
+import InsightsList from 'src/components/organisms/InsightsList.astro';
 import ClientSection from 'src/components/organisms/ClientSection.astro';
 
-import { getWorkForHome, getCategorySlides } from '../lib/content';
+import { getWorkForHome, getCategorySlides, getLatestInsights } from '../lib/content';
 
 export const prerender = true;
 
-const homeEntries = await getWorkForHome(4);
-const slides = await getCategorySlides();
+// Prefetch small data slices so sections can hide cleanly if empty
+const homeEntries = await getWorkForHome(4); // newest → oldest (already sorted)
+const slides = await getCategorySlides(); // service/category cards for home
+const latestInsights = await getLatestInsights(4); // newest → oldest
+
+const hasWork = homeEntries.length > 0;
+const hasSlides = slides.length > 0;
+const hasInsights = latestInsights.length > 0;
 ---
 
 <Base
@@ -17,7 +23,7 @@ const slides = await getCategorySlides();
 	description="Web design, branding & front-end development."
 	seoAppendSiteName={false}
 >
-	<!-- Hero: keep or replace with your header/scroll test -->
+	<!-- Hero -->
 	<section class="section">
 		<div class="container container--large">
 			<div class="stack large" style="text-align:center;">
@@ -28,45 +34,58 @@ const slides = await getCategorySlides();
 	</section>
 
 	<!-- Featured Work -->
-	<section class="section" aria-labelledby="home-work">
-		<div class="container container--large">
-			<h2 id="home-work">Featured work</h2>
-			<WorkListing entries={homeEntries} lede="Selected work." />
-			<p class="see-all"><a href="/work">See all work →</a></p>
-		</div>
-	</section>
+	{
+		hasWork && (
+			<section class="section" aria-labelledby="home-work">
+				<div class="container container--large">
+					<h2 id="home-work">Featured work</h2>
+					<WorkList entries={homeEntries} lede="Selected work." />
+					<p class="see-all">
+						<a href="/work">See all work →</a>
+					</p>
+				</div>
+			</section>
+		)
+	}
 
-	<section class="section">
-		<div class="container container--large">
-			<h2>Services</h2>
-			<ul class="cards" role="list">
-				{
-					slides.map((s) => (
-						<li class="card">
-							<h2 class="h4">{s.title}</h2>
-							{s.summary && <p>{s.summary}</p>}
-							<p>
-								<a class="btn btn--outline" href={s.href}>
-									Explore {s.title}
-								</a>
-							</p>
-						</li>
-					))
-				}
-			</ul>
-		</div>
-	</section>
+	<!-- Services -->
+	{
+		hasSlides && (
+			<section class="section" aria-labelledby="home-services">
+				<div class="container container--large">
+					<h2 id="home-services">Services</h2>
+					<ul class="cards" role="list">
+						{slides.map((s) => (
+							<li class="card">
+								<h3 class="h4">{s.title}</h3>
+								{s.summary && <p>{s.summary}</p>}
+								<p>
+									<a class="btn btn--outline" href={s.href}>
+										Explore {s.title}
+									</a>
+								</p>
+							</li>
+						))}
+					</ul>
+				</div>
+			</section>
+		)
+	}
 
 	<!-- Latest Insights -->
-	<section class="section" aria-labelledby="home-insights">
-		<div class="container container--large">
-			<h2 id="home-insights">Latest insights</h2>
-
-			<InsightsListing limit={4} />
-
-			<p class="see-all"><a href="/insights">All insights →</a></p>
-		</div>
-	</section>
+	{
+		hasInsights && (
+			<section class="section" aria-labelledby="home-insights">
+				<div class="container container--large">
+					<h2 id="home-insights">Latest insights</h2>
+					<InsightsList entries={latestInsights} />
+					<p class="see-all">
+						<a href="/insights">All insights →</a>
+					</p>
+				</div>
+			</section>
+		)
+	}
 
 	<ClientSection random />
 </Base>
