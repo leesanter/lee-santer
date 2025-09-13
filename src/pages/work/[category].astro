@@ -1,17 +1,25 @@
 ---
 import Base from '../../layouts/Base.astro';
-import WorkListing from '../../components/organisms/WorkListing.astro';
-import { fromSlug, CATEGORY_SLUGS, type CategorySlug } from '../../lib/categories';
+import WorkList from '../../components/organisms/WorkList.astro';
+import { CATEGORY_SLUGS, type CategorySlug } from '../../lib/categories';
+import type { GetStaticPaths } from 'astro';
 
-export async function getStaticPaths() {
+export const prerender = true;
+
+export const getStaticPaths: GetStaticPaths = async () => {
 	return CATEGORY_SLUGS.map((slug) => ({ params: { category: slug } }));
-}
+};
 
 const { category } = Astro.params as { category: CategorySlug };
-const proper = fromSlug(category);
+const proper = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
 ---
 
-<Base title={`Work — ${proper}`} description={`Projects in ${proper}.`}>
-	<h1>Work — {proper}</h1>
-	<WorkListing category={proper} showFilter active={category} lede={`Projects in ${proper}.`} />
+<Base title={`Work — ${proper(category)}`} description={`Projects in ${proper(category)}.`}>
+	<h1>Work — {proper(category)}</h1>
+	<WorkList
+		category={category}
+		showFilter
+		active={category}
+		lede={`Projects in ${proper(category)}.`}
+	/>
 </Base>

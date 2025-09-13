@@ -2,8 +2,10 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { POSTS_PER_PAGE } from '../../lib/constants';
-import InsightCard from '../../components/molecules/InsightCard.astro';
 import type { GetStaticPaths } from 'astro';
+import InsightsList from '../../components/organisms/InsightsList.astro';
+
+export const prerender = true;
 
 export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
 	const posts = await getCollection('insights', (p) => !p.data.draft);
@@ -14,43 +16,62 @@ export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
 type PageProp = {
 	data: CollectionEntry<'insights'>[];
 	url: { prev?: string; next?: string };
+	currentPage: number;
+	lastPage: number;
 };
 
 const { page } = Astro.props as { page: PageProp };
+const hasItems = page.data.length > 0;
+const showPrev = hasItems && Boolean(page.url.prev);
+const showNext = hasItems && Boolean(page.url.next);
 ---
 
-<Base title="Insights" description="Latest articles and notes.">
+<Base
+	title="Insights"
+	description="Latest articles and notes."
+	noindex={page.currentPage > 1}
+	*
+	Optional:
+	set
+	to
+	false
+	if
+	you
+	want
+	page
+	2+
+	indexed
+	*
+>
 	<Fragment slot="head">
-		{page.url.prev && <link rel="prev" href={page.url.prev} />}
-		{page.url.next && <link rel="next" href={page.url.next} />}
+		{showPrev && <link rel="prev" href={page.url.prev!} />}
+		{showNext && <link rel="next" href={page.url.next!} />}
+		{
+			/*
+      Canonical is handled by SEO.astro (self-referential). If you ever want a custom canonical,
+      pass `canonical` to <Base> instead of adding another <link> here.
+    */
+		}
 	</Fragment>
 
 	<h1>Insights</h1>
 
-	<ul class="post-list">
-		{
-			page.data.map((p) => (
-				<li>
-					<InsightCard entry={p} />
-				</li>
-			))
-		}
-	</ul>
+	<InsightsList entries={page.data} />
 
-	<nav aria-label="Pagination" class="pagination">
-		{
-			page.url.prev && (
-				<a href={page.url.prev} rel="prev" aria-label="Newer posts">
-					← Newer
-				</a>
-			)
-		}
-		{
-			page.url.next && (
-				<a href={page.url.next} rel="next" aria-label="Older posts">
-					Older →
-				</a>
-			)
-		}
-	</nav>
+	{
+		hasItems && (showPrev || showNext) && (
+			<nav aria-label="Pagination" class="pagination">
+				{showPrev && (
+					<a href={page.url.prev} rel="prev" aria-label="Newer posts">
+						← Newer
+					</a>
+				)}
+				{showNext && (
+					<a href={page.url.next} rel="next" aria-label="Older posts">
+						Older →
+					</a>
+				)}
+			</nav>
+		)
+	}
 </Base>

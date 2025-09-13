@@ -1,12 +1,14 @@
 ---
 import Base from '../../layouts/Base.astro';
-import WorkListing from '../../components/organisms/WorkListing.astro';
+import WorkList from '../../components/organisms/WorkList.astro';
 import { getAllWork } from '../../lib/content';
 
-const entries = await getAllWork(); // already sorted newest→oldest
+export const prerender = true;
+
+const entries = await getAllWork(); // newest → oldest
 ---
 
 <Base title="Work" description="Selected projects.">
 	<h1>Work</h1>
-	<WorkListing entries={entries} showFilter active="all" lede="Filter by focus area." />
+	<WorkList entries={entries} showFilter active="all" lede="Filter by focus area." />
 </Base>
