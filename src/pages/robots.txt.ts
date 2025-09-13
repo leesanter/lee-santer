@@ -3,33 +3,38 @@
  * robots.txt (dynamic)
  * -------------------------------------------
  * Behaviour:
- * - If INDEXING=false or not production: disallow all.
- * - Otherwise: allow all + output Sitemap lines.
+ * - If INDEXING=false: disallow all (no sitemap lines).
+ * - If INDEXING=true: allow all; only advertise sitemap-index.xml
+ *   when PUBLIC_SITE_URL is configured (absolute URL).
  *
  * ENV you can set:
  *   INDEXING=true|false
- *   PUBLIC_SITE_URL=https://example.com   // absolute Sitemap URLs if provided
+ *   PUBLIC_SITE_URL=https://example.com   // used for absolute Sitemap URL
  */
+import type { APIContext } from 'astro';
+
 export const prerender = true;
 
-export function GET() {
-  const isProd = import.meta.env.PROD;
-  const indexingEnv = String(import.meta.env.INDEXING ?? 'true').toLowerCase();
-  const allowIndex = isProd && indexingEnv !== 'false';
-
-  const site = (import.meta.env.PUBLIC_SITE_URL as string | undefined)?.replace(/\/+$/, '') || '';
+export function GET(_ctx: APIContext) {
+  const INDEXING =
+    String(import.meta.env.INDEXING ?? 'true').toLowerCase() !== 'false';
+  const SITE = (import.meta.env.PUBLIC_SITE_URL as string | undefined)?.trim() || '';
 
   const lines: string[] = ['User-agent: *'];
 
-  if (allowIndex) {
+  if (!INDEXING) {
+    // Non-indexable: block everything. Do not advertise a sitemap.
+    lines.push('Disallow: /');
+  } else {
+    // Indexable: allow crawling.
     lines.push('Allow: /');
 
-    // Prefer absolute URLs when site is configured; fall back to relative.
-    const base = site || '';
-    lines.push(`Sitemap: ${base ? `${base}/sitemap.xml` : '/sitemap.xml'}`);
-    lines.push(`Sitemap: ${base ? `${base}/sitemap-index.xml` : '/sitemap-index.xml'}`);
-  } else {
-    lines.push('Disallow: /');
+    // Only advertise sitemap when a SITE is configured.
+    // Standardise on the index file to avoid 404s for /sitemap.xml.
+    if (SITE) {
+      const indexUrl = new URL('/sitemap-index.xml', SITE).href;
+      lines.push(`Sitemap: ${indexUrl}`);
+    }
   }
 
   return new Response(lines.join('\n') + '\n', {
