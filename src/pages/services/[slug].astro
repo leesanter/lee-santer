@@ -1,0 +1,302 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageIntro from 'src/components/molecules/PageIntro.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+import Accordion from '../../components/molecules/Accordion.astro';
+import { Image } from 'astro:assets';
+
+import { getAllServices, getServiceByLanderSlug } from '../../lib/services';
+import { getAllWork, mapServiceKeysToLinks } from '../../lib/content';
+import { keyToSlug, type CategoryKey } from '../../lib/categories';
+
+export const prerender = true;
+
+// Static paths: published landers only
+export async function getStaticPaths() {
+	const all = await getAllServices();
+	return all
+		.filter((e) => (e.data as any).landerSlug)
+		.map((e) => ({ params: { slug: (e.data as any).landerSlug as string } }));
+}
+
+const { slug } = Astro.params as { slug: string };
+
+// Single fetch, typed entry
+const entry = await getServiceByLanderSlug(slug);
+if (!entry) throw new Error(`Unknown or draft service lander: ${slug}`);
+
+const data: any = entry.data;
+const lander: any = data.lander ?? {};
+
+// Category bits (label + slug for links)
+const categoryLabel: string = data.category as string;
+const categorySlug = keyToSlug(data.category as CategoryKey);
+
+// Case studies → cards (only if slugs provided)
+let workCards: any[] = [];
+const slugs: string[] = lander.caseStudies?.slugs ?? [];
+if (slugs.length) {
+	const allWork = await getAllWork();
+	const workEntries = slugs.map((s) => allWork.find((w) => w.slug === s)).filter(Boolean);
+	workCards = await Promise.all(
+		workEntries.map(async (w) => ({
+			href: `/work/${w!.slug}`,
+			title: w!.data.title,
+			summary: w!.data.description,
+			img: w!.data.featuredImage,
+			alt: w!.data.featuredAlt,
+			services: lander.caseStudies?.showServices
+				? await mapServiceKeysToLinks(w!.data.services)
+				: [],
+			compact: true,
+		}))
+	);
+}
+
+// ---------- SEO ----------
+const heroTitle = lander.intro?.title ?? data.title;
+const heroStandfirst = lander.intro?.standfirst ?? data.overviewShort ?? data.body ?? '';
+const pageTitle = data.seoTitle ?? heroTitle;
+// FIXED: cannot mix ?? and || without parens
+const description = data.seoDescription ?? (heroStandfirst || 'Service details.');
+
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || '';
+const canonical = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : undefined;
+
+// Breadcrumb JSON-LD (Services → Category → Page)
+const breadcrumbLd = {
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: [
+		{
+			'@type': 'ListItem',
+			position: 1,
+			name: 'Services',
+			item: siteUrl ? new URL('/services', siteUrl).href : '/services',
+		},
+		{
+			'@type': 'ListItem',
+			position: 2,
+			name: categoryLabel,
+			item: siteUrl
+				? new URL(`/services#${categorySlug}`, siteUrl).href
+				: `/services#${categorySlug}`,
+		},
+		{ '@type': 'ListItem', position: 3, name: heroTitle, item: canonical },
+	],
+};
+
+const faqs = Array.isArray(lander.faqs) ? lander.faqs : [];
+const faqLd = faqs.length
+	? {
+			'@context': 'https://schema.org',
+			'@type': 'FAQPage',
+			mainEntity: faqs.map((f: any) => ({
+				'@type': 'Question',
+				name: f.q,
+				acceptedAnswer: { '@type': 'Answer', text: f.a },
+			})),
+		}
+	: null;
+
+const structuredData = [breadcrumbLd, faqLd].filter(Boolean);
+---
+
+<Base title={pageTitle} description={description} structuredData={structuredData}>
+	<nav class="breadcrumb" aria-label="Breadcrumb">
+		<div class="container container--large">
+			<ol class="breadcrumb__list">
+				<li class="breadcrumb__item"><a href="/services">Services</a></li>
+				<li class="breadcrumb__item">
+					<a href={`/services#${categorySlug}`}>{categoryLabel}</a>
+				</li>
+				<li class="breadcrumb__item" aria-current="page">{heroTitle}</li>
+			</ol>
+		</div>
+	</nav>
+
+	<article class="entry entry--service-lander">
+		<!-- Intro via PageIntro -->
+		<PageIntro
+			as="section"
+			class="service-intro"
+			scheme={lander.intro?.scheme ?? 'inherit'}
+			container="large"
+			align="left"
+			title={heroTitle}
+			subtitle={categoryLabel}
+			lede={heroStandfirst}
+		>
+			{
+				Array.isArray(lander.intro?.actions) && lander.intro.actions.length > 0 && (
+					<Fragment slot="actions">
+						{lander.intro.actions.map((a: any) => {
+							const cls =
+								a.variant === 'outline'
+									? 'btn btn--outline'
+									: a.variant === 'text'
+										? 'btn btn--text'
+										: 'btn btn--primary';
+							return (
+								<a class={cls} href={a.href}>
+									{a.label}
+								</a>
+							);
+						})}
+					</Fragment>
+				)
+			}
+		</PageIntro>
+
+		{/* Case studies grid (optional) */}
+		{
+			workCards.length > 0 && (
+				<section class="section case-teaser">
+					<div class="container container--large">
+						<ul
+							class={`work-grid work-grid--${lander.caseStudies?.columns ?? 3}`}
+							role="list"
+							aria-label="Projects"
+						>
+							{workCards.map((c) => (
+								<li>
+									<WorkCard {...c} />
+								</li>
+							))}
+						</ul>
+					</div>
+				</section>
+			)
+		}
+
+		{/* Blurbs */}
+		{
+			Array.isArray(lander.blurbs) && lander.blurbs.length > 0 && (
+				<section class="section blurb-grid">
+					<div class="container container--large">
+						<ul class="blurb-grid__items blurb-grid__items--3" role="list">
+							{lander.blurbs.map((b: any) => (
+								<li class="blurb-grid__item">
+									<h3 class="blurb-grid__item-title">{b.title}</h3>
+									<p class="blurb-grid__item-text">{b.text}</p>
+								</li>
+							))}
+						</ul>
+					</div>
+				</section>
+			)
+		}
+
+		{/* Key services */}
+		{
+			Array.isArray(lander.keyServices) && lander.keyServices.length > 0 && (
+				<section class="section key-services">
+					<div class="container container--large">
+						<div class="key-services__list">
+							{lander.keyServices.map((it: any, i: number) => {
+								const isEsm =
+									it.image &&
+									typeof it.image === 'object' &&
+									'src' in it.image &&
+									'width' in it.image;
+								return (
+									<article
+										class={`key-services__item key-services__item--${i % 2 === 0 ? 'left' : 'right'}`}
+									>
+										<div class="key-services__media">
+											{isEsm ? (
+												<Image
+													src={it.image}
+													alt={it.alt || ''}
+													widths={[640, 960, 1280]}
+													sizes="(min-width: 1100px) 50vw, 100vw"
+													loading="lazy"
+													decoding="async"
+												/>
+											) : it?.image ? (
+												<img
+													src={it.image}
+													alt={it.alt || ''}
+													loading="lazy"
+													decoding="async"
+												/>
+											) : null}
+										</div>
+										<div class="key-services__content">
+											<h3 class="key-services__item-title">{it.title}</h3>
+											{it.text && (
+												<p class="key-services__item-text">{it.text}</p>
+											)}
+										</div>
+									</article>
+								);
+							})}
+						</div>
+					</div>
+				</section>
+			)
+		}
+
+		{/* Process */}
+		{
+			Array.isArray(lander.process) && lander.process.length > 0 && (
+				<section class="section process">
+					<div class="container container--large">
+						<ol class="process__steps">
+							{lander.process.map((s: any, i: number) => (
+								<li class="process__step">
+									<h3 class="process__step-title">
+										<span class="process__step-num">{i + 1}</span>
+										{s.title}
+									</h3>
+									{s.text && <p class="process__step-text">{s.text}</p>}
+								</li>
+							))}
+						</ol>
+					</div>
+				</section>
+			)
+		}
+
+		{/* FAQ (Accordion) */}
+		{
+			faqs.length > 0 && (
+				<section class="section faq">
+					<div class="container container--large">
+						<Accordion
+							allowMultiple={true}
+							openFirst
+							items={faqs.map((f: any, i: number) => ({
+								id: `faq-${i + 1}`,
+								title: f.q,
+								body: f.a,
+							}))}
+						/>
+					</div>
+				</section>
+			)
+		}
+	</article>
+</Base>
+
+<style lang="scss">
+	.work-grid {
+		display: grid;
+		gap: var(--size--large);
+		list-style: none;
+		padding: 0;
+	}
+	@media (min-width: 720px) {
+		.work-grid.work-grid--2 {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (min-width: 1100px) {
+		.work-grid.work-grid--3 {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+		.work-grid.work-grid--2 {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+</style>

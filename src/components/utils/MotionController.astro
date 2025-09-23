@@ -101,7 +101,7 @@
 			});
 		});
 
-		/* ----------------------- Header scheme control ---------------- */
+		/* ----------------------- Header helpers ----------------------- */
 		const header = doc.querySelector('[data-header]');
 		const overlayPref = (header && header.getAttribute('data-overlay')) || 'auto';
 		const isHeaderSolid = () =>
@@ -140,7 +140,19 @@
 			if (prefersReduced) return;
 
 			const x = Math.round((window.innerWidth || 0) / 2);
-			const y = lineY();
+
+			// Sample line for global scheme decision
+			let y = lineY();
+
+			// NEW: When near the very top, sample just below the header so short intros still flip the scheme
+			if ((window.scrollY || 0) < 8) {
+				const headerEl =
+					header instanceof HTMLElement
+						? header
+						: document.querySelector('[data-header]');
+				const headerBottom = headerEl?.getBoundingClientRect().bottom || 0;
+				y = Math.max(0, Math.round(headerBottom + 16)); // ~1rem below header
+			}
 
 			// Global scheme flip at decision line
 			const s = schemeAtPoint(x, y);
