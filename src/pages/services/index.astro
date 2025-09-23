@@ -9,6 +9,17 @@ import { keyToSlug, type CategoryKey } from '../../lib/categories';
 
 export const prerender = true;
 
+/* Local type to satisfy Accordion’s expected items */
+type AccItem = {
+	id: string;
+	title: string;
+	body?: string;
+	expanded?: boolean;
+	ctaHref?: string;
+	ctaLabel?: string;
+	ctaVariant?: 'primary' | 'outline' | 'text';
+};
+
 /* ---------- Fetch + shape data ---------- */
 const cats = await getAllServiceCategoryOverviews();
 const allWork = await getAllWork();
@@ -20,15 +31,15 @@ const sections = await Promise.all(
 
 		// Sub-services → accordion items
 		const subs = await getSubServicesForCategory(key);
-		const items = subs.map((s) => {
+		const items: AccItem[] = subs.map((s) => {
 			const id = (s.data as any).anchor ?? s.slug.split('/').pop()!;
 			const lander = (s.data as any).landerSlug as string | undefined;
 			const isDraft = !!s.data.draft;
 			const href = lander && !isDraft ? `/services/${lander}` : undefined;
 
 			return {
-				id,
-				title: s.data.title,
+				id: String(id),
+				title: String(s.data.title),
 				body:
 					(s.data as any).overviewShort ??
 					(s.data as any).body ??
@@ -36,7 +47,7 @@ const sections = await Promise.all(
 					'',
 				ctaHref: href,
 				ctaLabel: 'Learn more',
-				ctaVariant: 'text',
+				ctaVariant: 'text' as const, // <- narrow to the union
 			};
 		});
 
@@ -55,7 +66,7 @@ const sections = await Promise.all(
 				}
 			: null;
 
-		// ALWAYS set an explicit scheme; start light and alternate.
+		// ALWAYS set explicit scheme; start light and alternate
 		const fallbackScheme: 'light' | 'dark' = i % 2 === 1 ? 'dark' : 'light';
 		const scheme: 'light' | 'dark' =
 			((c.data as any).bandScheme as 'light' | 'dark' | undefined) ?? fallbackScheme;
