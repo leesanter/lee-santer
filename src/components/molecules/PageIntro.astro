@@ -3,7 +3,7 @@
  * PageIntro — headline block that delegates structure to <Section>
  * - Props:
  *   • title: string
- *   • eyebrow?: string
+ *   • subtitle?: string
  *   • lede?: string
  *   • align?: 'left' | 'center' (default 'left')
  *   • as?: 'section' | 'div' (default 'section')
@@ -20,7 +20,7 @@ import Section from '../atoms/Section.astro';
 
 interface Props {
 	title: string;
-	eyebrow?: string;
+	subtitle?: string;
 	lede?: string;
 	align?: 'left' | 'center';
 	as?: 'section' | 'div';
@@ -32,7 +32,7 @@ interface Props {
 
 const {
 	title,
-	eyebrow,
+	subtitle,
 	lede,
 	align = 'left',
 	as = 'section',
@@ -51,7 +51,7 @@ const {
 	scheme={scheme}
 >
 	<div class="stack small">
-		{eyebrow && <p class="eyebrow">{eyebrow}</p>}
+		{subtitle && <p class="text-larger">{subtitle}</p>}
 		<h1 class="h1">{title}</h1>
 		{lede && <p class="lede text-large">{lede}</p>}
 
@@ -70,7 +70,7 @@ const {
 	.page-intro.is-center {
 		text-align: center;
 	}
-	.page-intro .eyebrow {
+	.page-intro .subtitle {
 		font-size: var(--font--small);
 		color: var(--text-muted-colour);
 		letter-spacing: 0.04em;
