@@ -24,48 +24,138 @@ const CATEGORIES = z.enum(CATEGORY_KEYS);
 
 /* =============================================================================
    Services (unified)
+   - kind: 'category' (Design / Dev / …) OR 'service' (sub-service)
+   - Category docs drive the /services bands + home tiles (no detail page)
+   - Sub-service docs can “graduate” to a lander via `landerSlug`
 ============================================================================= */
 const services = defineCollection({
   type: 'content',
   schema: ({ image }) =>
-    z.object({
-      /** Discriminator */
-      kind: z.enum(['service', 'category']).default('service'),
+    z
+      .object({
+        /** Discriminator */
+        kind: z.enum(['service', 'category']).default('service'),
 
-      /** Shared */
-      title: z.string(),
-      category: CATEGORIES,
-      order: z.number().int().nonnegative().default(999),
-      draft: z.boolean().default(false),
+        /** Shared */
+        title: z.string(),                // generic title (used everywhere)
+        category: CATEGORIES,             // Strategy | Design | Development | Growth
+        order: z.number().int().nonnegative().default(999),
+        draft: z.boolean().default(false),
 
-      /** Sub-service fields (kind === 'service') */
-      anchor: z.string().optional(),
-      intro: z.string().optional(),
-      // Prefer MD/MDX body going forward:
-      body: z.string().optional(),
-      outcomes: z.array(z.string()).default([]),
-      deliverables: z.array(z.string()).default([]),
+        /* ---------- Sub-service (kind === 'service') ---------- */
+        anchor: z.string().optional(),    // fallback: filename
+        /** Short blurb shown on /services accordion (was `intro`) */
+        overviewShort: z.string().optional(),
+        /** Legacy alias, migrated → overviewShort */
+        intro: z.string().optional(),
 
-      /** Category overview fields (kind === 'category') */
-      summary: z.string().optional(),          // short blurb for tiles/cards
-      featuredImage: image().optional(),
-      featuredAlt: z.string().default(''),
-      featuredWorkSlug: z.string().optional(),
-      faqs: z
-        .array(
-          z.object({
-            q: z.string(),
-            a: z.string(), // HTML-safe; we’ll render as text in JSON-LD
-          }),
-        )
-        .optional(),
-    }),
+        /** Optional free-form long copy (unused on /services) */
+        body: z.string().optional(),
+
+        /** Lander route, e.g. /services/custom-website-development */
+        landerSlug: z.string().optional(),
+
+        /** SEO overrides for the lander page */
+        seoTitle: z.string().optional(),
+        seoDescription: z.string().optional(),
+        ogImage: image().optional(),
+
+        /** Lander view-model (used only when landerSlug is present) */
+        lander: z
+          .object({
+            intro: z
+              .object({
+                title: z.string().optional(),       // defaults to entry.title
+                standfirst: z.string().optional(),  // hero paragraph
+                scheme: z.enum(['light', 'dark']).optional(),
+                actions: z
+                  .array(
+                    z.object({
+                      label: z.string(),
+                      href: z.string(),
+                      variant: z.enum(['primary', 'outline', 'text']).default('primary'),
+                    }),
+                  )
+                  .default([]),
+              })
+              .default({}),
+
+            caseStudies: z
+              .object({
+                slugs: z.array(z.string()).default([]),   // ['forma', 'northbase']
+                columns: z.number().int().min(1).max(3).default(3),
+                showServices: z.boolean().default(false),
+              })
+              .default({ slugs: [] as string[], columns: 3, showServices: false }),
+
+            blurbs: z
+              .array(z.object({ title: z.string(), text: z.string() }))
+              .default([]),
+
+            /** Image is optional; title+text are required */
+            keyServices: z
+              .array(
+                z.object({
+                  title: z.string(),
+                  text: z.string().optional(),
+                  image: image().optional(),
+                  alt: z.string().default(''),
+                }),
+              )
+              .default([]),
+
+            process: z
+              .array(z.object({ title: z.string(), text: z.string().optional() }))
+              .default([]),
+
+            faqs: z
+              .array(z.object({ q: z.string(), a: z.string() }))
+              .default([]),
+          })
+          .optional(),
+
+        /* ---------- Category overview (kind === 'category') ---------- */
+        /** Home tile/slider blurb (replaces legacy `summary`) */
+        homeOverview: z.string().optional(),
+
+        /** /services band: subtitle (short line) */
+        servicesSubtitle: z.string().optional(),
+        /** /services band: short paragraph */
+        servicesOverview: z.string().optional(),
+
+        /** Optional art + featured case study for the band */
+        featuredImage: image().optional(),
+        featuredAlt: z.string().default(''),
+        featuredWorkSlug: z.string().optional(),
+        /** Optional per-band scheme override */
+        bandScheme: z.enum(['light', 'dark']).optional(),
+
+        /** Rarely used now; kept for back-compat (ignored on /services) */
+        faqs: z.array(z.object({ q: z.string(), a: z.string() })).optional(),
+
+        /* ---------- Back-compat fields (will be migrated away) ---------- */
+        summary: z.string().optional(), // legacy for category tiles
+        // outcomes / deliverables deprecated (no longer used)
+      })
+      .transform((data) => {
+        const d: any = { ...data };
+
+        // Category legacy: summary → homeOverview
+        if (d.kind === 'category') {
+          if (d.summary && !d.homeOverview) d.homeOverview = d.summary;
+        }
+
+        // Sub-service legacy: intro → overviewShort
+        if (d.kind === 'service') {
+          if (d.intro && !d.overviewShort) d.overviewShort = d.intro;
+        }
+
+        return d;
+      }),
 });
 
 /* =============================================================================
    Work (case studies)
-   - `description` replaces legacy `summary` (kept as fallback).
-   - Optional `seoTitle` / `seoDescription` for fine-grained control.
 ============================================================================= */
 const work = defineCollection({
   type: 'content',
@@ -78,39 +168,32 @@ const work = defineCollection({
         seoTitle: z.string().optional(),
         seoDescription: z.string().optional(),
 
-        // NEW primary description for cards/SEO; legacy kept as fallback.
+        // NEW preferred summary
         description: z.string().optional(),
-        summary: z.string().optional(), // deprecated; migrate to `description`
+        summary: z.string().optional(), // legacy
 
-        // Card/hero image (one source used in both places)
+        // Card/hero image
         featuredImage: image(),
         featuredAlt: z.string(),
 
-        // Filtering + mapping
         serviceCategories: z.array(CATEGORIES).default([]),
-        services: z.array(z.string()).default([]), // sub-service keys (filenames)
+        services: z.array(z.string()).default([]),
 
-        // Meta
         siteUrl: z.string().url().optional(),
         completedDate: z.coerce.date(),
 
-        // Home featuring
         featuredHome: z.boolean().default(false),
         featureWeight: z.number().int().min(0).max(100).default(999),
 
-        // High-level intro (lives next to meta)
         overviewTitle: z.string().default('Project Overview'),
-        overview: z.string().optional(), // Markdown; falls back to description when absent
+        overview: z.string().optional(),
 
-        // Control where gallery goes (instead of forced interleave)
         galleryPlacement: z.enum(['interleave', 'before', 'after']).default('interleave'),
 
-        // Rich sections (alternating text/media)
         sections: z
           .array(
             z.object({
               title: z.string(),
-              /** Write Markdown here; we'll render it */
               body: z.string(),
               image: image().optional(),
               imageAlt: z.string().optional(),
@@ -119,7 +202,6 @@ const work = defineCollection({
           )
           .default([]),
 
-        /** Decoupled gallery for standalone images between sections */
         gallery: z
           .array(
             z.object({
@@ -130,7 +212,6 @@ const work = defineCollection({
           )
           .default([]),
 
-        // Testimonials: array-only
         testimonials: z
           .array(
             z.object({
@@ -142,9 +223,7 @@ const work = defineCollection({
           )
           .default([]),
 
-        // Open Graph
         ogImage: image().optional(),
-
         draft: z.boolean().default(false),
       })
       .transform((data) => {
@@ -162,8 +241,6 @@ const work = defineCollection({
 
 /* =============================================================================
    Insights (blog)
-   - `description` replaces legacy `summary` (kept as fallback).
-   - Optional `seoTitle` / `seoDescription`.
 ============================================================================= */
 const insights = defineCollection({
   type: 'content',
@@ -171,19 +248,15 @@ const insights = defineCollection({
     z
       .object({
         title: z.string(),
-
-        // SEO overrides (optional)
         seoTitle: z.string().optional(),
         seoDescription: z.string().optional(),
-
         description: z.string().optional(),
-        summary: z.string().optional(), // deprecated; migrate to `description`
-
+        summary: z.string().optional(),
         date: z.coerce.date(),
         featuredImage: image().optional(),
         featuredAlt: z.string().optional(),
         author: z.string().default('Lee Santer'),
-        tags: z.array(z.string()).default([]), // decorative; no /tags routes (for now)
+        tags: z.array(z.string()).default([]),
         ogImage: image().optional(),
         draft: z.boolean().default(false),
       })
