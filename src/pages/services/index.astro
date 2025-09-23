@@ -1,48 +1,174 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getCategorySlides } from '../../lib/content';
+import Accordion from '../../components/molecules/Accordion.astro';
+import WorkCard from '../../components/molecules/WorkCard.astro';
+
+import { getAllServiceCategoryOverviews, getSubServicesForCategory } from '../../lib/services';
+import { getAllWork } from '../../lib/content';
+import { keyToSlug, type CategoryKey } from '../../lib/categories';
 
 export const prerender = true;
 
-const slides = await getCategorySlides();
+/* ---------- Fetch + shape data ---------- */
+const cats = await getAllServiceCategoryOverviews();
+const allWork = await getAllWork();
+
+const sections = await Promise.all(
+	cats.map(async (c, i) => {
+		const key = c.data.category as CategoryKey;
+		const slug = keyToSlug(key);
+
+		// Sub-services → accordion items
+		const subs = await getSubServicesForCategory(key);
+		const items = subs.map((s) => {
+			const id = (s.data as any).anchor ?? s.slug.split('/').pop()!;
+			const lander = (s.data as any).landerSlug as string | undefined;
+			const isDraft = !!s.data.draft;
+			const href = lander && !isDraft ? `/services/${lander}` : undefined;
+
+			return {
+				id,
+				title: s.data.title,
+				body:
+					(s.data as any).overviewShort ??
+					(s.data as any).body ??
+					(s.data as any).intro ??
+					'',
+				ctaHref: href,
+				ctaLabel: 'Learn more',
+				ctaVariant: 'text',
+			};
+		});
+
+		// Optional featured work card
+		const fwSlug = (c.data as any).featuredWorkSlug as string | undefined;
+		const fw = fwSlug ? allWork.find((w) => w.slug === fwSlug) : undefined;
+		const caseCard = fw
+			? {
+					href: `/work/${fw.slug}`,
+					title: fw.data.title,
+					summary: fw.data.description,
+					img: fw.data.featuredImage,
+					alt: fw.data.featuredAlt,
+					services: [],
+					compact: true,
+				}
+			: null;
+
+		// ALWAYS set an explicit scheme; start light and alternate.
+		const fallbackScheme: 'light' | 'dark' = i % 2 === 1 ? 'dark' : 'light';
+		const scheme: 'light' | 'dark' =
+			((c.data as any).bandScheme as 'light' | 'dark' | undefined) ?? fallbackScheme;
+
+		return {
+			num: String(i + 1).padStart(2, '0'),
+			slug,
+			title: c.data.title,
+			subtitle: (c.data as any).servicesSubtitle ?? '',
+			intro: (c.data as any).servicesOverview ?? (c.data as any).homeOverview ?? '',
+			items,
+			caseCard,
+			scheme,
+		};
+	})
+);
+
+const pageTitle = 'Services';
+const description = 'A helping hand through every step of your journey.';
 ---
 
-<Base title="Services" description="Strategy, design, and front-end builds.">
-	<section class="section">
-		<div class="container container--large">
-			<h1 class="h2">Services</h1>
+<Base title={pageTitle} description={description}>
+	<article class="entry entry--service">
+		{
+			sections.map((s) => (
+				<section class="section services-section" id={s.slug} data-scheme={s.scheme}>
+					<div class="container container--large">
+						<div class="services-section__grid">
+							<div class="services-section__meta">
+								<p class="services-section__num">{s.num}</p>
+								<h2 class="h2 services-section__title">{s.title}</h2>
+								{s.subtitle && (
+									<p class="services-section__subtitle">{s.subtitle}</p>
+								)}
+								{s.intro && <p class="services-section__intro">{s.intro}</p>}
+							</div>
 
-			<ul class="cards" role="list">
-				{
-					slides.map((s) => (
-						<li class="card">
-							<h2 class="h4">{s.title}</h2>
-							{s.summary && <p>{s.summary}</p>}
-							<p>
-								<a class="btn btn--outline" href={s.href}>
-									Explore {s.title}
-								</a>
-							</p>
-						</li>
-					))
-				}
-			</ul>
+							<div class="services-section__body">
+								<Accordion items={s.items} allowMultiple={false} openFirst />
+							</div>
+						</div>
+					</div>
 
-			{/* Add: “How I work”, logos strip, 1 testimonial, global FAQs, CTA */}
-		</div>
-	</section>
+					{/* Case study card stays inside the same section → inherits the scheme */}
+					{s.caseCard && (
+						<div class="container container--large">
+							<div class="services-section__case">
+								<ul
+									class="work-grid work-grid--1"
+									role="list"
+									aria-label="Projects"
+								>
+									<li>
+										<WorkCard {...s.caseCard} />
+									</li>
+								</ul>
+							</div>
+						</div>
+					)}
+				</section>
+			))
+		}
+	</article>
 </Base>
 
-<style>
-	.cards {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-		gap: var(--size--large);
-		padding: 0;
-		list-style: none;
+<style lang="scss">
+	.services-section + .services-section {
+		border-top: 1px solid var(--hairline-colour);
 	}
-	.card {
+
+	.services-section__grid {
 		display: grid;
-		gap: 0.5rem;
+		gap: var(--size--large);
+	}
+	@media (min-width: 980px) {
+		.services-section__grid {
+			grid-template-columns: 1fr 2fr;
+			align-items: start;
+			gap: var(--size--xlarge);
+		}
+	}
+
+	.services-section__num {
+		font-size: var(--font--small);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--text-muted-colour);
+		margin: 0 0 0.25rem;
+	}
+	.services-section__title {
+		margin: 0 0 0.5rem;
+	}
+	.services-section__subtitle {
+		margin: 0;
+		color: var(--text-muted-colour);
+	}
+	.services-section__intro {
+		margin: 0.5rem 0 0 0;
+		color: var(--text-colour);
+		max-width: 58ch;
+	}
+
+	.services-section__case {
+		margin-top: var(--size--large);
+	}
+
+	.work-grid {
+		list-style: none;
+		padding: 0;
+		display: grid;
+		gap: var(--size--large);
+	}
+	.work-grid--1 {
+		grid-template-columns: 1fr;
 	}
 </style>
