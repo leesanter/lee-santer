@@ -1,0 +1,313 @@
+---
+interface Item {
+	id: string; // anchor id for deep-linking
+	title: string;
+	body?: string; // plain or light HTML
+	expanded?: boolean;
+
+	// Optional CTA under the body
+	ctaHref?: string;
+	ctaLabel?: string; // default: "Learn more"
+	ctaVariant?: 'primary' | 'outline' | 'text'; // default: 'text'
+}
+
+interface Props {
+	items: Item[];
+	allowMultiple?: boolean; // default true (multi-open)
+	openFirst?: boolean; // default false
+	id?: string;
+	class?: string;
+}
+
+const {
+	items = [],
+	allowMultiple = true,
+	openFirst = false,
+	id,
+	class: className = '',
+} = Astro.props as Props;
+
+const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div
+	class:list={{ accordion: true, [className]: !!className }}
+	id={base}
+	data-multi={allowMultiple ? 'true' : 'false'}
+>
+	<ul class="accordion__list" role="list">
+		{
+			items.map((item, i) => {
+				const panelId = `${base}-panel-${i}`;
+				const btnId = `${base}-btn-${i}`;
+				const expanded =
+					typeof item.expanded === 'boolean' ? item.expanded : openFirst && i === 0;
+
+				const variant =
+					item.ctaVariant === 'primary'
+						? 'btn btn--primary'
+						: item.ctaVariant === 'outline'
+							? 'btn btn--outline'
+							: 'btn btn--text';
+				const ctaLabel = item.ctaLabel || 'Learn more';
+
+				return (
+					<li class="accordion__item" id={item.id}>
+						<h3 class="accordion__header">
+							<button
+								id={btnId}
+								type="button"
+								class="accordion__trigger"
+								aria-expanded={expanded ? 'true' : 'false'}
+								aria-controls={panelId}
+							>
+								<span class="accordion__title">{item.title}</span>
+								<span class="accordion__icon" aria-hidden="true">
+									<svg
+										class="icon icon--plus"
+										viewBox="0 0 24 24"
+										width="20"
+										height="20"
+									>
+										<path
+											d="M12 5v14M5 12h14"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+									</svg>
+									<svg
+										class="icon icon--minus"
+										viewBox="0 0 24 24"
+										width="20"
+										height="20"
+									>
+										<path
+											d="M5 12h14"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+									</svg>
+								</span>
+							</button>
+						</h3>
+
+						<div
+							id={panelId}
+							class="accordion__panel"
+							role="region"
+							aria-labelledby={btnId}
+							hidden={!expanded}
+						>
+							{item.body && (
+								<div class="accordion__body text-large" set:html={item.body} />
+							)}
+							{item.ctaHref && (
+								<p class="accordion__actions">
+									<a class={variant} href={item.ctaHref}>
+										{ctaLabel}
+									</a>
+								</p>
+							)}
+						</div>
+					</li>
+				);
+			})
+		}
+	</ul>
+</div>
+
+<!-- non-module so currentScript works consistently -->
+<script is:inline type="text/javascript">
+	(function () {
+		var script = document.currentScript;
+		var root = script ? script.previousElementSibling : null;
+		if (!root || !root.classList || !root.classList.contains('accordion')) return;
+
+		var allowMultiple = root.getAttribute('data-multi') !== 'false';
+		var items = Array.prototype.slice.call(root.querySelectorAll('.accordion__item'));
+
+		function setExpanded(ctrl, expanded) {
+			ctrl.trigger.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			if (expanded) ctrl.panel.removeAttribute('hidden');
+			else ctrl.panel.setAttribute('hidden', '');
+			ctrl.item.classList.toggle('is-open', expanded);
+		}
+
+		function collapseAll(except) {
+			for (var i = 0; i < ctrls.length; i++)
+				if (ctrls[i] !== except) setExpanded(ctrls[i], false);
+		}
+
+		// Build control map per item
+		var ctrls = items
+			.map(function (item) {
+				return {
+					item: item,
+					trigger: item.querySelector('.accordion__trigger'),
+					panel: item.querySelector('.accordion__panel'),
+				};
+			})
+			.filter(function (c) {
+				return c.trigger && c.panel;
+			});
+
+		// Init from current markup
+		for (var i = 0; i < ctrls.length; i++) {
+			setExpanded(ctrls[i], ctrls[i].trigger.getAttribute('aria-expanded') === 'true');
+		}
+
+		// ---- Event delegation (clicks) ----
+		root.addEventListener('click', function (e) {
+			var t = e.target;
+			// traverse up to the nearest trigger inside this accordion
+			while (
+				t &&
+				t !== root &&
+				!(t.classList && t.classList.contains('accordion__trigger'))
+			) {
+				t = t.parentElement;
+			}
+			if (!t || t === root) return;
+
+			var ctrl = null;
+			for (var i = 0; i < ctrls.length; i++)
+				if (ctrls[i].trigger === t) {
+					ctrl = ctrls[i];
+					break;
+				}
+			if (!ctrl) return;
+
+			var expanded = ctrl.trigger.getAttribute('aria-expanded') === 'true';
+			if (!allowMultiple) collapseAll(ctrl);
+			setExpanded(ctrl, !expanded);
+		});
+
+		// ---- Keyboard (on triggers only) ----
+		root.addEventListener('keydown', function (e) {
+			var t = e.target;
+			if (!(t && t.classList && t.classList.contains('accordion__trigger'))) return;
+			var idx = -1;
+			for (var i = 0; i < ctrls.length; i++)
+				if (ctrls[i].trigger === t) {
+					idx = i;
+					break;
+				}
+			if (idx < 0) return;
+
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				ctrls[(idx + 1) % ctrls.length].trigger.focus();
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				ctrls[(idx - 1 + ctrls.length) % ctrls.length].trigger.focus();
+			} else if (e.key === 'Home') {
+				e.preventDefault();
+				ctrls[0].trigger.focus();
+			} else if (e.key === 'End') {
+				e.preventDefault();
+				ctrls[ctrls.length - 1].trigger.focus();
+			}
+		});
+
+		// ---- Deep-link open (and on hashchange) ----
+		function openFromHash() {
+			var hash = location.hash ? location.hash.slice(1) : '';
+			if (!hash) return;
+			var target = null,
+				ctrl = null;
+			for (var i = 0; i < items.length; i++)
+				if (items[i].id === hash) {
+					target = items[i];
+					break;
+				}
+			if (!target) return;
+			for (var j = 0; j < ctrls.length; j++)
+				if (ctrls[j].item === target) {
+					ctrl = ctrls[j];
+					break;
+				}
+			if (!ctrl) return;
+			if (!allowMultiple) collapseAll(ctrl);
+			setExpanded(ctrl, true);
+			try {
+				ctrl.trigger.focus({ preventScroll: true });
+			} catch (_) {}
+		}
+		openFromHash();
+		window.addEventListener('hashchange', openFromHash);
+	})();
+</script>
+
+<style lang="scss">
+	.accordion__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.accordion__item {
+		border-top: 1px solid var(--hairline-colour);
+		scroll-margin-top: calc(var(--header-height, 56px) + var(--size--medium));
+	}
+	.accordion__item:last-child {
+		border-bottom: 1px solid var(--hairline-colour);
+	}
+
+	.accordion__header {
+		margin: 0;
+	}
+
+	.accordion__trigger {
+		appearance: none;
+		width: 100%;
+		text-align: left;
+		padding: var(--size--large) 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--size--small);
+		font: inherit;
+		color: inherit;
+		background: transparent;
+		border: 0;
+		cursor: pointer;
+	}
+	.accordion__trigger:focus-visible {
+		outline: 2px solid var(--focus-colour);
+		outline-offset: 2px;
+	}
+
+	.accordion__title {
+		font-size: var(--font--h3);
+		font-weight: var(--font-weight--bold);
+	}
+
+	.accordion__icon {
+		display: inline-flex;
+		width: 20px;
+		height: 20px;
+	}
+	.icon--minus {
+		display: none;
+	}
+	.accordion__trigger[aria-expanded='true'] .icon--plus {
+		display: none;
+	}
+	.accordion__trigger[aria-expanded='true'] .icon--minus {
+		display: block;
+	}
+
+	.accordion__panel {
+		padding-bottom: var(--size--large);
+	}
+	.accordion__body {
+		color: var(--text-muted-colour);
+		margin-block: 0 1rem;
+	}
+	.accordion__actions {
+		margin-top: 0.5rem;
+	}
+</style>
