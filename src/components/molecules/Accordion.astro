@@ -47,13 +47,13 @@ const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
 					item.ctaVariant === 'primary'
 						? 'btn btn--primary'
 						: item.ctaVariant === 'outline'
-							? 'btn btn--outline'
-							: 'btn btn--text';
+							? 'btn btn--text'
+							: 'btn btn--outline';
 				const ctaLabel = item.ctaLabel || 'Learn more';
 
 				return (
 					<li class="accordion__item" id={item.id}>
-						<h3 class="accordion__header">
+						<div class="accordion__header">
 							<button
 								id={btnId}
 								type="button"
@@ -93,7 +93,7 @@ const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
 									</svg>
 								</span>
 							</button>
-						</h3>
+						</div>
 
 						<div
 							id={panelId}
@@ -249,11 +249,12 @@ const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
 		padding: 0;
 	}
 	.accordion__item {
-		border-top: 1px solid var(--hairline-colour);
+		border-bottom: 2px solid var(--text-muted-colour);
 		scroll-margin-top: calc(var(--header-height, 56px) + var(--size--medium));
-	}
-	.accordion__item:last-child {
-		border-bottom: 1px solid var(--hairline-colour);
+		margin-bottom: var(--size--small);
+		&:last-of-type {
+			margin-bottom: 0;
+		}
 	}
 
 	.accordion__header {
@@ -264,7 +265,7 @@ const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
 		appearance: none;
 		width: 100%;
 		text-align: left;
-		padding: var(--size--large) 0;
+		padding: 0 0 var(--size--small) 0;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -281,14 +282,16 @@ const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
 	}
 
 	.accordion__title {
-		font-size: var(--font--h3);
-		font-weight: var(--font-weight--bold);
+		color: var(--heading-colour);
+		font-size: var(--font--larger);
+		font-weight: var(--weight--semibold);
 	}
 
 	.accordion__icon {
 		display: inline-flex;
 		width: 20px;
 		height: 20px;
+		color: var(--heading-colour);
 	}
 	.icon--minus {
 		display: none;
@@ -301,10 +304,10 @@ const base = id ?? `accordion-${Math.random().toString(36).slice(2, 8)}`;
 	}
 
 	.accordion__panel {
-		padding-bottom: var(--size--large);
+		padding-bottom: var(--size--small);
 	}
 	.accordion__body {
-		color: var(--text-muted-colour);
+		color: var(--text-colour);
 		margin-block: 0 1rem;
 	}
 	.accordion__actions {

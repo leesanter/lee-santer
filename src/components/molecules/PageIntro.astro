@@ -1,22 +1,20 @@
 ---
 /**
- * PageIntro — headline block that delegates structure to <Section>
- * - Props:
- *   • title: string
- *   • subtitle?: string
- *   • lede?: string
- *   • align?: 'left' | 'center' (default 'left')
- *   • as?: 'section' | 'div' (default 'section')
- *   • container?: 'small' | 'medium' | 'large' | false (default 'large')
- *   • scheme?: 'light' | 'dark' | 'inherit' (default 'inherit')
- *   • id?: string
- *   • class?: string
- * - Slots:
- *   • default (renders under the lede)
- *   • <slot name="actions" /> for buttons/links row
+ * PageIntro — headline block with optional subtitle/lede/actions.
+ * Props:
+ *  • title: string
+ *  • subtitle?: string
+ *  • lede?: string
+ *  • align?: 'left' | 'center' (default 'left')
+ *  • as?: 'section' | 'div' (default 'section')
+ *  • container?: 'small' | 'medium' | 'large' | false (default 'large')
+ *  • scheme?: 'light' | 'dark' | 'inherit' (default 'inherit')
+ *  • id?: string
+ *  • class?: string
+ * Slots:
+ *  • default (renders under the lede)
+ *  • <slot name="actions" /> for buttons/links row
  */
-
-import Section from '../atoms/Section.astro';
 
 interface Props {
 	title: string;
@@ -41,55 +39,78 @@ const {
 	id,
 	class: className = '',
 } = Astro.props as Props;
+
+const Tag = as; // dynamic tag
+const rootClass = `section page-intro ${align === 'center' ? 'is-center' : ''} ${className}`.trim();
+const schemeAttr = scheme !== 'inherit' ? scheme : undefined;
+const containerClass = container ? `container container--${container}` : ''; // if false, we won't render container div
 ---
 
-<Section
-	as={as}
-	id={id}
-	class={`page-intro ${align === 'center' ? 'is-center' : ''} ${className}`.trim()}
-	container={container}
-	scheme={scheme}
->
-	<div class="stack small">
-		{subtitle && <p class="text-larger">{subtitle}</p>}
-		<h1 class="h1">{title}</h1>
-		{lede && <p class="lede text-large">{lede}</p>}
+<Tag id={id} class={rootClass} data-scheme={schemeAttr}>
+	{
+		container ? (
+			<div class={containerClass}>
+				<div class="page-intro__content">
+					{subtitle && <p class="subtitle text-larger">{subtitle}</p>}
+					<h1 class="title">{title}</h1>
+					{lede && <p class="lede text-large">{lede}</p>}
 
-		<!-- Optional actions row -->
-		<div class="actions"><slot name="actions" /></div>
+					<div class="actions">
+						<slot name="actions" />
+					</div>
+					<slot />
+				</div>
+			</div>
+		) : (
+			<div class="page-intro__content">
+				{subtitle && <p class="subtitle text-larger">{subtitle}</p>}
+				<h1 class="title">{title}</h1>
+				{lede && <p class="lede text-large">{lede}</p>}
 
-		<!-- Optional extra content below -->
-		<slot />
-	</div>
-</Section>
+				<div class="actions">
+					<slot name="actions" />
+				</div>
+				<slot />
+			</div>
+		)
+	}
+</Tag>
 
 <style lang="scss">
 	.page-intro {
-		/* spacing handled by .section + container; keep text styles minimal */
-	}
-	.page-intro.is-center {
-		text-align: center;
-	}
-	.page-intro .subtitle {
-		font-size: var(--font--small);
-		color: var(--text-muted-colour);
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-	}
-	.page-intro .lede {
-		color: var(--text-colour);
-		max-width: 60ch;
-		margin-inline: 0; /* centered via parent when is-center */
-	}
-	.page-intro.is-center .lede {
-		margin-inline: auto;
-	}
-	.page-intro .actions:empty {
-		display: none;
-	}
-	.page-intro .actions {
-		display: inline-flex;
-		gap: var(--size--small);
-		flex-wrap: wrap;
+		/* spacing comes from .section and .container; keep typography simple */
+
+		.subtitle {
+			font-size: var(--font--larger);
+			color: var(--text-colour);
+			margin-bottom: var(--size--xsmall);
+		}
+
+		.title {
+			margin-bottom: var(--size--medium);
+		}
+
+		.lede {
+			color: var(--text-colour);
+			max-width: 60ch;
+			margin-inline: 0; /* centered via parent when is-center */
+		}
+
+		.actions {
+			display: inline-flex;
+			gap: var(--size--medium);
+			flex-wrap: wrap;
+			margin-top: var(--size--medium);
+		}
+		.actions:empty {
+			display: none;
+		}
+
+		&.is-center {
+			text-align: center;
+			.lede {
+				margin-inline: auto;
+			}
+		}
 	}
 </style>
