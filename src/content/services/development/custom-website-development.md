@@ -4,7 +4,7 @@ title: Custom Website Development
 category: Development
 order: 1
 anchor: custom-website-development
-overviewShort: Fast, accessible builds with an Astro-first approach.
+overviewShort: "Astro-first builds: static by default, islands where needed. Accessible, fast, and easy to maintain. CMS optional—Sanity, headless WordPress, or file-based—chosen to fit your team and publishing cadence."
 landerSlug: custom-website-development
 
 seoTitle: Custom Website Development (Astro)
@@ -14,7 +14,7 @@ seoDescription: Astro-first sites that are fast, accessible, and easy to maintai
 lander:
   intro:
     standfirst: Astro-first builds that load quickly and stay simple to update.
-    scheme: dark
+    scheme: light
     actions:
       - label: Start a project
         href: /contact

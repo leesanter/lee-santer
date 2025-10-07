@@ -19,7 +19,7 @@
      • main > * > .section  (e.g. main > article > .section) */
 main > :where(.section):first-child:not(.is-flush),
 main > * > :where(.section):first-child:not(.is-flush) {
-  padding-top: calc(var(--header-height, 56px) + var(--layout--section-y));
+  padding-top: calc(var(--header-height, 56px) + var(--layout--section-y) / 2);
 }
 
 /* 3) Last section gets BOTTOM padding so the page never kisses the footer
@@ -72,14 +72,18 @@ main > * > :where(.section):last-child {
    Containers
 ------------------------------------- */
 .container {
-	width: min(100% - (var(--container--pad-x) * 2), var(--container--max-medium));
+	// width: min(100% - (var(--container--pad-x) * 2), var(--container--max-medium));
 	margin-inline: auto;
+	margin-right: auto !important;
+  margin-left: auto !important;
 }
 .container--small {
-	width: min(100% - (var(--container--pad-x) * 2), var(--container--max-small));
+	// width: min(100% - (var(--container--pad-x) * 2), var(--container--max-small));
 }
 .container--large {
-	width: min(100% - (var(--container--pad-x) * 2), var(--container--max-large));
+	// width: min(100% - (var(--container--pad-x) * 2), var(--container--max-large));
+	width: 100%;
+  max-width: 90vw;
 }
 .container--fluid {
 	width: 100%;
