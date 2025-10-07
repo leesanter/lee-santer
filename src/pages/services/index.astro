@@ -1,7 +1,9 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageIntro from 'src/components/molecules/PageIntro.astro';
 import Accordion from '../../components/molecules/Accordion.astro';
 import WorkCard from '../../components/molecules/WorkCard.astro';
+import ClientSection from 'src/components/organisms/ClientSection.astro';
 
 import { getAllServiceCategoryOverviews, getSubServicesForCategory } from '../../lib/services';
 import { getAllWork } from '../../lib/content';
@@ -9,7 +11,7 @@ import { keyToSlug, type CategoryKey } from '../../lib/categories';
 
 export const prerender = true;
 
-/* Local type to satisfy Accordion’s expected items */
+/* Local type for Accordion items */
 type AccItem = {
 	id: string;
 	title: string;
@@ -20,7 +22,6 @@ type AccItem = {
 	ctaVariant?: 'primary' | 'outline' | 'text';
 };
 
-/* ---------- Fetch + shape data ---------- */
 const cats = await getAllServiceCategoryOverviews();
 const allWork = await getAllWork();
 
@@ -29,7 +30,6 @@ const sections = await Promise.all(
 		const key = c.data.category as CategoryKey;
 		const slug = keyToSlug(key);
 
-		// Sub-services → accordion items
 		const subs = await getSubServicesForCategory(key);
 		const items: AccItem[] = subs.map((s) => {
 			const id = (s.data as any).anchor ?? s.slug.split('/').pop()!;
@@ -47,11 +47,10 @@ const sections = await Promise.all(
 					'',
 				ctaHref: href,
 				ctaLabel: 'Learn more',
-				ctaVariant: 'text' as const, // <- narrow to the union
+				ctaVariant: 'text' as const,
 			};
 		});
 
-		// Optional featured work card
 		const fwSlug = (c.data as any).featuredWorkSlug as string | undefined;
 		const fw = fwSlug ? allWork.find((w) => w.slug === fwSlug) : undefined;
 		const caseCard = fw
@@ -66,7 +65,6 @@ const sections = await Promise.all(
 				}
 			: null;
 
-		// ALWAYS set explicit scheme; start light and alternate
 		const fallbackScheme: 'light' | 'dark' = i % 2 === 1 ? 'dark' : 'light';
 		const scheme: 'light' | 'dark' =
 			((c.data as any).bandScheme as 'light' | 'dark' | undefined) ?? fallbackScheme;
@@ -90,27 +88,42 @@ const description = 'A helping hand through every step of your journey.';
 
 <Base title={pageTitle} description={description}>
 	<article class="entry entry--service">
+		<PageIntro
+			as="section"
+			class="services-intro"
+			container="large"
+			align="left"
+			subtitle="Services"
+			title="A helping hand through every step of your journey."
+			lede="My approach combines design and strategy tailored to your brand. I’m dedicated to helping you succeed, ensuring that your presence resonates with your audience from the initial concept through to ongoing growth."
+		/>
 		{
 			sections.map((s) => (
 				<section class="section services-section" id={s.slug} data-scheme={s.scheme}>
 					<div class="container container--large">
 						<div class="services-section__grid">
+							{/* Row 1: number + title (full width) */}
 							<div class="services-section__meta">
-								<p class="services-section__num">{s.num}</p>
+								<p class="services-section__num">({s.num})</p>
 								<h2 class="h2 services-section__title">{s.title}</h2>
-								{s.subtitle && (
-									<p class="services-section__subtitle">{s.subtitle}</p>
-								)}
-								{s.intro && <p class="services-section__intro">{s.intro}</p>}
 							</div>
 
+							{/* Row 2, col 1: subtitle  */}
+							<div class="services-section__aside">
+								{s.subtitle && (
+									<h3 class="services-section__subtitle">{s.subtitle}</h3>
+								)}
+							</div>
+
+							{/* Row 2, col 2: accordion + intro*/}
 							<div class="services-section__body">
+								{s.intro && <p class="services-section__intro">{s.intro}</p>}
 								<Accordion items={s.items} allowMultiple={false} openFirst />
 							</div>
 						</div>
 					</div>
 
-					{/* Case study card stays inside the same section → inherits the scheme */}
+					{/* Keep case study inside the section so it inherits the scheme */}
 					{s.caseCard && (
 						<div class="container container--large">
 							<div class="services-section__case">
@@ -129,6 +142,7 @@ const description = 'A helping hand through every step of your journey.';
 				</section>
 			))
 		}
+		<ClientSection random />
 	</article>
 </Base>
 
@@ -137,40 +151,60 @@ const description = 'A helping hand through every step of your journey.';
 		border-top: 1px solid var(--hairline-colour);
 	}
 
+	/* Base: stacked */
 	.services-section__grid {
 		display: grid;
 		gap: var(--size--large);
 	}
+
+	/* Desktop: two-row layout
+     Row 1: meta (spans both cols)
+     Row 2: aside | body
+  */
 	@media (min-width: 980px) {
 		.services-section__grid {
-			grid-template-columns: 1fr 2fr;
+			grid-template-columns: 1.25fr 2fr;
+			grid-template-areas:
+				'meta  meta'
+				'aside body';
+			column-gap: var(--size--xlarge);
+			row-gap: var(--size--large);
 			align-items: start;
-			gap: var(--size--xlarge);
+		}
+		.services-section__meta {
+			grid-area: meta;
+		}
+		.services-section__aside {
+			grid-area: aside;
+			max-width: 58ch;
+		}
+		.services-section__body {
+			grid-area: body;
 		}
 	}
 
 	.services-section__num {
-		font-size: var(--font--small);
-		letter-spacing: 0.08em;
+		font-size: var(--font--larger);
 		text-transform: uppercase;
 		color: var(--text-muted-colour);
 		margin: 0 0 0.25rem;
 	}
 	.services-section__title {
-		margin: 0 0 0.5rem;
-	}
-	.services-section__subtitle {
 		margin: 0;
-		color: var(--text-muted-colour);
+	}
+
+	.services-section__subtitle {
+		margin: 0 0 0.5rem 0;
+		color: var(--heading-colour);
 	}
 	.services-section__intro {
-		margin: 0.5rem 0 0 0;
+		font-size: var(--font--larger);
+		margin-bottom: var(--size--large);
 		color: var(--text-colour);
-		max-width: 58ch;
 	}
 
 	.services-section__case {
-		margin-top: var(--size--large);
+		margin-top: var(--size--xlarge);
 	}
 
 	.work-grid {

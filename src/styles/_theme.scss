@@ -2,7 +2,7 @@
 	--bg-colour: var(--palette--white);
 	--heading-colour: var(--palette--neutral-900);
 	--text-colour: var(--palette--neutral-600);
-	--text-muted-colour: var(--palette--neutral-500);
+	--text-muted-colour: var(--palette--neutral-600);
 	--link-colour: var(--palette--primary);
 	--link-hover-colour: var(--palette--neutral-900);
 	--border-colour: color-mix(in srgb, var(--palette--neutral-900) 15%, transparent);
@@ -13,7 +13,7 @@
 [data-scheme='dark'], .scheme-local--dark {
 	--bg-colour: var(--palette--neutral-900);
 	--heading-colour: var(--palette--white);
-	--text-colour: #e6e6e6; /* ~90% white for readable body copy */
+	--text-colour: #ffffff99; /* ~90% white for readable body copy was - #e6e6e6 */
 	--text-muted-colour: #ffffff99; /* secondary only */
 	--link-colour: var(--palette--primary);
 	--link-hover-colour: var(--palette--white);
